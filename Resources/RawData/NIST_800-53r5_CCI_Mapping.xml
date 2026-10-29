@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<!-- DISA CCI list 2022-03-09 -> NIST SP 800-53 Rev 5; DoD guidance text carried forward from the Rev 4 mapping by CCI -->
+<!-- DISA CCI list 2026-07-14 -> NIST SP 800-53 Rev 5; DoD guidance text carried forward from the Rev 4 mapping by CCI -->
 <Pairs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <Pair family="AC" number="1" enhancement="0" indicator="AC-1 a 1 (a)" cci="000002">
     <ImplementationGuidance>The organization being inspected/assessed disseminates via an information sharing capability to all personnel.
@@ -961,11 +961,15 @@
     <ImplementationGuidance></ImplementationGuidance>
     <AssessmentProcedures></AssessmentProcedures>
   </Pair>
-  <Pair family="AC" number="3" enhancement="15" indicator="AC-3 (15) (a)" cci="003657">
-    <ImplementationGuidance></ImplementationGuidance>
-    <AssessmentProcedures></AssessmentProcedures>
+  <Pair family="AC" number="3" enhancement="15" indicator="AC-3 (15) (a)" cci="002153">
+    <ImplementationGuidance>The organization being inspected/assessed defines and documents  the mandatory access control policies that are to be enforced over all subjects and objects.
+
+			DoD has determined the mandatory access control policies are not appropriate to define at the Enterprise level.</ImplementationGuidance>
+    <AssessmentProcedures>The organization conducting the inspection/assessment obtains and examines the documented mandatory access control policies to ensure they have been defined.
+
+			DoD has determined the mandatory access control policies are not appropriate to define at the Enterprise level.</AssessmentProcedures>
   </Pair>
-  <Pair family="AC" number="3" enhancement="15" indicator="AC-3 (15) (a)" cci="003658">
+  <Pair family="AC" number="3" enhancement="15" indicator="AC-3 (15) (a)" cci="003657">
     <ImplementationGuidance></ImplementationGuidance>
     <AssessmentProcedures></AssessmentProcedures>
   </Pair>
@@ -2413,14 +2417,6 @@
     <ImplementationGuidance></ImplementationGuidance>
     <AssessmentProcedures></AssessmentProcedures>
   </Pair>
-  <Pair family="AC" number="16" enhancement="4" indicator="AC-16 (4)" cci="001428">
-    <ImplementationGuidance>The organization being inspected/assessed configures the information system to display security attributes in human readable form on each object that the system transmits to output devices to identify special dissemination, handling, or distribution instructions defined in AC-16 (5), CCI 1429 using human readable, standard naming conventions defined in AC-16 (5), CCI 1430.
-
-			For information system components that have applicable STIGs or SRGs, the organization being inspected/assessed must comply with the STIG/SRG guidance that pertains to CCI 1428.</ImplementationGuidance>
-    <AssessmentProcedures>The organization conducting the inspection/assessment examines the information system to ensure the organization being inspected/assessed configures the information system to  display security attributes in human readable form on each object that the system transmits to output devices to identify special dissemination, handling, or distribution instructions defined in AC-16 (5), CCI 1429 using human readable, standard naming conventions defined in AC-16 (5), CCI 1430.
-
-			For information system components that have applicable STIGs or SRGs, the organization conducting the inspection/assessment evaluates the components to ensure that the organization being inspected/assessed has configured the information system in compliance with the applicable STIGs and SRGs pertaining to CCI 1428.</AssessmentProcedures>
-  </Pair>
   <Pair family="AC" number="16" enhancement="4" indicator="AC-16 (4)" cci="002286">
     <ImplementationGuidance>The organization being inspected/assessed defines and documents the subjects with which organization-defined security attributes may be associated by authorized individuals (or processes acting on behalf of individuals).
 
@@ -2480,6 +2476,14 @@
   <Pair family="AC" number="16" enhancement="4" indicator="AC-16 (4)" cci="003726">
     <ImplementationGuidance></ImplementationGuidance>
     <AssessmentProcedures></AssessmentProcedures>
+  </Pair>
+  <Pair family="AC" number="16" enhancement="5" indicator="AC-16 (5)" cci="001428">
+    <ImplementationGuidance>The organization being inspected/assessed configures the information system to display security attributes in human readable form on each object that the system transmits to output devices to identify special dissemination, handling, or distribution instructions defined in AC-16 (5), CCI 1429 using human readable, standard naming conventions defined in AC-16 (5), CCI 1430.
+
+			For information system components that have applicable STIGs or SRGs, the organization being inspected/assessed must comply with the STIG/SRG guidance that pertains to CCI 1428.</ImplementationGuidance>
+    <AssessmentProcedures>The organization conducting the inspection/assessment examines the information system to ensure the organization being inspected/assessed configures the information system to  display security attributes in human readable form on each object that the system transmits to output devices to identify special dissemination, handling, or distribution instructions defined in AC-16 (5), CCI 1429 using human readable, standard naming conventions defined in AC-16 (5), CCI 1430.
+
+			For information system components that have applicable STIGs or SRGs, the organization conducting the inspection/assessment evaluates the components to ensure that the organization being inspected/assessed has configured the information system in compliance with the applicable STIGs and SRGs pertaining to CCI 1428.</AssessmentProcedures>
   </Pair>
   <Pair family="AC" number="16" enhancement="5" indicator="AC-16 (5)" cci="001429">
     <ImplementationGuidance>DoD has defined the instructions as for instructions relating to classification,  special dissemination, handling, or distribution instructions IAW DODI 5200.1R; for SCI and SAP, IAW Controlled Access Program Coordination Office (CAPCO) register.  For all other instructions, not appropriate to define at the Enterprise level.
@@ -4421,7 +4425,7 @@
 
 			For information system components that have applicable STIGs or SRGs, the organization conducting the inspection/assessment evaluates the components to ensure that the organization being inspected/assessed has configured the information system in compliance with the applicable STIGs and SRGs pertaining to CCI 1493.</AssessmentProcedures>
   </Pair>
-  <Pair family="AU" number="9" enhancement="0" indicator="AU-9" cci="001494">
+  <Pair family="AU" number="9" enhancement="0" indicator="AU-9 a" cci="001494">
     <ImplementationGuidance>The organization being inspected/assessed configures the information system to disallow unauthorized modification of audit tools.
 
 			For information system components that have applicable STIGs or SRGs, the organization being inspected/assessed must comply with the STIG/SRG guidance that pertains to CCI 1494.</ImplementationGuidance>
@@ -4429,7 +4433,7 @@
 
 			For information system components that have applicable STIGs or SRGs, the organization conducting the inspection/assessment evaluates the components to ensure that the organization being inspected/assessed has configured the information system in compliance with the applicable STIGs and SRGs pertaining to CCI 1494.</AssessmentProcedures>
   </Pair>
-  <Pair family="AU" number="9" enhancement="0" indicator="AU-9" cci="001495">
+  <Pair family="AU" number="9" enhancement="0" indicator="AU-9 a" cci="001495">
     <ImplementationGuidance>The organization being inspected/assessed configures the information system to disallow unauthorized deletion of audit tools.
 
 			For information system components that have applicable STIGs or SRGs, the organization being inspected/assessed must comply with the STIG/SRG guidance that pertains to CCI 1495.</ImplementationGuidance>
@@ -4945,6 +4949,10 @@
   <Pair family="AU" number="16" enhancement="2" indicator="AU-16 (2)" cci="001929">
     <ImplementationGuidance>The organization being inspected/assessed provides cross-organizational audit information to organizations defined in AU-16 (2), CCI 1927 based on cross organizational sharing agreements defined in AU-16 (2), CCI  1928.</ImplementationGuidance>
     <AssessmentProcedures>The organization conducting the inspection/assessment obtains and examines the audit information that provides cross-organizational audit information  to organizations defined in AU-16 (2), CCI 1927 based on cross organizational sharing agreements defined in AU-16 (2), CCI  1928.</AssessmentProcedures>
+  </Pair>
+  <Pair family="AU" number="16" enhancement="3" indicator="AU-16 (3)" cci="005149">
+    <ImplementationGuidance></ImplementationGuidance>
+    <AssessmentProcedures></AssessmentProcedures>
   </Pair>
   <Pair family="CA" number="1" enhancement="0" indicator="CA-1 c 1" cci="000238">
     <ImplementationGuidance>DoD has defined the frequency as every 5 years.</ImplementationGuidance>
@@ -5898,7 +5906,7 @@
 			The organization must maintain an audit trail of the implementation of approved configuration-controlled changes.</ImplementationGuidance>
     <AssessmentProcedures>The organization conducting the inspection/assessment obtains and examines the audit trail documenting the implementation of approved configuration-controlled changes to the information system to ensure the organization being inspected/assessed has implemented the approved changes.</AssessmentProcedures>
   </Pair>
-  <Pair family="CM" number="3" enhancement="0" indicator="CM-3 d" cci="002056">
+  <Pair family="CM" number="3" enhancement="0" indicator="CM-3 e" cci="002056">
     <ImplementationGuidance>DoD has defined the time period as a time period defined by the organization's CCB.</ImplementationGuidance>
     <AssessmentProcedures>The organization being inspected/assessed is automatically compliant with this CCI because they are covered at the DoD level.
 
@@ -8822,6 +8830,10 @@
 
 			DoD has determined the circumstances or situations are not appropriate to define at the Enterprise level.</AssessmentProcedures>
   </Pair>
+  <Pair family="IA" number="11" enhancement="0" indicator="IA-11" cci="002038">
+    <ImplementationGuidance>The organization being inspected/assessed implements a process to require users to reauthenticate when circumstances or situations requiring reauthentication as defined in IA-11, CCI 2036.</ImplementationGuidance>
+    <AssessmentProcedures>The organization conducting the inspection/assessment reviews the process to ensure the organization being inspected/assessed requires users to reauthenticate when circumstances or situations requiring reauthentication as defined in IA-11, CCI 2036.</AssessmentProcedures>
+  </Pair>
   <Pair family="IA" number="12" enhancement="0" indicator="IA-12 a" cci="004092">
     <ImplementationGuidance></ImplementationGuidance>
     <AssessmentProcedures></AssessmentProcedures>
@@ -8887,6 +8899,66 @@
     <AssessmentProcedures></AssessmentProcedures>
   </Pair>
   <Pair family="IA" number="12" enhancement="6" indicator="IA-12 (6)" cci="004108">
+    <ImplementationGuidance></ImplementationGuidance>
+    <AssessmentProcedures></AssessmentProcedures>
+  </Pair>
+  <Pair family="IA" number="13" enhancement="0" indicator="IA-13" cci="005155">
+    <ImplementationGuidance></ImplementationGuidance>
+    <AssessmentProcedures></AssessmentProcedures>
+  </Pair>
+  <Pair family="IA" number="13" enhancement="1" indicator="IA-13 (01)" cci="005156">
+    <ImplementationGuidance></ImplementationGuidance>
+    <AssessmentProcedures></AssessmentProcedures>
+  </Pair>
+  <Pair family="IA" number="13" enhancement="2" indicator="IA-13 (02)" cci="005157">
+    <ImplementationGuidance></ImplementationGuidance>
+    <AssessmentProcedures></AssessmentProcedures>
+  </Pair>
+  <Pair family="IA" number="13" enhancement="3" indicator="IA-13 (03) (a)" cci="005158">
+    <ImplementationGuidance></ImplementationGuidance>
+    <AssessmentProcedures></AssessmentProcedures>
+  </Pair>
+  <Pair family="IA" number="13" enhancement="3" indicator="IA-13 (03) (b)" cci="005159">
+    <ImplementationGuidance></ImplementationGuidance>
+    <AssessmentProcedures></AssessmentProcedures>
+  </Pair>
+  <Pair family="IA" number="13" enhancement="3" indicator="IA-13 (03) (c)" cci="005160">
+    <ImplementationGuidance></ImplementationGuidance>
+    <AssessmentProcedures></AssessmentProcedures>
+  </Pair>
+  <Pair family="IA" number="13" enhancement="3" indicator="IA-13 (03) (d)" cci="005161">
+    <ImplementationGuidance></ImplementationGuidance>
+    <AssessmentProcedures></AssessmentProcedures>
+  </Pair>
+  <Pair family="IA" number="13" enhancement="3" indicator="IA-13 (03) (e)" cci="005162">
+    <ImplementationGuidance></ImplementationGuidance>
+    <AssessmentProcedures></AssessmentProcedures>
+  </Pair>
+  <Pair family="IA" number="13" enhancement="3" indicator="IA-13 (03) (f)" cci="005163">
+    <ImplementationGuidance></ImplementationGuidance>
+    <AssessmentProcedures></AssessmentProcedures>
+  </Pair>
+  <Pair family="IA" number="13" enhancement="3" indicator="IA-13 (03) (a)" cci="005164">
+    <ImplementationGuidance></ImplementationGuidance>
+    <AssessmentProcedures></AssessmentProcedures>
+  </Pair>
+  <Pair family="IA" number="13" enhancement="3" indicator="IA-13 (03) (b)" cci="005165">
+    <ImplementationGuidance></ImplementationGuidance>
+    <AssessmentProcedures></AssessmentProcedures>
+  </Pair>
+  <Pair family="IA" number="13" enhancement="3" indicator="IA-13 (03) (c)" cci="005166">
+    <ImplementationGuidance></ImplementationGuidance>
+    <AssessmentProcedures></AssessmentProcedures>
+  </Pair>
+  <Pair family="IA" number="13" enhancement="3" indicator="IA-13 (03) (d)" cci="005167">
+    <ImplementationGuidance></ImplementationGuidance>
+    <AssessmentProcedures></AssessmentProcedures>
+  </Pair>
+  <Pair family="IA" number="13" enhancement="3" indicator="IA-13 (03) (e)" cci="005168">
+    <ImplementationGuidance></ImplementationGuidance>
+    <AssessmentProcedures></AssessmentProcedures>
+  </Pair>
+  <Pair family="IA" number="13" enhancement="3" indicator="IA-13 (03) (f)" cci="005169">
     <ImplementationGuidance></ImplementationGuidance>
     <AssessmentProcedures></AssessmentProcedures>
   </Pair>
@@ -9027,7 +9099,7 @@
 
 			DoD has defined the frequency as annually.</AssessmentProcedures>
   </Pair>
-  <Pair family="IR" number="2" enhancement="0" indicator="IR-2 c" cci="000815">
+  <Pair family="IR" number="2" enhancement="0" indicator="IR-2 a 3" cci="000815">
     <ImplementationGuidance>DoD has defined the frequency as annually.</ImplementationGuidance>
     <AssessmentProcedures>The organization being inspected/assessed is automatically compliant with this CCI because they are covered at the DoD level.
 
@@ -9048,6 +9120,18 @@
     <AssessmentProcedures>The organization conducting the inspection/assessment obtains and examines the documented process as well as training records for a sampling of information system users to ensure the organization being inspected/assessed provides incident response training to information system users, other than general users, consistent with assigned roles and responsibilities when required by information system changes.
 
 			For general users, DoD components are automatically compliant with the requirement based on DoDD 8570.01 requirements for IA awareness training. </AssessmentProcedures>
+  </Pair>
+  <Pair family="IR" number="2" enhancement="0" indicator="IR-2 b" cci="005151">
+    <ImplementationGuidance></ImplementationGuidance>
+    <AssessmentProcedures></AssessmentProcedures>
+  </Pair>
+  <Pair family="IR" number="2" enhancement="0" indicator="IR-2 b" cci="005152">
+    <ImplementationGuidance></ImplementationGuidance>
+    <AssessmentProcedures></AssessmentProcedures>
+  </Pair>
+  <Pair family="IR" number="2" enhancement="0" indicator="IR-2 b" cci="005153">
+    <ImplementationGuidance></ImplementationGuidance>
+    <AssessmentProcedures></AssessmentProcedures>
   </Pair>
   <Pair family="IR" number="2" enhancement="1" indicator="IR-2 (1)" cci="000816">
     <ImplementationGuidance>The organization being inspected/assessed will document a process to include simulated events into incident response training to facilitate effective response by personnel in crisis situations.
@@ -9458,6 +9542,10 @@
 
 		</ImplementationGuidance>
     <AssessmentProcedures>The organization conducting the inspection/assessment will interview organizational users to determine awareness of incident response support services and quality of assistance of those services when used.  If interviewing organizational users is not feasible, then review users manuals/documentation to ensures it identifies an incident response support service to contact.</AssessmentProcedures>
+  </Pair>
+  <Pair family="IR" number="7" enhancement="1" indicator="IR-7 (1)" cci="005154">
+    <ImplementationGuidance></ImplementationGuidance>
+    <AssessmentProcedures></AssessmentProcedures>
   </Pair>
   <Pair family="IR" number="7" enhancement="2" indicator="IR-7 (2) (a)" cci="000841">
     <ImplementationGuidance>The organization being inspected/assessed must establish a formal agreement with a computer network defense service provider (CNDSP).  </ImplementationGuidance>
@@ -13299,6 +13387,10 @@
     <ImplementationGuidance></ImplementationGuidance>
     <AssessmentProcedures></AssessmentProcedures>
   </Pair>
+  <Pair family="PM" number="30" enhancement="1" indicator="PM-30 (1)" cci="005150">
+    <ImplementationGuidance></ImplementationGuidance>
+    <AssessmentProcedures></AssessmentProcedures>
+  </Pair>
   <Pair family="PM" number="31" enhancement="0" indicator="PM-31 a" cci="004473">
     <ImplementationGuidance></ImplementationGuidance>
     <AssessmentProcedures></AssessmentProcedures>
@@ -15052,10 +15144,6 @@
     <ImplementationGuidance></ImplementationGuidance>
     <AssessmentProcedures></AssessmentProcedures>
   </Pair>
-  <Pair family="SA" number="4" enhancement="0" indicator="SA-4 f" cci="004692">
-    <ImplementationGuidance></ImplementationGuidance>
-    <AssessmentProcedures></AssessmentProcedures>
-  </Pair>
   <Pair family="SA" number="4" enhancement="0" indicator="SA-4 f" cci="004693">
     <ImplementationGuidance></ImplementationGuidance>
     <AssessmentProcedures></AssessmentProcedures>
@@ -16492,6 +16580,10 @@
     <ImplementationGuidance></ImplementationGuidance>
     <AssessmentProcedures></AssessmentProcedures>
   </Pair>
+  <Pair family="SA" number="15" enhancement="13" indicator="SA-15 (13)" cci="005170">
+    <ImplementationGuidance></ImplementationGuidance>
+    <AssessmentProcedures></AssessmentProcedures>
+  </Pair>
   <Pair family="SA" number="16" enhancement="0" indicator="SA-16" cci="003291">
     <ImplementationGuidance>The organization being inspected/assessed documents within contracts/agreements, the requirement that the  developer of the information system, system component, or information system service provide training defined in SA-16, CCI 3292 on the correct use and operation of the implemented security functions, controls, and/or mechanisms.</ImplementationGuidance>
     <AssessmentProcedures>The organization conducting the inspection/assessment obtains and examines the contracts/agreements to ensure the organization being inspected/assessed requires that the developer of the information system, system component, or information system service provide training defined in SA-16, CCI 3292 on the correct use and operation of the implemented security functions, controls, and/or mechanisms.</AssessmentProcedures>
@@ -16855,6 +16947,34 @@
     <AssessmentProcedures></AssessmentProcedures>
   </Pair>
   <Pair family="SA" number="23" enhancement="0" indicator="SA-23" cci="004851">
+    <ImplementationGuidance></ImplementationGuidance>
+    <AssessmentProcedures></AssessmentProcedures>
+  </Pair>
+  <Pair family="SA" number="24" enhancement="0" indicator="SA-24 a 1" cci="005171">
+    <ImplementationGuidance></ImplementationGuidance>
+    <AssessmentProcedures></AssessmentProcedures>
+  </Pair>
+  <Pair family="SA" number="24" enhancement="0" indicator="SA-24 a 2" cci="005172">
+    <ImplementationGuidance></ImplementationGuidance>
+    <AssessmentProcedures></AssessmentProcedures>
+  </Pair>
+  <Pair family="SA" number="24" enhancement="0" indicator="SA-24 a 3" cci="005173">
+    <ImplementationGuidance></ImplementationGuidance>
+    <AssessmentProcedures></AssessmentProcedures>
+  </Pair>
+  <Pair family="SA" number="24" enhancement="0" indicator="SA-24 a 4" cci="005174">
+    <ImplementationGuidance></ImplementationGuidance>
+    <AssessmentProcedures></AssessmentProcedures>
+  </Pair>
+  <Pair family="SA" number="24" enhancement="0" indicator="SA-24 a 5" cci="005175">
+    <ImplementationGuidance></ImplementationGuidance>
+    <AssessmentProcedures></AssessmentProcedures>
+  </Pair>
+  <Pair family="SA" number="24" enhancement="0" indicator="SA-24 b" cci="005176">
+    <ImplementationGuidance></ImplementationGuidance>
+    <AssessmentProcedures></AssessmentProcedures>
+  </Pair>
+  <Pair family="SA" number="24" enhancement="0" indicator="SA-24 a" cci="005182">
     <ImplementationGuidance></ImplementationGuidance>
     <AssessmentProcedures></AssessmentProcedures>
   </Pair>
@@ -18875,7 +18995,7 @@
 
 			DoD has determined the information, information system components, or devices are not appropriate to define at the Enterprise level.</AssessmentProcedures>
   </Pair>
-  <Pair family="SC" number="37" enhancement="0" indicator="SC-37, SC-37 (1)" cci="002523">
+  <Pair family="SC" number="37" enhancement="0" indicator="SC-37" cci="002523">
     <ImplementationGuidance>The organization being inspected/assessed defines and documents the individuals or information systems authorized to be recipients of organization-defined information, information system components, or devices to be delivered by employing organization-defined out-of-band channels for electronic transmission or physical delivery.
 
 			DoD has determined the individuals or information systems are not appropriate to define at the Enterprise level.</ImplementationGuidance>
@@ -18886,6 +19006,14 @@
   <Pair family="SC" number="37" enhancement="0" indicator="SC-37" cci="002524">
     <ImplementationGuidance>The organization being inspected/assessed employs out-of-band channels defined in SC-37, CCI 2521 for the electronic transmission or physical delivery of information, information system components, or devices defined in SC-37, CCI 2522 to individuals or information systems defined in SC-37, CCI 2523.</ImplementationGuidance>
     <AssessmentProcedures>The organization conducting the inspection/assessment obtains and examines any applicable evidence of out-of-band channels to ensure the organization being inspected/assessed employs out-of-band channels defined in SC-37, CCI 2521 for the electronic transmission or physical delivery of information, information system components, or devices defined in SC-37, CCI 2522 to individuals or information systems defined in SC-37, CCI 2523.</AssessmentProcedures>
+  </Pair>
+  <Pair family="SC" number="37" enhancement="1" indicator="SC-37 (1)" cci="002523">
+    <ImplementationGuidance>The organization being inspected/assessed defines and documents the individuals or information systems authorized to be recipients of organization-defined information, information system components, or devices to be delivered by employing organization-defined out-of-band channels for electronic transmission or physical delivery.
+
+			DoD has determined the individuals or information systems are not appropriate to define at the Enterprise level.</ImplementationGuidance>
+    <AssessmentProcedures>The organization conducting the inspection/assessment obtains and examines the documented information, information system components, or devices to ensure the organization being inspected/assessed  defines the individuals or information systems authorized to be recipients of organization-defined information, information system components, or devices to be delivered by employing organization-defined out-of-band channels for electronic transmission or physical delivery.
+
+			DoD has determined the individuals or information systems are not appropriate to define at the Enterprise level.</AssessmentProcedures>
   </Pair>
   <Pair family="SC" number="37" enhancement="1" indicator="SC-37 (1)" cci="002525">
     <ImplementationGuidance>The organization being inspected/assessed defines and documents the security safeguards to be employed to ensure only organization-defined individuals or information systems receive organization-defined information, information system components or devices.
@@ -19651,6 +19779,22 @@
 			For information system components that have applicable STIGs or SRGs, the organization conducting the inspection/assessment evaluates the components to ensure that the organization being inspected/assessed has configured the information system in compliance with the applicable STIGs and SRGs pertaining to CCI 2618.
 
 			DoD has defined the firmware components as all upgraded/replaced firmware components that are no longer required for operation.</AssessmentProcedures>
+  </Pair>
+  <Pair family="SI" number="2" enhancement="7" indicator="SI-2 (7) (a)" cci="005177">
+    <ImplementationGuidance></ImplementationGuidance>
+    <AssessmentProcedures></AssessmentProcedures>
+  </Pair>
+  <Pair family="SI" number="2" enhancement="7" indicator="SI-2 (7) (b)" cci="005178">
+    <ImplementationGuidance></ImplementationGuidance>
+    <AssessmentProcedures></AssessmentProcedures>
+  </Pair>
+  <Pair family="SI" number="2" enhancement="7" indicator="SI-2 (7) (c)" cci="005179">
+    <ImplementationGuidance></ImplementationGuidance>
+    <AssessmentProcedures></AssessmentProcedures>
+  </Pair>
+  <Pair family="SI" number="2" enhancement="7" indicator="SI-2 (7) (c)" cci="005180">
+    <ImplementationGuidance></ImplementationGuidance>
+    <AssessmentProcedures></AssessmentProcedures>
   </Pair>
   <Pair family="SI" number="3" enhancement="0" indicator="SI-3 c 1" cci="001241">
     <ImplementationGuidance>The organization being inspected/assessed configures malicious code protection mechanisms to perform periodic scans of the information system on every 7 days.

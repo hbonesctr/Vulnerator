@@ -101,7 +101,7 @@ try {
     # --- Database creation ---------------------------------------------------------------------
     [void](New-Object Vulnerator.Model.DataAccess.DatabaseBuilder)
     Assert-That ([System.IO.File]::Exists($dbPath)) 'database file created'
-    Assert-That ([int](Get-Scalar 'PRAGMA user_version') -eq 5) 'reference data version is 5 (Rev 5)'
+    Assert-That ([int](Get-Scalar 'PRAGMA user_version') -eq 6) 'reference data version is 6 (Rev 5, CCI list 2026-07-14)'
     Assert-That ([int](Get-Scalar "SELECT COUNT(*) FROM Groups WHERE GroupName = 'All'") -eq 1) 'default group "All" seeded'
     Assert-That ([int](Get-Scalar 'SELECT COUNT(*) FROM NIST_ControlsCCIs') -gt 3000) 'Rev 5 CCI-to-control mappings loaded'
     $cciRows = [int](Get-Scalar 'SELECT COUNT(*) FROM CCIs')
