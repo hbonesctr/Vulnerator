@@ -28,9 +28,10 @@ jobs:
         run: msbuild Vulnerator_v6.sln /p:Configuration=Release /p:Platform="Any CPU" /m /v:minimal
 
       - name: Test checklist import (CKL and CKLB)
-        shell: powershell
+        shell: cmd
         timeout-minutes: 5
-        run: .\tools\tests\Test-ChecklistImport.ps1 -BinDir bin\Release
+        # Release builds target x86, so the test host must be 32-bit Windows PowerShell 5.1.
+        run: '%SystemRoot%\SysWOW64\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools\tests\Test-ChecklistImport.ps1 -BinDir bin\Release'
 
       - name: Upload build
         uses: actions/upload-artifact@v4
