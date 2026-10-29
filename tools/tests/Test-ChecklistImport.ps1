@@ -298,6 +298,66 @@ try {
     [System.IO.File]::WriteAllText($noCci, "Control,Title`r`nAC-01,Policy`r`n")
     $noCciResult = [Vulnerator.Model.BusinessLogic.EmassAssessmentProcedureImporter]::Import($noCci)
     Assert-That ($noCciResult.StartsWith('No assessment procedures found')) ('a file without CCI / AP columns is rejected clearly (got "' + $noCciResult + '")')
+
+    # --- STIG library / benchmark import (synthetic benchmarks) -------------------------------
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $stigFixtures = Join-Path $fixtures 'stig'
+    $innerDir = Join-Path $workDir 'inner'
+    $outerDir = Join-Path $workDir 'outer'
+    [void][System.IO.Directory]::CreateDirectory($innerDir)
+    [void][System.IO.Directory]::CreateDirectory($outerDir)
+    Copy-Item (Join-Path $stigFixtures 'U_Library_Test_STIG_V2R3_Manual-xccdf.xml') $innerDir
+    Copy-Item (Join-Path $stigFixtures 'Library_SCAP_Test_SCAP_1-2_Benchmark.xml') (Join-Path $innerDir 'U_Library_Test_V2R3_STIG_SCAP_1-2_Benchmark.xml')
+    [System.IO.File]::WriteAllText((Join-Path $innerDir 'STIG_unclass.xsl'), '<xsl/>')
+    [System.IO.Compression.ZipFile]::CreateFromDirectory($innerDir, (Join-Path $outerDir 'U_Library_Test_V2R3_STIG.zip'))
+    [System.IO.File]::WriteAllText((Join-Path $outerDir 'readme.txt'), 'synthetic library')
+    $libraryZip = Join-Path $workDir 'U_SRG-STIG_Library_Test.zip'
+    [System.IO.Compression.ZipFile]::CreateFromDirectory($outerDir, $libraryZip)
+
+    $hostsBefore = [int](Get-Scalar 'SELECT COUNT(*) FROM Hardware')
+    $importer = New-Object Vulnerator.Model.BusinessLogic.StigLibraryImporter
+    $summary = $importer.Import($libraryZip)
+    Assert-That ($importer.Parsed -eq 1 -and $importer.Failed -eq 0 -and $importer.Rules -eq 3) ('library zip (zip in zip) loads one STIG, 3 rules; SCAP copy skipped (got "' + $summary + '")')
+    $ruleSql = 'SELECT VulnerabilityVersion || ''|'' || PrimaryRawRiskIndicator || ''|'' || VulnerabilityGroupIdentifier || ''|'' || SecondaryVulnerabilityIdentifier || ''|'' || CheckContent || ''|'' || IsDocumentable || ''|'' || VulnerabilityDescription FROM Vulnerabilities WHERE UniqueVulnerabilityIdentifier = @v'
+    $rule = [string](Get-Scalar $ruleSql @{ '@v' = 'SV-5001' })
+    Assert-That ($rule -eq '2|I|V-5001|LIB-00-000010|Verify rule one.|false|Rule one discussion with & and <b> markup.') ('benchmark rule fields read (got "' + $rule + '")')
+    $ruleCcis = [int](Get-Scalar 'SELECT COUNT(*) FROM VulnerabilitiesCCIs VC JOIN Vulnerabilities V ON VC.Vulnerability_ID = V.Vulnerability_ID WHERE V.UniqueVulnerabilityIdentifier = @v' @{ '@v' = 'SV-5001' })
+    Assert-That ($ruleCcis -eq 2) ('rule mapped to both CCIs (got ' + $ruleCcis + ')')
+    $sourceSql = "SELECT SourceVersion || '|' || SourceRelease FROM VulnerabilitySources WHERE SourceSecondaryIdentifier = 'Library_Test_STIG'"
+    $source = [string](Get-Scalar $sourceSql)
+    Assert-That ($source -eq '2|3') ('source version 2, release 3 (not the conventionsVersion) (got "' + $source + '")')
+    Assert-That ([int](Get-Scalar "SELECT COUNT(*) FROM Vulnerabilities WHERE UniqueVulnerabilityIdentifier = 'SV-6001'") -eq 0) 'SCAP content inside the library is not loaded'
+    Assert-That ([int](Get-Scalar 'SELECT COUNT(*) FROM Hardware') -eq $hostsBefore) 'library import adds no hosts'
+
+    $result = Import-Checklist (Join-Path $fixtures 'library-test.ckl') 'TestGroup'
+    Assert-That ($result -eq 'Processed') ('checklist for the library STIG imports (got "' + $result + '")')
+    Assert-That ([int](Get-Scalar "SELECT COUNT(*) FROM Vulnerabilities WHERE UniqueVulnerabilityIdentifier = 'SV-5002'") -eq 1) 'checklist reuses the library rule (no duplicate)'
+
+    $summary = $importer.Import((Join-Path $stigFixtures 'U_Library_Test_STIG_V2R4_Manual-xccdf.xml'))
+    Assert-That ($summary.StartsWith('Loaded 1 STIG(s), 3 rule(s)')) ('newer release loads from a single benchmark file (got "' + $summary + '")')
+    $revisions = [string](Get-Scalar "SELECT GROUP_CONCAT(VulnerabilityVersion) FROM Vulnerabilities WHERE UniqueVulnerabilityIdentifier = 'SV-5001'")
+    Assert-That ($revisions -eq '3') ('revised rule replaces the unused old revision (got "' + $revisions + '")')
+    $kept = [string](Get-Scalar $statusSql @{ '@h' = 'LIBHOST01'; '@v' = 'SV-5002' })
+    Assert-That ($kept -eq 'Ongoing') ('a rule dropped from the STIG is kept while a finding uses it (got "' + $kept + '")')
+    Assert-That ([int](Get-Scalar "SELECT COUNT(*) FROM Vulnerabilities WHERE UniqueVulnerabilityIdentifier IN ('SV-5003', 'SV-5004')") -eq 2) 'new and unchanged rules present'
+    $orphans = [int](Get-Scalar 'SELECT (SELECT COUNT(*) FROM VulnerabilitiesCCIs WHERE Vulnerability_ID NOT IN (SELECT Vulnerability_ID FROM Vulnerabilities)) + (SELECT COUNT(*) FROM VulnerabilitiesVulnerabilitySources WHERE Vulnerability_ID NOT IN (SELECT Vulnerability_ID FROM Vulnerabilities))')
+    Assert-That ($orphans -eq 0) ('pruned rules leave no orphan mappings (got ' + $orphans + ')')
+    $source = [string](Get-Scalar $sourceSql)
+    Assert-That ($source -eq '2|4') ('source moves to release 4 (got "' + $source + '")')
+
+    $summary = $importer.Import((Join-Path $stigFixtures 'U_Library_Test_STIG_V2R3_Manual-xccdf.xml'))
+    $revisions = [string](Get-Scalar "SELECT GROUP_CONCAT(VulnerabilityVersion) FROM Vulnerabilities WHERE UniqueVulnerabilityIdentifier = 'SV-5001'")
+    Assert-That ($importer.Older -eq 1 -and $revisions -eq '3' -and [string](Get-Scalar $sourceSql) -eq '2|4') ('an older release does not overwrite a newer one (got "' + $summary + '")')
+
+    $summary = $importer.Import((Join-Path $stigFixtures 'Library_SCAP_Test_SCAP_1-2_Benchmark.xml'))
+    $scapRule = [string](Get-Scalar "SELECT VulnerabilityVersion || '|' || VulnerabilityGroupIdentifier || '|' || VulnerabilityTitle FROM Vulnerabilities WHERE UniqueVulnerabilityIdentifier = 'SV-6001'")
+    Assert-That ($importer.Parsed -eq 1 -and $scapRule -eq '7|V-6001|Automated rule must be enforced.') ('SCAP 1.2 data stream (XCCDF 1.2 ids) loads when selected directly (got "' + $summary + '" / "' + $scapRule + '")')
+    $scapSource = [string](Get-Scalar "SELECT COUNT(*) FROM VulnerabilitySources WHERE SourceSecondaryIdentifier = 'Library_SCAP_Test'")
+    Assert-That ($scapSource -eq '1') 'XCCDF 1.2 benchmark id prefix removed'
+    $notStig = Join-Path $workDir 'not-a-stig.xml'
+    [System.IO.File]::WriteAllText($notStig, '<root/>')
+    $summary = $importer.Import($notStig)
+    Assert-That ($importer.Failed -eq 1 -and $importer.Parsed -eq 0) ('an XML file that is not a benchmark is reported, not loaded (got "' + $summary + '")')
     $notIgap = Join-Path $workDir 'not-igap.xlsx'
     [System.IO.File]::WriteAllText($notIgap, 'not a workbook')
     $bad = [Vulnerator.Model.BusinessLogic.EmassAssessmentProcedureImporter]::Import($notIgap)

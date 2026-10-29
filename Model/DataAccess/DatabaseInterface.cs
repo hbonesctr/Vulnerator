@@ -89,12 +89,20 @@ namespace Vulnerator.Model.DataAccess
 
                     using (SQLiteCommand deleteVulnsCommand = DatabaseBuilder.sqliteConnection.CreateCommand())
                     {
-                        deleteVulnsCommand.CommandText = _ddlReader.ReadDdl(_storedProcedureBase + "Delete.Vulnerability.dml", assembly);
                         deleteVulnsCommand.Parameters.Add(new SQLiteParameter("Vulnerability_ID"));
+                        string[] statements =
+                        {
+                            "Delete.VulnerabilityCCI_MappingByVulnerability.dml", "Delete.VulnerabilitySourceMappingByVulnerability.dml",
+                            "Delete.Vulnerability.dml"
+                        };
                         while (sqliteDataReader.Read())
                         {
                             deleteVulnsCommand.Parameters["Vulnerability_ID"].Value = sqliteDataReader["Vulnerability_ID"].ToString();
-                            deleteVulnsCommand.ExecuteNonQuery();
+                            foreach (string statement in statements)
+                            {
+                                deleteVulnsCommand.CommandText = _ddlReader.ReadDdl(_storedProcedureBase + statement, assembly);
+                                deleteVulnsCommand.ExecuteNonQuery();
+                            }
                         }
                     }
                 }
@@ -102,6 +110,33 @@ namespace Vulnerator.Model.DataAccess
             catch (Exception exception)
             {
                 LogWriter.LogError($"Unable to delete the Vulnerability '{sqliteCommand.Parameters["UniqueVulnerabilityIdentifier"].Value}'.");
+                throw exception;
+            }
+        }
+
+        /// <summary>True when the library already holds rules of this source (STIG) from a later benchmark date.</summary>
+        public bool SourceHasNewerRelease(SQLiteCommand sqliteCommand)
+        {
+            try
+            {
+                object ingested = sqliteCommand.Parameters["PublishedDate"].Value;
+                if (!(ingested is DateTime))
+                { return false; }
+                sqliteCommand.CommandText = _ddlReader.ReadDdl(_storedProcedureBase + "Select.LatestPublishedDateBySource.dml", assembly);
+                object latest = sqliteCommand.ExecuteScalar();
+                DateTime latestDate;
+                if (latest is DateTime)
+                { latestDate = (DateTime)latest; }
+                else if (latest is long)
+                { latestDate = new DateTime((long)latest); } // the connection stores dates as ticks
+                else if (latest == null || latest == DBNull.Value || !DateTime.TryParse(latest.ToString(),
+                    System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out latestDate))
+                { return false; }
+                return latestDate.Date > ((DateTime)ingested).Date;
+            }
+            catch (Exception exception)
+            {
+                LogWriter.LogError($"Unable to compare release dates for source '{sqliteCommand.Parameters["SourceName"].Value}'.");
                 throw exception;
             }
         }

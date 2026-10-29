@@ -216,8 +216,8 @@ namespace Vulnerator.ViewModel
                 openFileDialog = new OpenFileDialog();
                 openFileDialog.Multiselect = false;
                 openFileDialog.CheckFileExists = true;
-                openFileDialog.Filter = "STIG Library (*.zip)|*.zip";
-                openFileDialog.Title = "Please select a STIG Library to ingest";
+                openFileDialog.Filter = "STIG library, STIG zip or benchmark (*.zip;*.xml)|*.zip;*.xml";
+                openFileDialog.Title = "Select a DISA STIG library zip, a STIG zip or a benchmark (XCCDF) file to ingest";
                 openFileDialog.ShowDialog();
                 if (openFileDialog.FileName != null)
                 { StigLibraryLocation = openFileDialog.FileName; }
@@ -263,7 +263,23 @@ namespace Vulnerator.ViewModel
                     ProgressBarValue = 0;
                     ProgressVisibility = "Visible";
                     databaseInterface.DropIndices();
-                    ParseZip(StigLibraryLocation);
+                    StigLibraryImporter importer = new StigLibraryImporter
+                    {
+                        TotalItems = count => ProgressBarMax = count,
+                        Progress = name =>
+                        {
+                            if (name == null)
+                            {
+                                ProgressBarValue++;
+                                return;
+                            }
+                            guiFeedback.SetFields($"Ingesting {name}", "Visible", true);
+                            Messenger.Default.Send(guiFeedback);
+                        }
+                    };
+                    importer.Import(StigLibraryLocation);
+                    stigFilesAttempted = importer.Attempted;
+                    stigFilesParsed = importer.Parsed + importer.Older;
                     databaseInterface.CreateVulnerabilityRelatedIndices();
                     Properties.Settings.Default.StigLibraryIngestDate = DateTime.Now.ToLongDateString();
                     Messenger.Default.Send(new NotificationMessage<string>("ModelUpdate", "AllModels"), MessengerToken.ModelUpdated);
@@ -375,71 +391,6 @@ namespace Vulnerator.ViewModel
             {
                 LogWriter.LogError("Unable to handle STIG ingestion background worker completion events.");
                 throw exception;
-            }
-        }
-
-        private void ParseZip(string fileName)
-        {
-            try
-            {
-                using (ZipArchive zipArchive = ZipFile.Open(fileName, ZipArchiveMode.Read))
-                {
-                    ProgressBarMax = zipArchive.Entries.Count();
-                    foreach (ZipArchiveEntry entry in zipArchive.Entries)
-                    {
-                        HandleZipArchiveEntry(entry);
-                        ProgressBarValue++;
-                    }
-                }
-            }
-            catch (Exception exception)
-            {
-                LogWriter.LogError($"Unable to parse ZipArchive '{fileName}'");
-                throw exception;
-            }
-        }
-
-        private void ParseZip(ZipArchiveEntry zipArchiveEntry)
-        {
-            try
-            {
-                using (Stream stream = zipArchiveEntry.Open())
-                {
-                    using (ZipArchive zipArchive = new ZipArchive(stream, ZipArchiveMode.Read))
-                    {
-                        foreach (ZipArchiveEntry entry in zipArchive.Entries)
-                        { HandleZipArchiveEntry(entry); }
-                    }
-                }
-            }
-            catch (Exception exception)
-            {
-                LogWriter.LogError($"Unable to parse ZipArchiveEntry '{zipArchiveEntry}'.");
-            }
-        }
-
-        private void HandleZipArchiveEntry(ZipArchiveEntry zipArchiveEntry)
-        {
-            try
-            {
-                if (zipArchiveEntry.Name.EndsWith("zip"))
-                {
-                    if (!zipArchiveEntry.Name.Contains("SCAP_1-1"))
-                    { ParseZip(zipArchiveEntry); }
-                }
-                if (zipArchiveEntry.Name.EndsWith("xml"))
-                {
-                    stigFilesAttempted++;
-                    guiFeedback.SetFields($"Ingesting {zipArchiveEntry.Name}", "Visible", true);
-                    Messenger.Default.Send(guiFeedback);
-                    RawStigReader rawStigReader = new RawStigReader();
-                    if (rawStigReader.ReadRawStig(zipArchiveEntry) == "Parsed")
-                    { stigFilesParsed++; }
-                }
-            }
-            catch (Exception exception)
-            {
-                LogWriter.LogError($"Unable to correctly handle ZipArchiveEntry '{zipArchiveEntry}'.");
             }
         }
     }
