@@ -280,6 +280,24 @@ try {
     [void](New-Object Vulnerator.Model.DataAccess.DatabaseBuilder)
     $ap = [string](Get-Scalar $apSql)
     Assert-That ($ap.StartsWith('AC-02(01).01|')) 'imported procedures survive a reference data reload'
+
+    # Generic CSV: other header names and order, quoted multi-line text, several CCIs in one cell, blank AP
+    $csvResult = [Vulnerator.Model.BusinessLogic.EmassAssessmentProcedureImporter]::Import((Join-Path $fixtures 'igap-generic.csv'))
+    Assert-That ($csvResult.StartsWith('Imported assessment procedures for 3 CCI(s)') -and $csvResult.Contains('1 row(s) without a CCI skipped')) ('generic CSV imports (got "' + $csvResult + '")')
+    $ap = [string](Get-Scalar $apSql)
+    Assert-That ($ap.StartsWith('AC-02(01).01|Determine if: generic procedure') -and $ap.Contains('with "quotes", and a comma')) ('CSV procedure text replaces the old one; a blank AP keeps the existing AP (got "' + $ap.Substring(0, [Math]::Min(80, $ap.Length)) + '")')
+    $ap366Sql = "SELECT NCCI.DOD_AssessmentProcedureMapping FROM NIST_ControlsCCIs NCCI JOIN CCIs C ON NCCI.CCI_ID = C.CCI_ID WHERE C.CCI_Number = '000366'"
+    $ap366 = [string](Get-Scalar $ap366Sql)
+    Assert-That ($ap366 -eq 'CM-06b.01') ('a cell listing several CCIs maps each of them (got "' + $ap366 + '")')
+    $tsv = Join-Path $workDir 'procedures.tsv'
+    [System.IO.File]::WriteAllText($tsv, ("CCI`tAP Acronym`r`nCCI-000366`tCM-06.TSV`r`n"))
+    $tsvResult = [Vulnerator.Model.BusinessLogic.EmassAssessmentProcedureImporter]::Import($tsv)
+    $ap366 = [string](Get-Scalar $ap366Sql)
+    Assert-That ($tsvResult.StartsWith('Imported assessment procedures for 1 CCI(s)') -and $ap366 -eq 'CM-06.TSV') ('tab-delimited file with only CCI and AP columns imports (got "' + $tsvResult + '" / "' + $ap366 + '")')
+    $noCci = Join-Path $workDir 'no-cci.csv'
+    [System.IO.File]::WriteAllText($noCci, "Control,Title`r`nAC-01,Policy`r`n")
+    $noCciResult = [Vulnerator.Model.BusinessLogic.EmassAssessmentProcedureImporter]::Import($noCci)
+    Assert-That ($noCciResult.StartsWith('No assessment procedures found')) ('a file without CCI / AP columns is rejected clearly (got "' + $noCciResult + '")')
     $notIgap = Join-Path $workDir 'not-igap.xlsx'
     [System.IO.File]::WriteAllText($notIgap, 'not a workbook')
     $bad = [Vulnerator.Model.BusinessLogic.EmassAssessmentProcedureImporter]::Import($notIgap)

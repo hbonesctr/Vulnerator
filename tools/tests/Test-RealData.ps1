@@ -4,7 +4,7 @@
 #
 # Usage (from the unzipped build folder, Windows PowerShell 5.1):
 #   powershell -NoProfile -ExecutionPolicy Bypass -File .\Test-RealData.ps1 -InputDir "C:\path\to\files"
-#   add -IgApFile "C:\path\to\IGAPsExport.xlsx" to also try the eMASS IG/AP import
+#   add -IgApFile "C:\path\to\IGAPsExport.xlsx" (or a .csv with CCI and AP columns) to also try the assessment procedure import
 # Supported: *.ckl, *.cklb, *.nessus. Pure ASCII; no PowerShell 7 syntax.
 param(
     [Parameter(Mandatory = $true)][string]$InputDir,
@@ -76,7 +76,7 @@ foreach ($item in $files) {
 if ($IgApFile -ne '') {
     $igapPath = (Resolve-Path $IgApFile).Path
     Write-Host ''
-    Write-Host ('eMASS IG/AP export: ' + [Vulnerator.Model.BusinessLogic.EmassAssessmentProcedureImporter]::Import($igapPath))
+    Write-Host ('Assessment procedures: ' + [Vulnerator.Model.BusinessLogic.EmassAssessmentProcedureImporter]::Import($igapPath))
 }
 
 Write-Host ''

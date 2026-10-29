@@ -273,14 +273,14 @@
                                     ToolTip="Upload" />
                         </Grid>
                         <Label Style="{StaticResource SecondLevelHeaderStyle}">
-                            <TextBlock Text="eMASS Assessment Procedures"
+                            <TextBlock Text="Assessment Procedures"
                                        TextTrimming="CharacterEllipsis" />
                         </Label>
                         <Button Margin="5,0,5,5"
                                 HorizontalAlignment="Left"
                                 Command="{Binding ImportEmassAssessmentProceduresCommand}"
-                                Content="Import eMASS IG/AP export..."
-                                ToolTip="Load assessment procedures from your own eMASS IG/AP export; stays on this machine" />
+                                Content="Import assessment procedures..."
+                                ToolTip="Load AP acronyms and assessment procedures by CCI from an eMASS IG/AP export or any .xlsx / .csv with CCI and AP columns; stays on this machine" />
                         <!--<Label Grid.Column="0" Style="{StaticResource SecondLevelHeaderStyle}">
                         <TextBlock Text="Build Ansible Tower Report Files" TextTrimming="CharacterEllipsis" />
                     </Label>

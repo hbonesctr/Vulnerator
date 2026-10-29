@@ -166,18 +166,18 @@ namespace Vulnerator.ViewModel
                 OpenFileDialog dialog = new OpenFileDialog
                 {
                     CheckFileExists = true,
-                    Filter = "eMASS IG/AP export (*.xlsx)|*.xlsx",
-                    Title = "Select an eMASS IG/AP export (Implementation Guidance / Assessment Procedures)"
+                    Filter = "Assessment procedures (*.xlsx;*.xlsm;*.csv;*.tsv;*.txt)|*.xlsx;*.xlsm;*.csv;*.tsv;*.txt|All files (*.*)|*.*",
+                    Title = "Select an assessment procedure list (eMASS IG/AP export, or a workbook / CSV with CCI and AP columns)"
                 };
                 if (dialog.ShowDialog() != true)
                 { return; }
                 string result = EmassAssessmentProcedureImporter.Import(dialog.FileName);
-                MessageBox.Show(result, "eMASS assessment procedures", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show(result, "Assessment procedures", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception exception)
             {
-                LogWriter.LogErrorWithDebug("Unable to import the eMASS IG/AP export.", exception);
-                MessageBox.Show("The import failed; see the Vulnerator log for details.", "eMASS assessment procedures",
+                LogWriter.LogErrorWithDebug("Unable to import the assessment procedure list.", exception);
+                MessageBox.Show("The import failed; see the Vulnerator log for details.", "Assessment procedures",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
