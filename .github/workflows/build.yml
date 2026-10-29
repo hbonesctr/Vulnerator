@@ -65,6 +65,9 @@ jobs:
           copy tools\tests\fixtures\multi-stig.ckl realdata-smoke\
           copy tools\tests\fixtures\viewer3.cklb realdata-smoke\
           copy tools\tests\fixtures\scan.nessus realdata-smoke\
+          copy tools\tests\fixtures\acas-vulnerability-detail.csv realdata-smoke\
+          copy tools\tests\fixtures\xccdf\scc5-results.xml realdata-smoke\
+          copy tools\tests\fixtures\stig\U_Library_Test_STIG_V2R4_Manual-xccdf.xml realdata-smoke\
           powershell -NoProfile -ExecutionPolicy Bypass -File tools\tests\Test-RealData.ps1 -InputDir realdata-smoke -BinDir bin\Release -IgApFile tools\tests\fixtures\igap-sample.xlsx
 
       - name: Add the real-data test script to the build

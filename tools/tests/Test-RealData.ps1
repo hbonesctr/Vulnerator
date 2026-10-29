@@ -5,7 +5,8 @@
 # Usage (from the unzipped build folder, Windows PowerShell 5.1):
 #   powershell -NoProfile -ExecutionPolicy Bypass -File .\Test-RealData.ps1 -InputDir "C:\path\to\files"
 #   add -IgApFile "C:\path\to\IGAPsExport.xlsx" (or a .csv with CCI and AP columns) to also try the assessment procedure import
-# Supported: *.ckl, *.cklb, *.nessus. Pure ASCII; no PowerShell 7 syntax.
+# Supported: *.ckl, *.cklb, *.nessus, ACAS *.csv, SCAP/SCC XCCDF results *.xml, and STIG library *.zip or
+# benchmark *.xml (loaded first, so checklists and results find their rules). Pure ASCII; no PowerShell 7 syntax.
 param(
     [Parameter(Mandatory = $true)][string]$InputDir,
     [string]$BinDir = '',
@@ -50,7 +51,17 @@ function Get-Scalar {
     finally { $connection.Dispose() }
 }
 
-$files = @(Get-ChildItem -LiteralPath $inputPath -Recurse -File | Where-Object { @('.ckl', '.cklb', '.nessus') -contains $_.Extension.ToLowerInvariant() })
+$all = @(Get-ChildItem -LiteralPath $inputPath -Recurse -File)
+# STIG libraries and benchmarks first: they fill the rule library the other files refer to.
+$library = @($all | Where-Object { $_.Extension -ieq '.zip' })
+$files = @($all | Where-Object { @('.ckl', '.cklb', '.nessus', '.csv', '.xml') -contains $_.Extension.ToLowerInvariant() })
+foreach ($item in $library) {
+    $watch = [System.Diagnostics.Stopwatch]::StartNew()
+    $importer = New-Object Vulnerator.Model.BusinessLogic.StigLibraryImporter
+    $summary = $importer.Import($item.FullName)
+    $watch.Stop()
+    Write-Host ('{0,-34} {1,6:N1}s  {2}' -f 'STIG library', $watch.Elapsed.TotalSeconds, ($item.Name + ': ' + $summary))
+}
 Write-Host ('Importing ' + $files.Count + ' file(s) from ' + $inputPath + ' into a scratch database')
 Write-Host ''
 $failed = 0
@@ -62,6 +73,20 @@ foreach ($item in $files) {
         $file = New-Object Vulnerator.Model.Object.File ($item.BaseName, 'ACAS - Nessus', 'Ready', $item.FullName, 'True')
         $status = (New-Object Vulnerator.Model.BusinessLogic.AcasNessusReader).ReadAcasNessusFile($file, 'All')
     }
+    elseif ($extension -eq '.csv') {
+        $file = New-Object Vulnerator.Model.Object.File ($item.BaseName, 'ACAS - CSV', 'Ready', $item.FullName, 'True')
+        $status = (New-Object Vulnerator.Model.BusinessLogic.AcasCsvReader).ReadAcasCsvFile($file, 'All')
+    }
+    elseif ($extension -eq '.xml') {
+        $file = New-Object Vulnerator.Model.Object.File ($item.BaseName, 'SCAP Benchmark', 'Ready', $item.FullName, 'True')
+        $status = (New-Object Vulnerator.Model.BusinessLogic.XccdfReader).ReadXccdfFile($file, 'All')
+        if ($status -eq 'Failed; No XCCDF Results') {
+            # A benchmark without results: load it into the library instead.
+            $importer = New-Object Vulnerator.Model.BusinessLogic.StigLibraryImporter
+            $status = 'STIG benchmark: ' + $importer.Import($item.FullName)
+            if ($importer.Failed -eq 0) { $status = 'Processed; ' + $status }
+        }
+    }
     else {
         $file = New-Object Vulnerator.Model.Object.File ($item.BaseName, 'Checklist', 'Ready', $item.FullName, 'True')
         if ($extension -eq '.cklb') { $status = (New-Object Vulnerator.Model.BusinessLogic.CklbReader).ReadCklbFile($file, 'All') }
@@ -69,7 +94,7 @@ foreach ($item in $files) {
     }
     $watch.Stop()
     $added = [int](Get-Scalar 'SELECT COUNT(*) FROM UniqueFindings') - $before
-    if ($status -ne 'Processed') { $failed++ }
+    if (-not ([string]$status).StartsWith('Processed')) { $failed++ }
     Write-Host ('{0,-34} {1,7} findings {2,6:N1}s  {3}' -f $status, $added, $watch.Elapsed.TotalSeconds, $item.Name)
 }
 
