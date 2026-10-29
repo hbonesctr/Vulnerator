@@ -138,6 +138,9 @@ namespace Vulnerator.Model.BusinessLogic
         {
             foreach (string parameter in SourceParameters)
             { sqliteCommand.Parameters[parameter].Value = string.Empty; }
+            // A parameter keeps the type of the first value it is given: clear the date with null, not "", or every
+            // later date would be stored as text instead of the ticks used everywhere else.
+            sqliteCommand.Parameters["PublishedDate"].Value = DBNull.Value;
             sqliteCommand.Parameters["FindingType"].Value = "CKL";
             sqliteCommand.Parameters["ModifiedDate"].Value = DateTime.Now.ToShortDateString();
             sqliteCommand.Parameters["SourceName"].Value = ChildText(benchmark, "title").Replace('_', ' ').ToSanitizedSource();
