@@ -1122,12 +1122,11 @@ namespace Vulnerator.ViewModel
                     {
                         if ((bool) GetExcelReportName())
                         {
-                            guiFeedback.SetFields("Creating Navy RAR...", "Visible", false);
+                            guiFeedback.SetFields("Creating Risk Assessment Report...", "Visible", false);
                             Messenger.Default.Send(guiFeedback);
-                            OpenXmlNavyRarReportCreator openXmlNavyRarReportCreator = new OpenXmlNavyRarReportCreator();
-                            openXmlNavyRarReportCreator.CreateNavyRar(saveExcelFile.FileName);
+                            new OpenXmlRiskAssessmentReportCreator().CreateRiskAssessmentReport(saveExcelFile.FileName);
                             e.Result = "Success";
-                            guiFeedback.SetFields("Navy RAR creation completed...", "Collapsed", false);
+                            guiFeedback.SetFields("Risk Assessment Report creation completed...", "Collapsed", false);
                             Messenger.Default.Send(guiFeedback);
                         }
                         else
@@ -1235,8 +1234,7 @@ namespace Vulnerator.ViewModel
                         }
                         case 2:
                         {
-                            OpenXmlNavyRarReportCreator openXmlNavyRarReportCreator = new OpenXmlNavyRarReportCreator();
-                            openXmlNavyRarReportCreator.CreateNavyRar($"{location}\\Navy-RAR_{DateTime.Now.ToString("yyyyMMdd-HHmmss", new CultureInfo("en-US"))}.xlsx");
+                            new OpenXmlRiskAssessmentReportCreator().CreateRiskAssessmentReport($"{location}\\Risk-Assessment-Report_{DateTime.Now.ToString("yyyyMMdd-HHmmss", new CultureInfo("en-US"))}.xlsx");
                             break;
                         }
                         case 3:

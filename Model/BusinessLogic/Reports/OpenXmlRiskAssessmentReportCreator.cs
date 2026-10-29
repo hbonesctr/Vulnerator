@@ -14,8 +14,10 @@ using Vulnerator.Model.DataAccess;
 
 namespace Vulnerator.Model.BusinessLogic.Reports
 {
-    public class OpenXmlNavyRarReportCreator
+    /// <summary>Generic Risk Assessment Report (RAR) workbook.</summary>
+    public class OpenXmlRiskAssessmentReportCreator
     {
+        public const string RiskAssessmentReportName = "Risk Assessment Report";
         private Dictionary<string, int> sharedStringDictionary = new Dictionary<string, int>();
         private int sharedStringMaxIndex;
         private UInt32Value sheetIndex = 1;
@@ -29,7 +31,7 @@ namespace Vulnerator.Model.BusinessLogic.Reports
         private readonly string[] mitigatedStatuses = { "Ongoing", "Completed", "Not Applicable", "Not Reviewed" };
         private readonly string[] levels = {"Very High", "High", "Moderate", "Low", "Very Low"};
 
-        public string CreateNavyRar(string fileName)
+        public string CreateRiskAssessmentReport(string fileName)
         {
             try
             {
@@ -41,16 +43,16 @@ namespace Vulnerator.Model.BusinessLogic.Reports
                 using (SpreadsheetDocument spreadsheetDocument =
                     SpreadsheetDocument.Create(fileName, SpreadsheetDocumentType.Workbook))
                 {
-                    LogWriter.LogStatusUpdate("Creating Navy RAR workbook framework.");
+                    LogWriter.LogStatusUpdate("Creating Risk Assessment Report workbook framework.");
                     WorkbookPart workbookPart = spreadsheetDocument.AddWorkbookPart();
                     WorkbookStylesPart workbookStylesPart = workbookPart.AddNewPart<WorkbookStylesPart>();
                     workbookStylesPart.Stylesheet = _openXmlStylesheetCreator.CreateStylesheet();
                     Workbook workbook = workbookPart.Workbook = new Workbook();
                     Sheets sheets = workbook.AppendChild(new Sheets());
                     StartReport(workbookPart, sheets);
-                    LogWriter.LogStatusUpdate("Writing Navy RAR findings.");
+                    LogWriter.LogStatusUpdate("Writing Risk Assessment Report findings.");
                     WriteFindingsToReport();
-                    LogWriter.LogStatusUpdate("Finalizing Navy RAR workbook.");
+                    LogWriter.LogStatusUpdate("Finalizing Risk Assessment Report workbook.");
                     EndReport();
                     _openXmlCellDataHandler.CreateSharedStringPart(workbookPart, sharedStringMaxIndex,
                         sharedStringDictionary);
@@ -76,7 +78,7 @@ namespace Vulnerator.Model.BusinessLogic.Reports
             {
                 WorksheetPart worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
                 Sheet sheet = new Sheet()
-                    {Id = workbookPart.GetIdOfPart(worksheetPart), SheetId = sheetIndex, Name = "Navy RAR"};
+                    {Id = workbookPart.GetIdOfPart(worksheetPart), SheetId = sheetIndex, Name = RiskAssessmentReportName};
                 sheetIndex++;
                 sheets.Append(sheet);
                 _openXmlWriter = OpenXmlWriter.Create(worksheetPart);
@@ -89,7 +91,7 @@ namespace Vulnerator.Model.BusinessLogic.Reports
             }
             catch (Exception exception)
             {
-                LogWriter.LogError("Unable to initialize 'Navy RAR' tab.");
+                LogWriter.LogError("Unable to initialize 'Risk Assessment Report' tab.");
                 throw exception;
             }
         }
@@ -124,7 +126,7 @@ namespace Vulnerator.Model.BusinessLogic.Reports
             }
             catch (Exception exception)
             {
-                LogWriter.LogError("Unable to generate 'Navy RAR' columns.");
+                LogWriter.LogError("Unable to generate 'Risk Assessment Report' columns.");
                 throw exception;
             }
         }
@@ -141,7 +143,7 @@ namespace Vulnerator.Model.BusinessLogic.Reports
             }
             catch (Exception exception)
             {
-                LogWriter.LogError("Unable to generate first 'Navy RAR' header row.");
+                LogWriter.LogError("Unable to generate first 'Risk Assessment Report' header row.");
                 throw exception;
             }
         }
@@ -197,7 +199,7 @@ namespace Vulnerator.Model.BusinessLogic.Reports
             }
             catch (Exception exception)
             {
-                LogWriter.LogError("Unable to generate second 'Navy RAR' header row.");
+                LogWriter.LogError("Unable to generate second 'Risk Assessment Report' header row.");
                 throw exception;
             }
         }
@@ -211,13 +213,13 @@ namespace Vulnerator.Model.BusinessLogic.Reports
                     sqliteCommand.Parameters.Add(new SQLiteParameter("UserName",
                         Properties.Settings.Default.ActiveUser));
                     FilterTextCreator filterTextCreator = new FilterTextCreator();
-                    string findingTypeFilter = filterTextCreator.FindingType(sqliteCommand, "Navy RAR");
-                    string groupFilter = filterTextCreator.Group(sqliteCommand, "Navy RAR");
-                    string severityFilter = filterTextCreator.Severity(sqliteCommand, "Navy RAR");
-                    string statusFilter = filterTextCreator.Status(sqliteCommand, "Navy RAR");
-                    string rmfOverrideFilter = filterTextCreator.RmfOverride(sqliteCommand, "Navy RAR");
+                    string findingTypeFilter = filterTextCreator.FindingType(sqliteCommand, RiskAssessmentReportName);
+                    string groupFilter = filterTextCreator.Group(sqliteCommand, RiskAssessmentReportName);
+                    string severityFilter = filterTextCreator.Severity(sqliteCommand, RiskAssessmentReportName);
+                    string statusFilter = filterTextCreator.Status(sqliteCommand, RiskAssessmentReportName);
+                    string rmfOverrideFilter = filterTextCreator.RmfOverride(sqliteCommand, RiskAssessmentReportName);
                     sqliteCommand.CommandText =
-                        _ddlReader.ReadDdl(_storedProcedureBase + "Select.NavyRarVulnerabilities.dml", assembly);
+                        _ddlReader.ReadDdl(_storedProcedureBase + "Select.RiskAssessmentReportVulnerabilities.dml", assembly);
 
                     if (!string.IsNullOrWhiteSpace(findingTypeFilter) ||
                         !string.IsNullOrWhiteSpace(groupFilter) ||
@@ -295,7 +297,7 @@ namespace Vulnerator.Model.BusinessLogic.Reports
             }
             catch (Exception exception)
             {
-                LogWriter.LogError("Unable to write findings to the 'Navy RAR' workbook.");
+                LogWriter.LogError("Unable to write findings to the 'Risk Assessment Report' workbook.");
                 throw exception;
             }
         }
@@ -488,7 +490,7 @@ namespace Vulnerator.Model.BusinessLogic.Reports
             }
             catch (Exception exception)
             {
-                LogWriter.LogError("Unable to write finding to 'Navy RAR'.");
+                LogWriter.LogError("Unable to write finding to 'Risk Assessment Report'.");
                 throw exception;
             }
         }
@@ -503,7 +505,7 @@ namespace Vulnerator.Model.BusinessLogic.Reports
             }
             catch (Exception exception)
             {
-                LogWriter.LogError("Unable to finalize 'Navy RAR' tab.");
+                LogWriter.LogError("Unable to finalize 'Risk Assessment Report' tab.");
                 throw exception;
             }
         }

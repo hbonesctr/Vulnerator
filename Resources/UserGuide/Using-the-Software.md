@@ -95,9 +95,9 @@ On the mitigations tab, select the "Add" sub tab to create new mitigation items;
 4. **Denote a "Vulnerability Status":** Options are "Ongoing", "Completed", and "False Positive"
 5. **Generate / Select a "Mitigation Group":** This is the identifier used to tie your mitigation back to the appropriate asset; some group name examples are:
   * **Operating System Name:** "Windows Assets"
-  * **Accreditation Name / Number:** "Patuxent River Data Center", "eMASS 624"
-  * **Project Name:** "Navy ERP"
-  * **Network Name:** "NMCI", "DREN"
+  * **Accreditation Name / Number:** "Primary Data Center", "eMASS 624"
+  * **Project Name:** "Logistics Portal"
+  * **Network Name:** "Enterprise LAN", "DREN"
     * _Note:_ The "MAC Level" field is currently required, but will be removed at a later date - feel free to select a "filler" value
 6. **Select "Save Mitigations":** A new mitigation item will be created in the "Existing Statements" pane, and the "Mitigations Count" field will increment accordingly
 

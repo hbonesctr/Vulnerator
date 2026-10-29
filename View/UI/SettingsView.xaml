@@ -87,7 +87,7 @@
                         <TextBox Margin="5,0,5,5"
                                  Controls:TextBoxHelper.ButtonContent="{IconPacks:FontAwesomeLight Kind=TimesSquare}"
                                  Controls:TextBoxHelper.ClearTextButton="True"
-                                 Controls:TextBoxHelper.Watermark="Organization (e.g. NAVAIR)"
+                                 Controls:TextBoxHelper.Watermark="Organization (e.g. Program Office)"
                                  vh:DependencyProperties.FloatingWatermark="Organization"
                                  Style="{StaticResource HeaderedTextBoxStyle}"
                                  Text="{Binding Source={StaticResource Settings}, Path=Default.Organization}" />

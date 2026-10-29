@@ -82,50 +82,22 @@
                         <TextBlock Text="Contributors"
                                    TextTrimming="CharacterEllipsis" />
                     </Label>
-                    <TextBlock x:Name="emailAlexTextBox"
+                    <TextBlock
                                Margin="5,0"
-                               Style="{StaticResource HyperlinkTextBlockStyle}"
                                Text="Alex Kuchta - Redesign, ACAS Integration"
-                               TextWrapping="NoWrap">
-                        <TextBlock.InputBindings>
-                            <MouseBinding Command="{Binding AboutLinksCommand}"
-                                          CommandParameter="{Binding ElementName=emailAlexTextBox, Path=Name}"
-                                          MouseAction="LeftClick" />
-                        </TextBlock.InputBindings>
-                    </TextBlock>
-                    <TextBlock x:Name="emailJeffvTextBox"
+                               TextWrapping="NoWrap" />
+                    <TextBlock
                                Margin="5,0"
-                               Style="{StaticResource HyperlinkTextBlockStyle}"
                                Text="Jeff Vanerwegen - WASSP, SCAP, CKL Integration"
-                               TextWrapping="NoWrap">
-                        <TextBlock.InputBindings>
-                            <MouseBinding Command="{Binding AboutLinksCommand}"
-                                          CommandParameter="{Binding ElementName=emailJeffvTextBox, Path=Name}"
-                                          MouseAction="LeftClick" />
-                        </TextBlock.InputBindings>
-                    </TextBlock>
-                    <TextBlock x:Name="emailRickTextBox"
+                               TextWrapping="NoWrap" />
+                    <TextBlock
                                Margin="5,0"
-                               Style="{StaticResource HyperlinkTextBlockStyle}"
                                Text="Rick Murphy - POA&amp;M Integration"
-                               TextWrapping="NoWrap">
-                        <TextBlock.InputBindings>
-                            <MouseBinding Command="{Binding AboutLinksCommand}"
-                                          CommandParameter="{Binding ElementName=emailRickTextBox, Path=Name}"
-                                          MouseAction="LeftClick" />
-                        </TextBlock.InputBindings>
-                    </TextBlock>
-                    <TextBlock x:Name="emailJeffpTextBox"
+                               TextWrapping="NoWrap" />
+                    <TextBlock
                                Margin="5,0"
-                               Style="{StaticResource HyperlinkTextBlockStyle}"
                                Text="Jeff Purcell - Creator"
-                               TextWrapping="NoWrap">
-                        <TextBlock.InputBindings>
-                            <MouseBinding Command="{Binding AboutLinksCommand}"
-                                          CommandParameter="{Binding ElementName=emailJeffpTextBox, Path=Name}"
-                                          MouseAction="LeftClick" />
-                        </TextBlock.InputBindings>
-                    </TextBlock>
+                               TextWrapping="NoWrap" />
                 </StackPanel>
             </ScrollViewer>
             <ScrollViewer Grid.Column="1"

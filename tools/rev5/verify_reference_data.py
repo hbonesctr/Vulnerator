@@ -5,7 +5,7 @@ Verifies the embedded Rev 5 reference data against Vulnerator's real SQLite sche
 Creates an in-memory database from Resources/DdlFiles/Tables (Create + Insert/Data), then loads
 U_CCI_List.xml and the NIST_800-53r5_* files using the same SQL statements DatabaseBuilder.cs runs.
 The load is run twice to prove it is idempotent, then the control-ID formatting used by the eMASS
-POA&M and Navy RAR queries is checked.
+POA&M and Risk Assessment Report queries is checked.
 
 Usage: python3 verify_reference_data.py [repo root]   (exit code 0 = all checks passed)
 """

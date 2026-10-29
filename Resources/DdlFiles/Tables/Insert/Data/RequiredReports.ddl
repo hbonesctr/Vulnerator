@@ -1,3 +1,8 @@
+-- Earlier versions named report 2 'Navy RAR'; rename it in place so existing filters are kept.
+UPDATE RequiredReports
+SET DisplayedReportName = 'Risk Assessment Report'
+WHERE DisplayedReportName = 'Navy RAR';
+
 INSERT INTO RequiredReports
 VALUES (NULL,
         'eMASS-Importable POA&M',
@@ -7,7 +12,7 @@ VALUES (NULL,
 
 INSERT INTO RequiredReports
 VALUES (NULL,
-        'Navy RAR',
+        'Risk Assessment Report',
         'Excel',
         'True',
         'Vulnerability Management');

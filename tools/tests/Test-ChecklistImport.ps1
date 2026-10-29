@@ -217,6 +217,12 @@ try {
     Assert-That (($hwswResult -eq 'Excel report creation successful') -and [System.IO.File]::Exists($hwswPath)) ('eMASS Hardware/Software export runs (got "' + $hwswResult + '")')
     $hwswReport = [int](Get-Scalar "SELECT COUNT(*) FROM RequiredReports WHERE DisplayedReportName = 'eMASS Hardware/Software List'")
     Assert-That ($hwswReport -eq 1) 'Hardware/Software report is registered once in the Reporting screen'
+    $rarName = Get-Scalar 'SELECT DisplayedReportName FROM RequiredReports WHERE RequiredReport_ID = 2'
+    Assert-That ($rarName -eq 'Risk Assessment Report') ('report 2 is the generic Risk Assessment Report (got "' + $rarName + '")')
+    Assert-That ([int](Get-Scalar "SELECT COUNT(*) FROM RequiredReports WHERE DisplayedReportName LIKE '%Navy%'") -eq 0) 'no Navy-branded report remains'
+    $rarPath = Join-Path $OutDir 'sample-Risk-Assessment-Report.xlsx'
+    $rarResult = (New-Object Vulnerator.Model.BusinessLogic.Reports.OpenXmlRiskAssessmentReportCreator).CreateRiskAssessmentReport($rarPath)
+    Assert-That (($rarResult -like '*successful*') -and [System.IO.File]::Exists($rarPath)) ('Risk Assessment Report export runs (got "' + $rarResult + '")')
 }
 catch {
     $script:failures.Add('Unhandled error: ' + $_.Exception.ToString())
