@@ -1136,6 +1136,23 @@ namespace Vulnerator.ViewModel
                         }
                         return;
                     }
+                    case "5":
+                    {
+                        if ((bool) GetExcelReportName())
+                        {
+                            guiFeedback.SetFields("Creating eMASS Hardware/Software list...", "Visible", false);
+                            Messenger.Default.Send(guiFeedback);
+                            new OpenXmlEmassHardwareSoftwareReportCreator().CreateHardwareSoftwareList(saveExcelFile.FileName);
+                            e.Result = "Success";
+                            guiFeedback.SetFields("eMASS Hardware/Software list creation completed...", "Collapsed", false);
+                            Messenger.Default.Send(guiFeedback);
+                        }
+                        else
+                        {
+                            e.Result = "Cancelled";
+                        }
+                        return;
+                    }
                     case "3":
                     {
                         if ((bool) GetExcelReportName())
@@ -1203,12 +1220,17 @@ namespace Vulnerator.ViewModel
                         continue;
                     }
 
-                    switch (report.RequiredReportUserSelection_ID)
+                    // Dispatch on the report, not the per-user selection row (their IDs only coincide for the first user).
+                    switch (report.RequiredReport_ID)
                     {
                         case 1:
                         {
-                            OpenXmlNavyRarReportCreator openXmlNavyRarReportCreator = new OpenXmlNavyRarReportCreator();
-                            openXmlNavyRarReportCreator.CreateNavyRar($"{location}\\eMASS-POA&M_{DateTime.Now.ToString("yyyyMMdd-HHmmss", new CultureInfo("en-US"))}.xlsx");
+                            new OpenXmlEmassPoamReportCreator().CreateEmassPoam($"{location}\\eMASS-POA&M_{DateTime.Now.ToString("yyyyMMdd-HHmmss", new CultureInfo("en-US"))}.xlsx");
+                            break;
+                        }
+                        case 5:
+                        {
+                            new OpenXmlEmassHardwareSoftwareReportCreator().CreateHardwareSoftwareList($"{location}\\eMASS-HW-SW-List_{DateTime.Now.ToString("yyyyMMdd-HHmmss", new CultureInfo("en-US"))}.xlsx");
                             break;
                         }
                         case 2:

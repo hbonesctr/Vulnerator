@@ -362,7 +362,10 @@
     <Compile Include="Model\BusinessLogic\AcasNessusReader.cs" />
     <Compile Include="Model\BusinessLogic\AcasCsvReader.cs" />
     <Compile Include="Model\BusinessLogic\CklCreator.cs" />
+    <Compile Include="Model\BusinessLogic\Reports\EmassPoamBuilder.cs" />
+    <Compile Include="Model\BusinessLogic\Reports\EmassWorkbookWriter.cs" />
     <Compile Include="Model\BusinessLogic\Reports\FilterTextCreator.cs" />
+    <Compile Include="Model\BusinessLogic\Reports\OpenXmlEmassHardwareSoftwareReportCreator.cs" />
     <Compile Include="Model\BusinessLogic\Reports\OpenXmlCellDataHandler.cs" />
     <Compile Include="Model\BusinessLogic\Reports\OpenXmlEmassPoamReportCreator.cs" />
     <Compile Include="Model\BusinessLogic\RawStigReader.cs" />
@@ -951,7 +954,9 @@
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Insert\VulnerabilityIA_ControlMapping.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Insert\VulnerabilitySourceVulnerabilityMapping.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Select\Hardware.dml" />
+    <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Select\EmassHardwareList.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Select\EmassPoamVulnerabilities.dml" />
+    <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Select\EmassSoftwareList.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Select\HardwareCklCreationData.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Select\Indices.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Select\UngroupedVulnerabilities.dml" />

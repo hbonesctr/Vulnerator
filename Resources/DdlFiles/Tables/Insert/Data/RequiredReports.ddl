@@ -26,6 +26,13 @@ VALUES (NULL,
         'True',
         'N/A');
 
+INSERT INTO RequiredReports
+VALUES (NULL,
+        'eMASS Hardware/Software List',
+        'Excel',
+        'True',
+        'Vulnerability Management');
+
 -- INSERT INTO RequiredReports
 -- VALUES (NULL,
 --         'Excel Summary',

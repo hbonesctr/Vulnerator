@@ -146,5 +146,44 @@
     <Setting Name="CklMitigationHandling" Type="System.String" Scope="User">
       <Value Profile="(Default)">Append</Value>
     </Setting>
+    <Setting Name="EmassSystemName" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="EmassCcsafa" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="EmassItRegistrationNumber" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="EmassSystemType" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="EmassOmbProjectId" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="EmassSecurityCosts" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="EmassInformationSystemOwner" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="EmassOfficeOrg" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="EmassResourcesRequired" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="EmassIdentificationSource" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Vulnerability Management</Value>
+    </Setting>
+    <Setting Name="EmassScheduledCompletionDays" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="EmassDefaultMilestone" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Remediate the finding per the security check fix procedure.</Value>
+    </Setting>
+    <Setting Name="EmassClassificationMarking" Type="System.String" Scope="User">
+      <Value Profile="(Default)">CONTROLLED UNCLASSIFIED INFORMATION</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

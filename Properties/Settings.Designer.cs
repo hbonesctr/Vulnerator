@@ -598,5 +598,161 @@ namespace Vulnerator.Properties {
                 this["CklMitigationHandling"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string EmassSystemName {
+            get {
+                return ((string)(this["EmassSystemName"]));
+            }
+            set {
+                this["EmassSystemName"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string EmassCcsafa {
+            get {
+                return ((string)(this["EmassCcsafa"]));
+            }
+            set {
+                this["EmassCcsafa"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string EmassItRegistrationNumber {
+            get {
+                return ((string)(this["EmassItRegistrationNumber"]));
+            }
+            set {
+                this["EmassItRegistrationNumber"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string EmassSystemType {
+            get {
+                return ((string)(this["EmassSystemType"]));
+            }
+            set {
+                this["EmassSystemType"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string EmassOmbProjectId {
+            get {
+                return ((string)(this["EmassOmbProjectId"]));
+            }
+            set {
+                this["EmassOmbProjectId"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string EmassSecurityCosts {
+            get {
+                return ((string)(this["EmassSecurityCosts"]));
+            }
+            set {
+                this["EmassSecurityCosts"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string EmassInformationSystemOwner {
+            get {
+                return ((string)(this["EmassInformationSystemOwner"]));
+            }
+            set {
+                this["EmassInformationSystemOwner"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string EmassOfficeOrg {
+            get {
+                return ((string)(this["EmassOfficeOrg"]));
+            }
+            set {
+                this["EmassOfficeOrg"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string EmassResourcesRequired {
+            get {
+                return ((string)(this["EmassResourcesRequired"]));
+            }
+            set {
+                this["EmassResourcesRequired"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Vulnerability Management")]
+        public string EmassIdentificationSource {
+            get {
+                return ((string)(this["EmassIdentificationSource"]));
+            }
+            set {
+                this["EmassIdentificationSource"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string EmassScheduledCompletionDays {
+            get {
+                return ((string)(this["EmassScheduledCompletionDays"]));
+            }
+            set {
+                this["EmassScheduledCompletionDays"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Remediate the finding per the security check fix procedure.")]
+        public string EmassDefaultMilestone {
+            get {
+                return ((string)(this["EmassDefaultMilestone"]));
+            }
+            set {
+                this["EmassDefaultMilestone"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("CONTROLLED UNCLASSIFIED INFORMATION")]
+        public string EmassClassificationMarking {
+            get {
+                return ((string)(this["EmassClassificationMarking"]));
+            }
+            set {
+                this["EmassClassificationMarking"] = value;
+            }
+        }
     }
 }

@@ -5,13 +5,15 @@
 # Runs on Windows PowerShell 5.1 (.NET Framework 4.8). Pure ASCII; no PowerShell 7 syntax.
 # Usage: powershell -NoProfile -ExecutionPolicy Bypass -File tools\tests\Test-ChecklistImport.ps1 -BinDir bin\Release
 param(
-    [Parameter(Mandatory = $true)][string]$BinDir
+    [Parameter(Mandatory = $true)][string]$BinDir,
+    [string]$OutDir = ''
 )
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 2.0
 
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $binPath = (Resolve-Path $BinDir).Path
+if ($OutDir -ne '') { $OutDir = [System.IO.Path]::GetFullPath((Join-Path (Get-Location).Path $OutDir)) }
 $fixtures = Join-Path $PSScriptRoot 'fixtures'
 $workDir = Join-Path ([System.IO.Path]::GetTempPath()) ('VulneratorTest_' + [Guid]::NewGuid().ToString('N'))
 [void][System.IO.Directory]::CreateDirectory($workDir)
@@ -185,6 +187,36 @@ try {
 
     $sourceFile = Get-Scalar ("SELECT COUNT(*) FROM UniqueFindingsSourceFiles WHERE FindingSourceFileName LIKE '%viewer3%'")
     Assert-That ([int]$sourceFile -ge 1) 'CKLB findings are attributed to the original .cklb file name'
+
+    # --- eMASS exports ------------------------------------------------------------------------
+    $builder = [Vulnerator.Model.BusinessLogic.Reports.EmassPoamBuilder]
+    Assert-That ($builder::RawRiskToLevel('I') -eq 'High' -and $builder::RawRiskToLevel('II') -eq 'Moderate' -and $builder::RawRiskToLevel('III') -eq 'Low') 'CAT I/II/III map to High/Moderate/Low'
+    Assert-That ($builder::ToSecurityCheck('SV-1001', '2') -eq 'SV-1001r2_rule') 'STIG rule renders as SV-1001r2_rule'
+    Assert-That ($builder::ToSecurityCheck('21745', '') -eq '21745') 'Nessus plugin ID is kept as-is'
+    Assert-That ($builder::ToEmassStatus('Ongoing', 'Completed') -eq 'Completed') 'a mitigation status overrides the scan status'
+    Assert-That ($null -eq $builder::ToEmassStatus('Not Applicable', '')) 'Not Applicable findings stay off the POA&M'
+    Assert-That ($builder::ToEmassLevel('medium') -eq 'Moderate') 'medium normalizes to Moderate'
+
+    # Report filters pick up groups created since launch on the next launch; simulate one.
+    [void](New-Object Vulnerator.Model.DataAccess.DatabaseBuilder)
+    $indexer.SetValue($defaultSettings, 'Test Org', [object[]]@('Organization'))
+    $indexer.SetValue($defaultSettings, 'Pat Tester', [object[]]@('Name'))
+    $indexer.SetValue($defaultSettings, '555-0100', [object[]]@('Phone'))
+    $indexer.SetValue($defaultSettings, 'pat.tester@example.test', [object[]]@('Email'))
+    $indexer.SetValue($defaultSettings, 'Test System', [object[]]@('EmassSystemName'))
+    $indexer.SetValue($defaultSettings, 'Sustainment funding', [object[]]@('EmassResourcesRequired'))
+    $indexer.SetValue($defaultSettings, '90', [object[]]@('EmassScheduledCompletionDays'))
+
+    if ($OutDir -eq '') { $OutDir = $workDir }
+    [void][System.IO.Directory]::CreateDirectory($OutDir)
+    $poamPath = Join-Path $OutDir 'sample-eMASS-POAM.xlsx'
+    $hwswPath = Join-Path $OutDir 'sample-eMASS-HW-SW-List.xlsx'
+    $poamResult = (New-Object Vulnerator.Model.BusinessLogic.Reports.OpenXmlEmassPoamReportCreator).CreateEmassPoam($poamPath)
+    Assert-That (($poamResult -eq 'Excel report creation successful') -and [System.IO.File]::Exists($poamPath)) ('eMASS POA&M export runs (got "' + $poamResult + '")')
+    $hwswResult = (New-Object Vulnerator.Model.BusinessLogic.Reports.OpenXmlEmassHardwareSoftwareReportCreator).CreateHardwareSoftwareList($hwswPath)
+    Assert-That (($hwswResult -eq 'Excel report creation successful') -and [System.IO.File]::Exists($hwswPath)) ('eMASS Hardware/Software export runs (got "' + $hwswResult + '")')
+    $hwswReport = [int](Get-Scalar "SELECT COUNT(*) FROM RequiredReports WHERE DisplayedReportName = 'eMASS Hardware/Software List'")
+    Assert-That ($hwswReport -eq 1) 'Hardware/Software report is registered once in the Reporting screen'
 }
 catch {
     $script:failures.Add('Unhandled error: ' + $_.Exception.ToString())

@@ -7,6 +7,8 @@
                     COALESCE('(' || NC.ControlEnhancement || ')', ''))                                    as NIST_Controls,
        GROUP_CONCAT(DISTINCT CI.CCI_Number)                                   as CCIs,
        GROUP_CONCAT(DISTINCT UF.InstanceIdentifier)                           as InstanceIdentifier,
+       MIN(UF.FirstDiscovered)                                                as FirstDiscovered,
+       MAX(UF.LastObserved)                                                   as LastObserved,
        V.UniqueVulnerabilityIdentifier,
        V.SecondaryVulnerabilityIdentifier,
        V.VulnerabilityGroupIdentifier,
