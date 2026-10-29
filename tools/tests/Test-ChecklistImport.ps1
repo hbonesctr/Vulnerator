@@ -417,6 +417,36 @@ try {
     [System.IO.File]::WriteAllText($notCsv, "Name,Value`r`nA,1`r`n")
     $result = (New-Object Vulnerator.Model.BusinessLogic.AcasCsvReader).ReadAcasCsvFile((New-Object Vulnerator.Model.Object.File ('not-acas', 'ACAS - CSV', 'Ready', $notCsv, 'True')), 'TestGroup')
     Assert-That ($result -eq 'Failed; Not An ACAS CSV') ('a CSV without plugin / host columns is refused clearly (got "' + $result + '")')
+
+    # --- CKL export (round trip) -----------------------------------------------------------------
+    $hardware = New-Object Vulnerator.Model.Entity.Hardware
+    $hardware.Hardware_ID = [long](Get-Scalar "SELECT Hardware_ID FROM Hardware WHERE DiscoveredHostName = 'LIBHOST01'")
+    $hardware.DisplayedHostName = 'LIBHOST01'
+    $stigSource = New-Object Vulnerator.Model.Entity.VulnerabilitySource
+    $stigSource.VulnerabilitySource_ID = [long](Get-Scalar "SELECT VulnerabilitySource_ID FROM VulnerabilitySources WHERE SourceSecondaryIdentifier = 'Library_Test_STIG'")
+    $stigSource.SourceName = 'Library Test STIG'
+    $exportDir = Join-Path $workDir 'ckl-export'
+    [void][System.IO.Directory]::CreateDirectory($exportDir)
+    $cklPath = (New-Object Vulnerator.Model.BusinessLogic.CklCreator).CreateCklFromHardware($hardware, $stigSource, $exportDir)
+    Assert-That ([System.IO.File]::Exists($cklPath)) ('CKL written (got "' + $cklPath + '")')
+    $ckl = New-Object System.Xml.XmlDocument
+    $ckl.LoadXml([System.IO.File]::ReadAllText($cklPath))
+    $vulns = @($ckl.SelectNodes('/CHECKLIST/STIGS/iSTIG/VULN'))
+    Assert-That ($vulns.Count -eq 4) ('every rule of the STIG is in the checklist, one revision each (got ' + $vulns.Count + ')')
+    $hostNode = $ckl.SelectSingleNode('/CHECKLIST/ASSET')
+    Assert-That ($hostNode.HOST_NAME -eq 'LIBHOST01' -and $hostNode.HOST_IP -eq '10.1.2.9') ('asset from the host record (got "' + $hostNode.HOST_NAME + '" / "' + $hostNode.HOST_IP + '")')
+    $releaseInfo = $ckl.SelectSingleNode("//SI_DATA[SID_NAME='releaseinfo']/SID_DATA").InnerText
+    Assert-That ($releaseInfo -eq 'Release: 4 Benchmark Date: 01 May 2026') ('release info in STIG Viewer form (got "' + $releaseInfo + '")')
+    $v5002 = $ckl.SelectSingleNode("//VULN[STIG_DATA[VULN_ATTRIBUTE='Vuln_Num' and ATTRIBUTE_DATA='V-5002']]")
+    Assert-That ($v5002.STATUS -eq 'Open' -and $v5002.FINDING_DETAILS -eq 'Account management is manual.' -and $v5002.COMMENTS -eq 'Ticket 42 opened.') ('host result, details and comments exported (got "' + $v5002.STATUS + '")')
+    $v5001 = $ckl.SelectSingleNode("//VULN[STIG_DATA[VULN_ATTRIBUTE='Vuln_Num' and ATTRIBUTE_DATA='V-5001']]")
+    $v5001Rule = $v5001.SelectSingleNode("STIG_DATA[VULN_ATTRIBUTE='Rule_ID']/ATTRIBUTE_DATA").InnerText
+    $v5001Ccis = @($v5001.SelectNodes("STIG_DATA[VULN_ATTRIBUTE='CCI_REF']")).Count
+    Assert-That ($v5001.STATUS -eq 'Not_Reviewed' -and $v5001Rule -eq 'SV-5001r3_rule' -and $v5001Ccis -eq 2) ('rule without a result is Not_Reviewed, current revision, both CCIs (got ' + $v5001.STATUS + ', ' + $v5001Rule + ', ' + $v5001Ccis + ')')
+    $result = Import-Checklist $cklPath 'TestGroup'
+    $roundTrip = [string](Get-Scalar $statusSql @{ '@h' = 'LIBHOST01'; '@v' = 'SV-5002' })
+    $rulesAfter = [int](Get-Scalar "SELECT COUNT(*) FROM Vulnerabilities WHERE UniqueVulnerabilityIdentifier LIKE 'SV-500%'")
+    Assert-That ($result -eq 'Processed' -and $roundTrip -eq 'Ongoing' -and $rulesAfter -eq 4) ('exported CKL re-imports without new rules or changed results (got "' + $result + '", ' + $roundTrip + ', ' + $rulesAfter + ' rules)')
     $notIgap = Join-Path $workDir 'not-igap.xlsx'
     [System.IO.File]::WriteAllText($notIgap, 'not a workbook')
     $bad = [Vulnerator.Model.BusinessLogic.EmassAssessmentProcedureImporter]::Import($notIgap)

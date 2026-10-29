@@ -815,6 +815,7 @@
     </Compile>
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Select\RiskAssessmentReportVulnerabilities.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Select\LatestPublishedDateBySource.dml" />
+    <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Select\HardwareCklAsset.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Delete\VulnerabilityCCI_MappingByVulnerability.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Delete\VulnerabilitySourceMappingByVulnerability.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Insert\RequiredReportUserFindingTypes.dml" />
