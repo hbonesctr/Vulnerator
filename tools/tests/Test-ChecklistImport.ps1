@@ -37,18 +37,6 @@ function Write-Annotation {
     Write-Host ('::' + $Level + '::' + $clean)
 }
 
-# --- Load the application and point it at a scratch database --------------------------------
-[System.IO.Directory]::SetCurrentDirectory($binPath)
-$app = [System.Reflection.Assembly]::LoadFrom((Join-Path $binPath 'Vulnerator.exe'))
-[void][System.Reflection.Assembly]::LoadFrom((Join-Path $binPath 'System.Data.SQLite.dll'))
-$log4net = [System.Reflection.Assembly]::LoadFrom((Join-Path $binPath 'log4net.dll'))
-[void]$log4net.GetType('log4net.Config.BasicConfigurator').GetMethod('Configure', [Type[]]@()).Invoke($null, @())
-
-$settingsType = $app.GetType('Vulnerator.Properties.Settings')
-$settings = [System.Configuration.ApplicationSettingsBase]$settingsType.GetProperty('Default').GetValue($null, $null)
-$settings['Database'] = $dbPath
-$settings['ActiveUser'] = 'ci-test'
-
 function Invoke-Sql {
     param([string]$Sql, [hashtable]$Parameters = @{})
     $connection = New-Object System.Data.SQLite.SQLiteConnection ('Data Source=' + $dbPath + ';Version=3;datetimeformat=Ticks;')
@@ -93,6 +81,23 @@ $statusSql = 'SELECT UF.Status FROM UniqueFindings UF JOIN Hardware H ON UF.Hard
     'WHERE H.DiscoveredHostName = @h AND V.UniqueVulnerabilityIdentifier = @v'
 
 try {
+    # --- Load the application and point it at a scratch database ----------------------------
+    Add-Type -AssemblyName System.Configuration
+    [System.IO.Directory]::SetCurrentDirectory($binPath)
+    $app = [System.Reflection.Assembly]::LoadFrom((Join-Path $binPath 'Vulnerator.exe'))
+    [void][System.Reflection.Assembly]::LoadFrom((Join-Path $binPath 'System.Data.SQLite.dll'))
+    $log4net = [System.Reflection.Assembly]::LoadFrom((Join-Path $binPath 'log4net.dll'))
+    $configure = $log4net.GetType('log4net.Config.BasicConfigurator').GetMethod('Configure', [Type[]]@())
+    if ($null -ne $configure) { [void]$configure.Invoke($null, $null) }
+
+    # Properties.Settings is internal: set values through the public ApplicationSettingsBase indexer.
+    $settingsType = $app.GetType('Vulnerator.Properties.Settings', $true)
+    $defaultSettings = $settingsType.GetProperty('Default', [System.Reflection.BindingFlags]'Public,Static').GetValue($null, $null)
+    $indexer = [System.Configuration.ApplicationSettingsBase].GetProperty('Item', [Type[]]@([string]))
+    $indexer.SetValue($defaultSettings, $dbPath, [object[]]@('Database'))
+    $indexer.SetValue($defaultSettings, 'ci-test', [object[]]@('ActiveUser'))
+    Write-Host ('Scratch database: ' + $dbPath)
+
     # --- Database creation ---------------------------------------------------------------------
     [void](New-Object Vulnerator.Model.DataAccess.DatabaseBuilder)
     Assert-That ([System.IO.File]::Exists($dbPath)) 'database file created'
