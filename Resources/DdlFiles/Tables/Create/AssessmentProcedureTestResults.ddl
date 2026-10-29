@@ -1,10 +1,10 @@
 ﻿CREATE TABLE IF NOT EXISTS AssessmentProcedureTestResults (
     AssessmentProcedureTestResult_ID        INTEGER PRIMARY KEY,
     ComplianceStatus                        NVARCHAR (20) NOT NULL,
-    TestResultText                          NVARCHAR (MAX),
+    TestResultText                          TEXT          ,
     TestResultDate                          DATE,
     TestedBy                                DATE,
-    PolicyText                              NVARCHAR (MAX),
+    PolicyText                              TEXT          ,
     Inheritability                          NVARCHAR (20) NOT NULL,
     Group_ID                                INTEGER NOT NULL,
     NIST_ControlCCI_ID                      INTEGER NOT NULL,
