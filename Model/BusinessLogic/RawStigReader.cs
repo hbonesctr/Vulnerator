@@ -75,24 +75,11 @@ namespace Vulnerator.Model.BusinessLogic
                 using (SQLiteCommand sqliteCommand = DatabaseBuilder.sqliteConnection.CreateCommand())
                 {
                     databaseInterface.InsertParameterPlaceholders(sqliteCommand);
-                    SetSource(sqliteCommand, benchmark, fileName);
-                    if (databaseInterface.SourceHasNewerRelease(sqliteCommand))
+                    if (!LoadBenchmark(sqliteCommand, benchmark, fileName, "CKL", true))
                     {
                         LogWriter.LogStatusUpdate($"Skipped '{fileName}': a newer release of this STIG is already loaded.");
                         return Older;
                     }
-                    databaseInterface.UpdateVulnerabilitySource(sqliteCommand);
-                    databaseInterface.InsertVulnerabilitySource(sqliteCommand);
-
-                    foreach (XElement group in Children(benchmark, "Group").SelectMany(SelfAndNestedGroups))
-                    {
-                        foreach (XElement rule in Children(group, "Rule"))
-                        {
-                            ReadRule(sqliteCommand, group, rule);
-                            RulesRead++;
-                        }
-                    }
-                    databaseInterface.DeleteRemovedVulnerabilities(sqliteCommand);
                     sqliteTransaction.Commit();
                 }
                 LogWriter.LogStatusUpdate($"Ingested {RulesRead} rule(s) from '{fileName}'.");
@@ -107,13 +94,44 @@ namespace Vulnerator.Model.BusinessLogic
             { DatabaseBuilder.sqliteConnection.Close(); }
         }
 
+        /// <summary>Rule id ("SV-254239") to the library revision its findings attach to, filled by <see cref="LoadBenchmark"/>.</summary>
+        public Dictionary<string, string> Revisions { get; } = new Dictionary<string, string>();
+
+        /// <summary>
+        /// Writes the benchmark's source and rules using an open command (placeholders inserted). As the library
+        /// (<paramref name="isLibrary"/>), an older release is refused (returns false) and superseded rules are pruned;
+        /// for scan results the rules are only added or refreshed.
+        /// </summary>
+        public bool LoadBenchmark(SQLiteCommand sqliteCommand, XElement benchmark, string fileName, string findingType, bool isLibrary)
+        {
+            RulesRead = 0;
+            Revisions.Clear();
+            SetSource(sqliteCommand, benchmark, fileName);
+            sqliteCommand.Parameters["FindingType"].Value = findingType;
+            if (isLibrary && databaseInterface.SourceHasNewerRelease(sqliteCommand))
+            { return false; }
+            databaseInterface.UpdateVulnerabilitySource(sqliteCommand);
+            databaseInterface.InsertVulnerabilitySource(sqliteCommand);
+            foreach (XElement group in Children(benchmark, "Group").SelectMany(SelfAndNestedGroups))
+            {
+                foreach (XElement rule in Children(group, "Rule"))
+                {
+                    ReadRule(sqliteCommand, group, rule);
+                    RulesRead++;
+                }
+            }
+            if (isLibrary)
+            { databaseInterface.DeleteRemovedVulnerabilities(sqliteCommand); }
+            return true;
+        }
+
         private static IEnumerable<XElement> SelfAndNestedGroups(XElement group)
         { return new[] { group }.Concat(Children(group, "Group").SelectMany(SelfAndNestedGroups)); }
 
-        private static IEnumerable<XElement> Children(XElement parent, string localName)
+        public static IEnumerable<XElement> Children(XElement parent, string localName)
         { return parent.Elements().Where(e => e.Name.LocalName == localName); }
 
-        private static string ChildText(XElement parent, string localName)
+        public static string ChildText(XElement parent, string localName)
         { return Children(parent, localName).FirstOrDefault()?.Value.Trim() ?? string.Empty; }
 
         private static void SetSource(SQLiteCommand sqliteCommand, XElement benchmark, string fileName)
@@ -195,6 +213,8 @@ namespace Vulnerator.Model.BusinessLogic
                 default:
                     { break; } // the library already holds a newer revision of this rule
             }
+
+            Revisions[ruleId] = sqliteCommand.Parameters["VulnerabilityVersion"].Value?.ToString() ?? string.Empty;
 
             List<string> ccis = Children(rule, "ident")
                 .Where(i => ExtensionMethods.IsCciIdentSystem(i.Attribute("system")?.Value))

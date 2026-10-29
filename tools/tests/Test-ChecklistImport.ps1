@@ -358,6 +358,42 @@ try {
     [System.IO.File]::WriteAllText($notStig, '<root/>')
     $summary = $importer.Import($notStig)
     Assert-That ($importer.Failed -eq 1 -and $importer.Parsed -eq 0) ('an XML file that is not a benchmark is reported, not loaded (got "' + $summary + '")')
+
+    # --- SCAP / SCC XCCDF results ----------------------------------------------------------------
+    $xccdfFixtures = Join-Path $fixtures 'xccdf'
+    function Import-Xccdf {
+        param([string]$Name)
+        $path = Join-Path $xccdfFixtures $Name
+        $file = New-Object Vulnerator.Model.Object.File ([System.IO.Path]::GetFileNameWithoutExtension($path), 'SCAP Benchmark', 'Ready', $path, 'True')
+        $script:xccdfReader = New-Object Vulnerator.Model.BusinessLogic.XccdfReader
+        return $script:xccdfReader.ReadXccdfFile($file, 'TestGroup')
+    }
+    $result = Import-Xccdf 'scc5-results.xml'
+    Assert-That ($result -eq 'Processed' -and $script:xccdfReader.FindingsRead -eq 3) ('SCC 5 XCCDF 1.2 results import; notselected rule skipped (got "' + $result + '", ' + $script:xccdfReader.FindingsRead + ' findings)')
+    $fail = [string](Get-Scalar $statusSql @{ '@h' = 'SCCHOST01'; '@v' = 'SV-8001' })
+    $pass = [string](Get-Scalar $statusSql @{ '@h' = 'SCCHOST01'; '@v' = 'SV-8002' })
+    $notChecked = [string](Get-Scalar $statusSql @{ '@h' = 'SCCHOST01'; '@v' = 'SV-8004' })
+    Assert-That ($fail -eq 'Ongoing' -and $pass -eq 'Completed' -and $notChecked -eq 'Not Reviewed') ('fail / pass / notchecked map to Ongoing / Completed / Not Reviewed (got ' + $fail + ' / ' + $pass + ' / ' + $notChecked + ')')
+    $output = [string](Get-Scalar 'SELECT UF.ToolGeneratedOutput FROM UniqueFindings UF JOIN Vulnerabilities V ON UF.Vulnerability_ID = V.Vulnerability_ID WHERE V.UniqueVulnerabilityIdentifier = @v' @{ '@v' = 'SV-8001' })
+    Assert-That ($output.Contains('Result: fail') -and $output.Contains('Message: Value found: 0') -and $output.Contains('scc:5.10')) ('tool output keeps result, message and scanner (got "' + $output + '")')
+    $hostInfo = [string](Get-Scalar "SELECT H.FQDN || '|' || (SELECT GROUP_CONCAT(IP.IP_Address) FROM Hardware_IP_Addresses HI JOIN IP_Addresses IP ON HI.IP_Address_ID = IP.IP_Address_ID WHERE HI.Hardware_ID = H.Hardware_ID) FROM Hardware H WHERE H.DiscoveredHostName = 'SCCHOST01'")
+    Assert-That ($hostInfo -eq 'scchost01.example.test|10.9.8.7') ('host FQDN and IP from target facts; loopback dropped (got "' + $hostInfo + '")')
+    $inGroup = [int](Get-Scalar "SELECT COUNT(*) FROM HardwareGroups HG JOIN Hardware H ON HG.Hardware_ID = H.Hardware_ID JOIN Groups G ON HG.Group_ID = G.Group_ID WHERE H.DiscoveredHostName = 'SCCHOST01' AND G.GroupName = 'TestGroup'")
+    Assert-That ($inGroup -eq 1) 'host placed in the selected group'
+    $score = [string](Get-Scalar "SELECT S.Score || '|' || S.ScanProfile || '|' || S.ScanUser FROM SCAP_Scores S JOIN Hardware H ON S.Hardware_ID = H.Hardware_ID WHERE H.DiscoveredHostName = 'SCCHOST01'")
+    Assert-That ($score -eq '50|MAC-1_Classified|TESTDOMAIN\scanner') ('SCC default score recorded (got "' + $score + '")')
+    $before = [int](Get-Scalar 'SELECT COUNT(*) FROM UniqueFindings')
+    $result = Import-Xccdf 'scc5-results.xml'
+    Assert-That ($result -eq 'Processed' -and [int](Get-Scalar 'SELECT COUNT(*) FROM UniqueFindings') -eq $before) 're-importing the same results adds no findings'
+
+    $result = Import-Xccdf 'legacy-xccdf11-results.xml'
+    $legacy = [string](Get-Scalar $statusSql @{ '@h' = 'LEGACYHOST'; '@v' = 'SV-7001' })
+    Assert-That ($result -eq 'Processed' -and $legacy -eq 'Ongoing' -and $script:xccdfReader.UnmatchedResults -eq 1) ('XCCDF 1.1 results (host from <target>) import; result for an unknown rule skipped (got "' + $result + '", ' + $legacy + ', ' + $script:xccdfReader.UnmatchedResults + ' unmatched)')
+    $result = Import-Xccdf 'oval-results.xml'
+    Assert-That ($result -eq 'Report Type (OVAL) Not Supported') ('OVAL results are refused clearly (got "' + $result + '")')
+    $benchmarkOnly = New-Object Vulnerator.Model.Object.File ('benchmark', 'SCAP Benchmark', 'Ready', (Join-Path $stigFixtures 'U_Library_Test_STIG_V2R4_Manual-xccdf.xml'), 'True')
+    $result = (New-Object Vulnerator.Model.BusinessLogic.XccdfReader).ReadXccdfFile($benchmarkOnly, 'TestGroup')
+    Assert-That ($result -eq 'Failed; No XCCDF Results') ('a benchmark without results points to the STIG library (got "' + $result + '")')
     $notIgap = Join-Path $workDir 'not-igap.xlsx'
     [System.IO.File]::WriteAllText($notIgap, 'not a workbook')
     $bad = [Vulnerator.Model.BusinessLogic.EmassAssessmentProcedureImporter]::Import($notIgap)
