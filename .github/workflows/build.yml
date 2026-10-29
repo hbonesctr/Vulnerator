@@ -12,6 +12,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Verify NIST / CCI reference data
+        run: python tools/rev5/verify_reference_data.py .
+
       - name: Set up MSBuild
         uses: microsoft/setup-msbuild@v2
 
