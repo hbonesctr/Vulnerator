@@ -83,13 +83,10 @@ namespace Vulnerator.Model.DataAccess
                             sqliteCommand.ExecuteNonQuery();
                         }
 
-                        sqliteCommand.ExecuteNonQuery();
-                        PopulateIaControlData(sqliteCommand);
-                        PopulateCciData(sqliteCommand);
-                        PopulateNistControls(sqliteCommand);
-                        MapControlsToCci(sqliteCommand);
-                        MapControlsToCnssOverlays(sqliteCommand);
-                        MapControlsToMonitoringFrequency(sqliteCommand);
+                        if (ReadReferenceDataVersion(sqliteCommand) < ReferenceDataVersion)
+                        {
+                            LoadReferenceData(sqliteCommand);
+                        }
                         InsertUserReportSettings(sqliteCommand);
                     }
 
@@ -105,11 +102,70 @@ namespace Vulnerator.Model.DataAccess
             }
         }
 
+        /// <summary>
+        /// Version of the embedded NIST / CCI reference data, stored in the database's PRAGMA user_version.
+        /// 5 = NIST SP 800-53 Revision 5. Raise this whenever the files in Resources/RawData are regenerated
+        /// so existing databases reload them on next launch.
+        /// </summary>
+        public const int ReferenceDataVersion = 5;
+
+        private const string RawDataBase = "Vulnerator.Resources.RawData.";
+
+        private int ReadReferenceDataVersion(SQLiteCommand sqliteCommand)
+        {
+            sqliteCommand.Parameters.Clear();
+            sqliteCommand.CommandText = "PRAGMA user_version;";
+            return Convert.ToInt32(sqliteCommand.ExecuteScalar());
+        }
+
+        /// <summary>
+        /// Loads CCIs and NIST SP 800-53 Rev 5 controls. CCIs and controls are updated in place (keyed on
+        /// CCI number and family/number/enhancement) so rows referenced by imported findings keep their IDs;
+        /// the CCI-to-control and baseline mappings are rebuilt from scratch.
+        /// </summary>
+        private void LoadReferenceData(SQLiteCommand sqliteCommand)
+        {
+            try
+            {
+                LogWriter.LogStatusUpdate($"Loading reference data version {ReferenceDataVersion} (NIST SP 800-53 Rev 5).");
+                Messenger.Default.Send("Loading NIST SP 800-53 Rev 5 reference data", MessengerToken.LoadingTextUpdated);
+                sqliteCommand.Parameters.Clear();
+                sqliteCommand.CommandText =
+                    "DELETE FROM NIST_ControlsCCIs; " +
+                    "DELETE FROM NIST_ControlsConfidentialityLevels; " +
+                    "DELETE FROM NIST_ControlsIntegrityLevels; " +
+                    "DELETE FROM NIST_ControlsAvailabilityLevels; " +
+                    "UPDATE NIST_Controls SET MonitoringFrequency = NULL;";
+                sqliteCommand.ExecuteNonQuery();
+
+                PopulateIaControlData(sqliteCommand);
+                PopulateCciData(sqliteCommand);
+                PopulateNistControls(sqliteCommand);
+                MapControlsToCci(sqliteCommand);
+                MapControlsToMonitoringFrequency(sqliteCommand);
+
+                sqliteCommand.Parameters.Clear();
+                sqliteCommand.CommandText = $"PRAGMA user_version = {ReferenceDataVersion};";
+                sqliteCommand.ExecuteNonQuery();
+            }
+            catch (Exception exception)
+            {
+                LogWriter.LogError("Unable to load NIST / CCI reference data.");
+                throw exception;
+            }
+        }
+
         private void PopulateIaControlData(SQLiteCommand sqliteCommand)
         {
             try
             {
                 LogWriter.LogStatusUpdate("Verifying IA Controls are populated.");
+                sqliteCommand.Parameters.Clear();
+                sqliteCommand.CommandText = "SELECT COUNT(*) FROM IA_Controls;";
+                if (Convert.ToInt64(sqliteCommand.ExecuteScalar()) > 0)
+                {
+                    return;
+                }
                 using (Stream stream =
                     assembly.GetManifestResourceStream("Vulnerator.Resources.RawData.IAControls_Mapping.xml"))
                 {
@@ -263,8 +319,15 @@ namespace Vulnerator.Model.DataAccess
                 sqliteCommand.Parameters.Add(new SQLiteParameter("Type", cci.Type));
                 sqliteCommand.Parameters.Add(new SQLiteParameter("Status", cci.Status));
                 sqliteCommand.Parameters.Add(new SQLiteParameter("Version", versionDateTime));
-                sqliteCommand.CommandText = "INSERT INTO Ccis VALUES (NULL, @CCI, @Definition, @Type, @Status, @Version);";
-                sqliteCommand.ExecuteNonQuery();
+                sqliteCommand.CommandText =
+                    "UPDATE CCIs SET CCI_Definition = @Definition, CCI_Type = @Type, CCI_Status = @Status, Version = @Version " +
+                    "WHERE CCI_Number = @CCI;";
+                if (sqliteCommand.ExecuteNonQuery() == 0)
+                {
+                    sqliteCommand.CommandText =
+                        "INSERT INTO CCIs VALUES (NULL, @CCI, @Definition, @Type, @Status, @Version);";
+                    sqliteCommand.ExecuteNonQuery();
+                }
                 sqliteCommand.Parameters.Clear();
             }
             catch (Exception exception)
@@ -282,7 +345,7 @@ namespace Vulnerator.Model.DataAccess
                 Dictionary<string, string> ciaTriadFlags = new Dictionary<string, string>();
 
                 using (Stream stream =
-                    assembly.GetManifestResourceStream("Vulnerator.Resources.RawData.NIST_800-53_CNSS_Mapping.xml"))
+                    assembly.GetManifestResourceStream(RawDataBase + "NIST_800-53r5_Controls.xml"))
                 {
                     using (XmlReader xmlReader = XmlReader.Create(stream))
                     {
@@ -380,18 +443,26 @@ namespace Vulnerator.Model.DataAccess
                     sqliteCommand.Parameters.Add(new SQLiteParameter("SupplementalGuidance", string.Empty));
                 }
 
-                if (sqliteCommand.Parameters.Contains("Enhancement"))
+                string enhancementValue = sqliteCommand.Parameters.Contains("Enhancement") ? "@Enhancement" : "NULL";
+                string enhancementMatch = sqliteCommand.Parameters.Contains("Enhancement")
+                    ? "ControlEnhancement = @Enhancement"
+                    : "ControlEnhancement IS NULL";
+
+                sqliteCommand.CommandText =
+                    "UPDATE NIST_Controls SET ControlTitle = @Title, ControlText = @Text, SupplementalGuidance = @SupplementalGuidance " +
+                    $"WHERE ControlFamily = @Family AND ControlNumber = @Number AND {enhancementMatch};";
+                if (sqliteCommand.ExecuteNonQuery() == 0)
                 {
                     sqliteCommand.CommandText =
-                        "INSERT INTO NIST_Controls VALUES (NULL, @Family, @Number, @Enhancement, @Title, @Text, @SupplementalGuidance, NULL);";
-                }
-                else
-                {
-                    sqliteCommand.CommandText =
-                        "INSERT INTO NIST_Controls VALUES (NULL, @Family, @Number, NULL, @Title, @Text, @SupplementalGuidance, NULL);";
+                        $"INSERT INTO NIST_Controls VALUES (NULL, @Family, @Number, {enhancementValue}, @Title, @Text, @SupplementalGuidance, NULL);";
+                    sqliteCommand.ExecuteNonQuery();
                 }
 
-                sqliteCommand.ExecuteNonQuery();
+                sqliteCommand.CommandText =
+                    "SELECT NIST_Control_ID FROM NIST_Controls " +
+                    $"WHERE ControlFamily = @Family AND ControlNumber = @Number AND {enhancementMatch} ORDER BY NIST_Control_ID LIMIT 1;";
+                sqliteCommand.Parameters.Add(new SQLiteParameter("NIST_Control_ID",
+                    sqliteCommand.ExecuteScalar().ToString()));
             }
             catch (Exception exception)
             {
@@ -404,9 +475,7 @@ namespace Vulnerator.Model.DataAccess
         {
             try
             {
-                sqliteCommand.CommandText = "SELECT last_insert_rowid();";
-                sqliteCommand.Parameters.Add(new SQLiteParameter("NIST_Control_ID",
-                    sqliteCommand.ExecuteScalar().ToString()));
+                // NIST_Control_ID was resolved by InsertNistControls (insert or update)
                 foreach (string key in ciaTriadFlags.Keys)
                 {
                     // Skip item or set IsNss Flag, as applicable
@@ -472,7 +541,7 @@ namespace Vulnerator.Model.DataAccess
             {
                 LogWriter.LogStatusUpdate("Verifying NIST Controls are mapped to CCIs.");
                 using (Stream stream =
-                    assembly.GetManifestResourceStream("Vulnerator.Resources.RawData.NIST_800-53_CCI_Mapping.xml"))
+                    assembly.GetManifestResourceStream(RawDataBase + "NIST_800-53r5_CCI_Mapping.xml"))
                 {
                     using (XmlReader xmlReader = XmlReader.Create(stream))
                     {
@@ -495,7 +564,7 @@ namespace Vulnerator.Model.DataAccess
                                         }
 
                                         sqliteCommand.Parameters.Add(new SQLiteParameter("DoD_AP",
-                                            xmlReader.GetAttribute("dod-ap")?.Replace(" )", ")")));
+                                            (object)xmlReader.GetAttribute("dod-ap")?.Replace(" )", ")") ?? DBNull.Value));
                                         sqliteCommand.Parameters.Add(new SQLiteParameter("ControlIndicator",
                                             xmlReader.GetAttribute("indicator")));
                                         sqliteCommand.Parameters.Add(new SQLiteParameter("CCI",
@@ -505,8 +574,11 @@ namespace Vulnerator.Model.DataAccess
                                     case "ImplementationGuidance":
                                     {
                                         string implementationGuidance = xmlReader.ObtainCurrentNodeValue(false).ToString();
-                                        implementationGuidance =
-                                            implementationGuidance.SanitizeNewLines().InsertStartingBullet();
+                                        if (!string.IsNullOrWhiteSpace(implementationGuidance))
+                                        {
+                                            implementationGuidance =
+                                                implementationGuidance.SanitizeNewLines().InsertStartingBullet();
+                                        }
                                         sqliteCommand.Parameters.Add(new SQLiteParameter("ImplementationGuidance",
                                             implementationGuidance));
                                         break;
@@ -514,7 +586,10 @@ namespace Vulnerator.Model.DataAccess
                                     case "AssessmentProcedures":
                                     {
                                         string ap = xmlReader.ObtainCurrentNodeValue(false).ToString();
-                                        ap = ap.SanitizeNewLines().InsertStartingBullet();
+                                        if (!string.IsNullOrWhiteSpace(ap))
+                                        {
+                                            ap = ap.SanitizeNewLines().InsertStartingBullet();
+                                        }
                                         sqliteCommand.Parameters.Add(new SQLiteParameter("AP_Text", ap));
                                         break;
                                     }
@@ -558,73 +633,13 @@ namespace Vulnerator.Model.DataAccess
             }
         }
 
-        private void MapControlsToCnssOverlays(SQLiteCommand sqliteCommand)
-        {
-            try
-            {
-                LogWriter.LogStatusUpdate("Verifying NIST Controls are mapped to CNSS Overlays.");
-                Dictionary<string, string> overlayApplicability = new Dictionary<string, string>();
-                using (Stream stream =
-                    assembly.GetManifestResourceStream(
-                        "Vulnerator.Resources.RawData.NIST_800-53_CNSS-Overlay_Mapping.xml"))
-                {
-                    using (XmlReader xmlReader = XmlReader.Create(stream))
-                    {
-                        while (xmlReader.Read())
-                        {
-                            if (xmlReader.IsStartElement())
-                            {
-                                switch (xmlReader.Name)
-                                {
-                                    case "Control":
-                                    {
-                                        sqliteCommand.Parameters.Add(new SQLiteParameter("Family",
-                                            xmlReader.GetAttribute("family")));
-                                        sqliteCommand.Parameters.Add(new SQLiteParameter("Number",
-                                            xmlReader.GetAttribute("number")));
-                                        if (!xmlReader.GetAttribute("enhancement").Equals("0"))
-                                        {
-                                            sqliteCommand.Parameters.Add(new SQLiteParameter("Enhancement",
-                                                xmlReader.GetAttribute("enhancement")));
-                                        }
-
-                                        break;
-                                    }
-                                    default:
-                                    {
-                                        overlayApplicability.Add(xmlReader.Name.Replace("-", " "),
-                                            xmlReader.ObtainCurrentNodeValue(false).ToString());
-                                        break;
-                                    }
-                                }
-                            }
-                            else if (xmlReader.NodeType == XmlNodeType.EndElement && xmlReader.Name.Equals("Control"))
-                            {
-                                // TODO: Finish this
-                                if (sqliteCommand.Parameters.Contains("enhancement"))
-                                { }
-                                else
-                                { }
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception exception)
-            {
-                LogWriter.LogError("Unable to map NIST controls to CNSS 1523 Overlays.");
-                throw exception;
-            }
-        }
-
         private void MapControlsToMonitoringFrequency(SQLiteCommand sqliteCommand)
         {
             try
             {
                 LogWriter.LogStatusUpdate("Verifying NIST Controls are mapped to monitoring frequencies.");
                 using (Stream stream =
-                    assembly.GetManifestResourceStream(
-                        "Vulnerator.Resources.RawData.NIST_800-53_MonitoringFrequency_Mapping.xml"))
+                    assembly.GetManifestResourceStream(RawDataBase + "NIST_800-53r5_MonitoringFrequency.xml"))
                 {
                     using (XmlReader xmlReader = XmlReader.Create(stream))
                     {

@@ -1160,10 +1160,9 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources\RawData\NIST_800-53_CCI_Mapping.xml" />
-    <EmbeddedResource Include="Resources\RawData\NIST_800-53_CNSS-Overlay_Mapping.xml" />
-    <EmbeddedResource Include="Resources\RawData\NIST_800-53_CNSS_Mapping.xml" />
-    <EmbeddedResource Include="Resources\RawData\NIST_800-53_MonitoringFrequency_Mapping.xml" />
+    <EmbeddedResource Include="Resources\RawData\NIST_800-53r5_CCI_Mapping.xml" />
+    <EmbeddedResource Include="Resources\RawData\NIST_800-53r5_Controls.xml" />
+    <EmbeddedResource Include="Resources\RawData\NIST_800-53r5_MonitoringFrequency.xml" />
     <EmbeddedResource Include="Resources\RawData\U_CCI_List.xml">
       <SubType>Designer</SubType>
     </EmbeddedResource>
