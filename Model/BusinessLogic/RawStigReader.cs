@@ -136,10 +136,11 @@ namespace Vulnerator.Model.BusinessLogic
 
         private static void SetSource(SQLiteCommand sqliteCommand, XElement benchmark, string fileName)
         {
-            foreach (string parameter in SourceParameters)
+            // A parameter keeps the type of the first value it is given: the date is cleared with null, never "", or
+            // every later date would be stored as text instead of the ticks used everywhere else.
+            foreach (string parameter in SourceParameters.Where(p => p != "PublishedDate"))
             { sqliteCommand.Parameters[parameter].Value = string.Empty; }
-            // A parameter keeps the type of the first value it is given: clear the date with null, not "", or every
-            // later date would be stored as text instead of the ticks used everywhere else.
+            sqliteCommand.Parameters["PublishedDate"].DbType = System.Data.DbType.DateTime;
             sqliteCommand.Parameters["PublishedDate"].Value = DBNull.Value;
             sqliteCommand.Parameters["FindingType"].Value = "CKL";
             sqliteCommand.Parameters["ModifiedDate"].Value = DateTime.Now.ToShortDateString();
