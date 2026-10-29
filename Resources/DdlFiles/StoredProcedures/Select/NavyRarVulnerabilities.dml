@@ -4,8 +4,8 @@ SELECT UF.Vulnerability_ID                                                      
        V.VulnerabilityDescription,
        GROUP_CONCAT(DISTINCT CCI_Number)                                                    as CCI,
        GROUP_CONCAT(DISTINCT
-                    NC.ControlFamily || '-' || NC.ControlNumber || '.' ||
-                    NC.ControlEnhancement)                                                  as NIST_Controls,
+                    NC.ControlFamily || '-' || NC.ControlNumber ||
+                    COALESCE('(' || NC.ControlEnhancement || ')', ''))                                                  as NIST_Controls,
        GROUP_CONCAT(DISTINCT ConfidentialityLevel)                                          as ConfidentialityLevel,
        GROUP_CONCAT(DISTINCT IntegrityLevel)                                                as IntegrityLevel,
        GROUP_CONCAT(DISTINCT AvailabilityLevel)                                             as AvailabilityLevel,

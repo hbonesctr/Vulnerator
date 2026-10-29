@@ -307,7 +307,7 @@ namespace Vulnerator.Model.BusinessLogic
                                 }
                             case "cdf:ident":
                                 {
-                                    if (xmlReader.GetAttribute("system").Equals("http://iase.disa.mil/cci"))
+                                    if (ExtensionMethods.IsCciIdentSystem(xmlReader.GetAttribute("system")))
                                     { ccis.Add(xmlReader.ObtainCurrentNodeValue(true).ToString().Replace("CCI-", string.Empty)); }
                                     break;
                                 }

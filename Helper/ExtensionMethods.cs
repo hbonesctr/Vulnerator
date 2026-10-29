@@ -309,6 +309,20 @@ namespace Vulnerator.Helper
             }
         }
 
+        /// <summary>
+        /// True when an XCCDF ident "system" URI denotes a DISA CCI. DISA moved from
+        /// http://iase.disa.mil/cci to http://cyber.mil/cci; both are accepted. Null-safe.
+        /// </summary>
+        public static bool IsCciIdentSystem(string system)
+        {
+            if (string.IsNullOrWhiteSpace(system))
+            { return false; }
+            string normalized = system.Trim().TrimEnd('/');
+            return normalized.Equals("http://iase.disa.mil/cci", StringComparison.OrdinalIgnoreCase) ||
+                   normalized.Equals("http://cyber.mil/cci", StringComparison.OrdinalIgnoreCase) ||
+                   normalized.Equals("https://cyber.mil/cci", StringComparison.OrdinalIgnoreCase);
+        }
+
         public static string InsertStartingBullet(this string _string)
         {
             try

@@ -270,7 +270,7 @@ namespace Vulnerator.Model.BusinessLogic
                                 }
                             case "ident":
                                 {
-                                    if (xmlReader.GetAttribute("system").Equals("http://iase.disa.mil/cci"))
+                                    if (ExtensionMethods.IsCciIdentSystem(xmlReader.GetAttribute("system")))
                                     { ccis.Add(xmlReader.ObtainCurrentNodeValue(false).ToString().Replace("CCI-", string.Empty)); }
                                     break;
                                 }

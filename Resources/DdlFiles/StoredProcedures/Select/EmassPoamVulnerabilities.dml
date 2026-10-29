@@ -3,8 +3,8 @@
        V.VulnerabilityTitle,
        V.VulnerabilityDescription,
        GROUP_CONCAT(DISTINCT
-                    NC.ControlFamily || '-' || NC.ControlNumber || '.' ||
-                    NC.ControlEnhancement)                                    as NIST_Controls,
+                    NC.ControlFamily || '-' || NC.ControlNumber ||
+                    COALESCE('(' || NC.ControlEnhancement || ')', ''))                                    as NIST_Controls,
        GROUP_CONCAT(DISTINCT CI.CCI_Number)                                   as CCIs,
        GROUP_CONCAT(DISTINCT UF.InstanceIdentifier)                           as InstanceIdentifier,
        V.UniqueVulnerabilityIdentifier,
