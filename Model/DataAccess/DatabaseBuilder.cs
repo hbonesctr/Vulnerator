@@ -104,10 +104,10 @@ namespace Vulnerator.Model.DataAccess
 
         /// <summary>
         /// Version of the embedded NIST / CCI reference data, stored in the database's PRAGMA user_version.
-        /// 5 = NIST SP 800-53 Revision 5 (DISA CCI list 2022-03-09); 6 = DISA CCI list 2026-07-14. Raise this whenever the files in Resources/RawData are regenerated
+        /// 5 = NIST SP 800-53 Revision 5 (DISA CCI list 2022-03-09); 6 = DISA CCI list 2026-07-14; 7 = CNSSI 1253 baselines. Raise this whenever the files in Resources/RawData are regenerated
         /// so existing databases reload them on next launch.
         /// </summary>
-        public const int ReferenceDataVersion = 6;
+        public const int ReferenceDataVersion = 7;
 
         private const string RawDataBase = "Vulnerator.Resources.RawData.";
 

@@ -13,6 +13,9 @@ Inputs (all public, authoritative sources):
   --rev4-frequency
                The previous Rev 4 monitoring-frequency file; carried forward for controls that
                still exist in Rev 5
+  --cnss       (optional) cnssi1253_baselines.csv: CNSSI 1253 confidentiality / integrity /
+               availability baselines per control (from an eMASS "Export Controls" workbook).
+               When given, these replace the SP 800-53B Low/Moderate/High flags.
 
 Outputs (written to --out, normally Resources/RawData):
   U_CCI_List.xml                         copy of the DISA CCI list
@@ -27,6 +30,7 @@ Usage:
 """
 import argparse
 import json
+import os
 import re
 import shutil
 import sys
@@ -129,6 +133,21 @@ def cci_rev5_pairs(cci_path):
     return version, pairs, skipped
 
 
+def read_cnss(path):
+    """cnssi1253_baselines.csv -> {(family, number, enhancement): {"Confidentiality": {"High", ...}, ...}}"""
+    import csv
+    result = {}
+    with open(path, encoding="utf-8-sig", newline="") as f:
+        for row in csv.DictReader(f):
+            m = re.fullmatch(r"([A-Z]{2})-(\d+)(?:\((\d+)\))?", row["control"].strip())
+            if not m:
+                continue
+            key = (m.group(1), int(m.group(2)), int(m.group(3) or 0))
+            result[key] = {triad.capitalize(): {v for v in row[triad].split(";") if v}
+                           for triad in ("confidentiality", "integrity", "availability")}
+    return result
+
+
 def rev4_guidance(path):
     guidance = {}
     for pair in ET.parse(path).getroot().iter("Pair"):
@@ -150,7 +169,9 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     for name in ("cci", "catalog", "low", "moderate", "high", "rev4-cci-mapping", "rev4-frequency", "out"):
         ap.add_argument(f"--{name}", required=True)
+    ap.add_argument("--cnss")
     args = ap.parse_args()
+    cnss = read_cnss(args.cnss) if args.cnss else None
 
     with open(args.catalog, encoding="utf-8") as f:
         catalog = json.load(f)["catalog"]
@@ -158,8 +179,10 @@ def main():
     low, moderate, high = baseline_ids(args.low), baseline_ids(args.moderate), baseline_ids(args.high)
 
     controls = {}
+    cnss_hits = [0]
     out = ['<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',
-           f'<!-- NIST SP 800-53 Rev 5 (OSCAL catalog {escape(catalog_version)}); Low/Moderate/High flags from SP 800-53B baselines -->',
+           f'<!-- NIST SP 800-53 Rev 5 (OSCAL catalog {escape(catalog_version)}); '
+           + ('confidentiality / integrity / availability flags from CNSSI 1253 baselines -->' if cnss else 'Low/Moderate/High flags from SP 800-53B baselines -->'),
            '<Controls xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">']
     for control in walk_controls(catalog):
         if is_withdrawn(control):
@@ -181,12 +204,18 @@ def main():
         flag = {"high": cid in low or cid in moderate or cid in high,
                 "moderate": cid in low or cid in moderate,
                 "low": cid in low}
-        attrs = " ".join(f'{level}="{"true" if flag[level] else "false"}"' for level in ("high", "moderate", "low"))
         out.append(f'  <Control family="{key[0]}" number="{key[1]}" enhancement="{key[2]}">')
         out.append(f"    <Title>{escape(title)}</Title>")
         out.append(f"    <Text>{escape(text)}</Text>")
         out.append(f"    <SupplementalGuidance>{escape(discussion)}</SupplementalGuidance>")
         for triad in ("Confidentiality", "Integrity", "Availability"):
+            if cnss is not None:
+                levels = cnss.get(key, {}).get(triad, set())
+                triad_flag = {level: level.capitalize() in levels for level in ("high", "moderate", "low")}
+                cnss_hits[0] += 1 if key in cnss else 0
+            else:
+                triad_flag = flag
+            attrs = " ".join(f'{level}="{"true" if triad_flag[level] else "false"}"' for level in ("high", "moderate", "low"))
             out.append(f"    <{triad} {attrs} />")
         out.append("  </Control>")
     out.append("</Controls>")
@@ -227,9 +256,13 @@ def main():
     with open(f"{args.out}/NIST_800-53r5_MonitoringFrequency.xml", "w", encoding="utf-8", newline="\r\n") as f:
         f.write("\n".join(out) + "\n")
 
-    shutil.copyfile(args.cci, f"{args.out}/U_CCI_List.xml")
+    target = f"{args.out}/U_CCI_List.xml"
+    if not (os.path.exists(target) and os.path.samefile(args.cci, target)):
+        shutil.copyfile(args.cci, target)
 
     print(f"Rev 5 catalog {catalog_version}: {len(controls)} active controls and enhancements")
+    if cnss is not None:
+        print(f"CNSSI 1253 baselines applied to {cnss_hits[0] // 3} of {len(controls)} controls")
     print(f"CCI list {cci_version}: {len(pairs)} Rev 5 references, {len(pairs) - len(missing)} mapped, "
           f"{len(missing)} to unknown/withdrawn controls, {len(skipped)} unparseable indexes")
     print(f"DoD guidance carried forward for {carried} pairs; monitoring frequency kept for {kept} controls")
