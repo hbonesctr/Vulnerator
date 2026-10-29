@@ -49,4 +49,5 @@ VALUES (NULL,
         @WebDB_Instance,
         @Classification,
         @CVSS_EnvironmentalScore,
-        @CVSS_EnvironmentalVector);
+        @CVSS_EnvironmentalVector,
+        NULL);
