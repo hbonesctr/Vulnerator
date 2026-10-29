@@ -207,7 +207,8 @@ namespace Vulnerator.Model.BusinessLogic
             List<string> outdated = databaseInterface.SelectOutdatedVulnerabilities(sqliteCommand, false);
             if (outdated.Count > 0)
             {
-                SQLiteParameter updatedStatus = sqliteCommand.Parameters.Add(new SQLiteParameter("UpdatedStatus", "Completed"));
+                SQLiteParameter updatedStatus = new SQLiteParameter("UpdatedStatus", "Completed");
+                sqliteCommand.Parameters.Add(updatedStatus);
                 SQLiteParameter findingId = sqliteCommand.Parameters["UniqueFinding_ID"];
                 object previous = findingId.Value;
                 foreach (string id in outdated)

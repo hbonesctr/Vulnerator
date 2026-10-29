@@ -28,7 +28,14 @@ jobs:
         run: nuget restore Vulnerator_v6.sln
 
       - name: Build (Release)
-        run: msbuild Vulnerator_v6.sln /p:Configuration=Release /p:Platform="Any CPU" /m /v:minimal
+        shell: pwsh
+        # Compiler errors are re-emitted as annotations so they show on the run page and through the checks API.
+        run: |
+          $output = & msbuild Vulnerator_v6.sln /p:Configuration=Release /p:Platform="Any CPU" /m /v:minimal 2>&1
+          $code = $LASTEXITCODE
+          $output | ForEach-Object { Write-Host $_ }
+          $output | Where-Object { $_ -match ': error ' } | Select-Object -Unique -First 20 | ForEach-Object { Write-Host ('::error::' + ($_ -replace '^.*\\([^\\]+\.cs)', '$1')) }
+          exit $code
 
       - name: Test checklist import (CKL and CKLB)
         shell: cmd

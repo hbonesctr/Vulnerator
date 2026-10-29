@@ -51,9 +51,24 @@ namespace Vulnerator.Model.BusinessLogic
                     LogWriter.LogError($"'{file.FileName}' is in use; please close any open instances and try again.");
                     return "Failed; File In Use";
                 }
+                return ReadAcasNessus(file, groupName, () => System.IO.File.OpenRead(file.FilePath));
+            }
+            catch (Exception exception)
+            {
+                string error = $"Unable to process ACAS Nessus file '{file.FileName}'";
+                LogWriter.LogErrorWithDebug(error, exception);
+                return "Failed; See Log";
+            }
+        }
+
+        /// <summary>Reads .nessus (v2) content from a stream; the ACAS CSV reader passes converted CSV rows here.</summary>
+        public string ReadAcasNessus(Object.File file, string groupName, Func<System.IO.Stream> openContent)
+        {
+            try
+            {
                 _groupName = groupName;
                 fileName = file.FileName;
-                ParseNessusWithXmlReader(file);
+                ParseNessusWithXmlReader(file, openContent);
 
                 return "Processed";
             }
@@ -65,7 +80,7 @@ namespace Vulnerator.Model.BusinessLogic
             }
         }
 
-        private void ParseNessusWithXmlReader(Object.File file)
+        private void ParseNessusWithXmlReader(Object.File file, Func<System.IO.Stream> openContent)
         {
             try
             {
@@ -80,7 +95,8 @@ namespace Vulnerator.Model.BusinessLogic
                         sqliteCommand.Parameters["GroupName"].Value = string.IsNullOrWhiteSpace(_groupName) ? "All" : _groupName;
                         databaseInterface.InsertParsedFileSource(sqliteCommand, file);
                         XmlReaderSettings xmlReaderSettings = GenerateXmlReaderSettings();
-                        using (XmlReader xmlReader = XmlReader.Create(file.FilePath, xmlReaderSettings))
+                        using (System.IO.Stream content = openContent())
+                        using (XmlReader xmlReader = XmlReader.Create(content, xmlReaderSettings))
                         {
                             while (xmlReader.Read())
                             {

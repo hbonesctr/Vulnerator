@@ -394,6 +394,29 @@ try {
     $benchmarkOnly = New-Object Vulnerator.Model.Object.File ('benchmark', 'SCAP Benchmark', 'Ready', (Join-Path $stigFixtures 'U_Library_Test_STIG_V2R4_Manual-xccdf.xml'), 'True')
     $result = (New-Object Vulnerator.Model.BusinessLogic.XccdfReader).ReadXccdfFile($benchmarkOnly, 'TestGroup')
     Assert-That ($result -eq 'Failed; No XCCDF Results') ('a benchmark without results points to the STIG library (got "' + $result + '")')
+
+    # --- ACAS / Tenable.sc CSV -------------------------------------------------------------------
+    $csvPath = Join-Path $fixtures 'acas-vulnerability-detail.csv'
+    $csvFile = New-Object Vulnerator.Model.Object.File ('acas-vulnerability-detail', 'ACAS - CSV', 'Ready', $csvPath, 'True')
+    $csvReader = New-Object Vulnerator.Model.BusinessLogic.AcasCsvReader
+    $result = $csvReader.ReadAcasCsvFile($csvFile, 'TestGroup')
+    Assert-That ($result -eq 'Processed' -and $csvReader.RowsRead -eq 4) ('Tenable.sc CSV imports (multi-line quoted output, control character) (got "' + $result + '", ' + $csvReader.RowsRead + ' rows)')
+    $critical = [string](Get-Scalar $statusSql @{ '@h' = 'csvhost01.example.test'; '@v' = '97833' })
+    $info = [string](Get-Scalar $statusSql @{ '@h' = 'csvhost01.example.test'; '@v' = '19506' })
+    $medium = [string](Get-Scalar $statusSql @{ '@h' = '10.20.30.41'; '@v' = '42873' })
+    Assert-That ($critical -eq 'Ongoing' -and $info -eq 'Completed' -and $medium -eq 'Ongoing') ('CSV statuses match .nessus handling; host without a name filed by IP (got ' + $critical + ' / ' + $info + ' / ' + $medium + ')')
+    $csvVuln = [string](Get-Scalar "SELECT PrimaryRawRiskIndicator || '|' || VulnerabilityVersion || '|' || PublishedDate FROM Vulnerabilities WHERE UniqueVulnerabilityIdentifier = '97833'")
+    Assert-That ($csvVuln.StartsWith('I|1|2017/03/14')) ('CSV plugin risk, revision and dates read (got "' + $csvVuln + '")')
+    $csvHost = [string](Get-Scalar "SELECT NetBIOS || '|' || ScanIP FROM Hardware WHERE DiscoveredHostName = 'csvhost01.example.test'")
+    Assert-That ($csvHost -eq 'CSVHOST01|10.20.30.40') ('NetBIOS domain prefix dropped; scan IP kept (got "' + $csvHost + '")')
+    $csvGroup = [int](Get-Scalar "SELECT COUNT(*) FROM HardwareGroups HG JOIN Hardware H ON HG.Hardware_ID = H.Hardware_ID JOIN Groups G ON HG.Group_ID = G.Group_ID WHERE H.DiscoveredHostName = 'csvhost01.example.test' AND G.GroupName = 'TestGroup'")
+    Assert-That ($csvGroup -eq 1) 'CSV hosts placed in the selected group'
+    $output = [string](Get-Scalar "SELECT UF.ToolGeneratedOutput FROM UniqueFindings UF JOIN Vulnerabilities V ON UF.Vulnerability_ID = V.Vulnerability_ID WHERE V.UniqueVulnerabilityIdentifier = '97833'")
+    Assert-That ($output.StartsWith('The remote host is missing a "synthetic" update,') -and -not $output.StartsWith('Plugin Output')) ('plugin output kept without the "Plugin Output:" prefix (got "' + $output + '")')
+    $notCsv = Join-Path $workDir 'not-acas.csv'
+    [System.IO.File]::WriteAllText($notCsv, "Name,Value`r`nA,1`r`n")
+    $result = (New-Object Vulnerator.Model.BusinessLogic.AcasCsvReader).ReadAcasCsvFile((New-Object Vulnerator.Model.Object.File ('not-acas', 'ACAS - CSV', 'Ready', $notCsv, 'True')), 'TestGroup')
+    Assert-That ($result -eq 'Failed; Not An ACAS CSV') ('a CSV without plugin / host columns is refused clearly (got "' + $result + '")')
     $notIgap = Join-Path $workDir 'not-igap.xlsx'
     [System.IO.File]::WriteAllText($notIgap, 'not a workbook')
     $bad = [Vulnerator.Model.BusinessLogic.EmassAssessmentProcedureImporter]::Import($notIgap)

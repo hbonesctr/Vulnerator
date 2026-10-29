@@ -43,11 +43,8 @@ namespace Vulnerator.Model.BusinessLogic
                 { tables = ReadWorkbook(path); }
                 else
                 {
-                    string text;
-                    using (StreamReader reader = new StreamReader(path, System.Text.Encoding.UTF8, true))
-                    { text = reader.ReadToEnd(); }
                     // Comma, tab or semicolon: whichever parse yields the header row wins.
-                    tables = new[] { ',', '\t', ';' }.Select(d => ReadDelimited(text, d)).ToList();
+                    tables = DelimitedText.ParseCandidates(DelimitedText.ReadAllText(path)).ToList();
                 }
             }
             catch (Exception exception)
@@ -142,24 +139,11 @@ namespace Vulnerator.Model.BusinessLogic
             return command.ExecuteNonQuery();
         }
 
-        private static string Normalize(string text)
-        { return new string((text ?? string.Empty).Where(char.IsLetterOrDigit).Select(char.ToLowerInvariant).ToArray()); }
-
-        /// <summary>Index of the first cell matching one of the names (in the names' order of preference), or -1.</summary>
         private static int Find(string[] row, string[] names)
-        {
-            foreach (string name in names)
-            {
-                string wanted = Normalize(name);
-                int index = Array.FindIndex(row, c => Normalize(c) == wanted);
-                if (index >= 0)
-                { return index; }
-            }
-            return -1;
-        }
+        { return DelimitedText.Find(row, names); }
 
         private static string Cell(string[] row, int index)
-        { return index >= 0 && index < row.Length ? row[index] ?? string.Empty : string.Empty; }
+        { return DelimitedText.Cell(row, index); }
 
         /// <summary>CCI numbers in a cell as stored in the CCIs table (six digits, no prefix): "CCI-000015", "CCI-15" or "000015".</summary>
         private static List<string> CciNumbers(string cell)
@@ -229,47 +213,6 @@ namespace Vulnerator.Model.BusinessLogic
                 }
             }
             return tables;
-        }
-
-        /// <summary>Rows of delimited text (RFC 4180 quoting; quoted fields may span lines).</summary>
-        private static List<string[]> ReadDelimited(string text, char delimiter)
-        {
-            List<string[]> rows = new List<string[]>();
-            List<string> fields = new List<string>();
-            System.Text.StringBuilder field = new System.Text.StringBuilder();
-            bool quoted = false;
-            for (int i = 0; i < text.Length; i++)
-            {
-                char c = text[i];
-                if (quoted)
-                {
-                    if (c == '"' && i + 1 < text.Length && text[i + 1] == '"')
-                    { field.Append('"'); i++; }
-                    else if (c == '"')
-                    { quoted = false; }
-                    else
-                    { field.Append(c); }
-                }
-                else if (c == '"' && field.Length == 0)
-                { quoted = true; }
-                else if (c == delimiter)
-                { fields.Add(field.ToString()); field.Clear(); }
-                else if (c == '\r' || c == '\n')
-                {
-                    if (c == '\r' && i + 1 < text.Length && text[i + 1] == '\n')
-                    { i++; }
-                    fields.Add(field.ToString()); field.Clear();
-                    rows.Add(fields.ToArray()); fields.Clear();
-                }
-                else
-                { field.Append(c); }
-            }
-            if (field.Length > 0 || fields.Count > 0)
-            {
-                fields.Add(field.ToString());
-                rows.Add(fields.ToArray());
-            }
-            return rows;
         }
 
         private static string CellText(Cell cell, SharedStringItem[] sharedStrings)
