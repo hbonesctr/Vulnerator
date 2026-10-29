@@ -223,6 +223,16 @@ try {
     $rarPath = Join-Path $OutDir 'sample-Risk-Assessment-Report.xlsx'
     $rarResult = (New-Object Vulnerator.Model.BusinessLogic.Reports.OpenXmlRiskAssessmentReportCreator).CreateRiskAssessmentReport($rarPath)
     Assert-That (($rarResult -like '*successful*') -and [System.IO.File]::Exists($rarPath)) ('Risk Assessment Report export runs (got "' + $rarResult + '")')
+
+    # --- Checklists without a host name (e.g. blank STIG baselines) ----------------------------
+    $before = Get-Counts
+    $result = Import-Checklist (Join-Path $fixtures 'blank-host.ckl') 'TestGroup'
+    $after = Get-Counts
+    Assert-That ($result -eq 'Failed; No Host Identified') ('checklist with no host, FQDN or IP fails with a clear status (got "' + $result + '")')
+    Assert-That (($after['UniqueFindings'] -eq $before['UniqueFindings']) -and ($after['Vulnerabilities'] -eq $before['Vulnerabilities'])) 'a checklist with no host writes nothing'
+    $result = Import-Checklist (Join-Path $fixtures 'fqdn-only.ckl') 'TestGroup'
+    $fqdnHost = [int](Get-Scalar "SELECT COUNT(*) FROM Hardware WHERE DiscoveredHostName = 'testhost03.example.test'")
+    Assert-That (($result -eq 'Processed') -and ($fqdnHost -eq 1)) ('checklist with only an FQDN imports under the FQDN (got "' + $result + '")')
 }
 catch {
     $script:failures.Add('Unhandled error: ' + $_.Exception.ToString())

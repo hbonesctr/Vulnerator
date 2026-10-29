@@ -264,6 +264,10 @@ namespace Vulnerator.Model.BusinessLogic
             { return fallback; }
             if (value is bool)
             { return (bool)value ? "true" : "false"; }
+            // check_content_ref is an object, e.g. { "href": "X_STIG.xml", "name": "M" }; CKL carries its name.
+            Dictionary<string, object> obj = value as Dictionary<string, object>;
+            if (obj != null)
+            { return Text(Get(obj, "name"), fallback); }
             if (value is IFormattable)
             { return ((IFormattable)value).ToString(null, System.Globalization.CultureInfo.InvariantCulture); }
             string text = value.ToString();

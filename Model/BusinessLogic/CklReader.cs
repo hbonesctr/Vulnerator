@@ -93,6 +93,11 @@ namespace Vulnerator.Model.BusinessLogic
                 }
                 return "Processed";
             }
+            catch (System.IO.InvalidDataException noHost)
+            {
+                LogWriter.LogError($"'{file.FileName}': {noHost.Message}");
+                return "Failed; No Host Identified";
+            }
             catch (Exception exception)
             {
                 string error = $"Unable to process CKL file '{file.FileName}'.";
@@ -109,6 +114,7 @@ namespace Vulnerator.Model.BusinessLogic
             {
                 object ip = string.Empty;
                 object mac = string.Empty;
+                object fqdn = string.Empty;
                 while (xmlReader.Read())
                 {
                     if (xmlReader.IsStartElement())
@@ -142,7 +148,8 @@ namespace Vulnerator.Model.BusinessLogic
                                 }
                             case "HOST_FQDN":
                                 {
-                                    sqliteCommand.Parameters["FQDN"].Value = xmlReader.ObtainCurrentNodeValue(true);
+                                    fqdn = xmlReader.ObtainCurrentNodeValue(true);
+                                    sqliteCommand.Parameters["FQDN"].Value = fqdn;
                                     break;
                                 }
                             case "TECH_AREA":
@@ -164,6 +171,21 @@ namespace Vulnerator.Model.BusinessLogic
                     }
                     else if (xmlReader.NodeType == XmlNodeType.EndElement && xmlReader.Name.Equals("ASSET"))
                     {
+                        // Findings must belong to a host. Blank checklists (e.g. a STIG baseline set) have no
+                        // host name; fall back to the FQDN, then the IP address, and otherwise stop cleanly
+                        // instead of failing on the host-to-group mapping.
+                        if (string.IsNullOrWhiteSpace(sqliteCommand.Parameters["DiscoveredHostName"].Value?.ToString()))
+                        {
+                            string fallback = !string.IsNullOrWhiteSpace(fqdn?.ToString()) ? fqdn.ToString().Trim()
+                                : (!string.IsNullOrWhiteSpace(ip?.ToString()) && !ip.Equals("IP") ? ip.ToString().Split(',')[0].Trim() : null);
+                            if (fallback == null)
+                            {
+                                throw new System.IO.InvalidDataException(
+                                    "the checklist has no host name, FQDN or IP address. Fill in the asset information in STIG Viewer, save, and import again.");
+                            }
+                            sqliteCommand.Parameters["DiscoveredHostName"].Value = fallback;
+                            sqliteCommand.Parameters["DisplayedHostName"].Value = fallback;
+                        }
                         sqliteCommand.Parameters["IsVirtualServer"].Value = "False";
                         databaseInterface.InsertHardware(sqliteCommand);
                         databaseInterface.MapHardwareToGroup(sqliteCommand);
