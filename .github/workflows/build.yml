@@ -50,6 +50,16 @@ jobs:
           if-no-files-found: ignore
           retention-days: 30
 
+      - name: Smoke-test Test-RealData.ps1 on the synthetic files
+        shell: cmd
+        timeout-minutes: 5
+        run: |
+          mkdir realdata-smoke
+          copy tools\tests\fixtures\multi-stig.ckl realdata-smoke\
+          copy tools\tests\fixtures\viewer3.cklb realdata-smoke\
+          copy tools\tests\fixtures\scan.nessus realdata-smoke\
+          powershell -NoProfile -ExecutionPolicy Bypass -File tools\tests\Test-RealData.ps1 -InputDir realdata-smoke -BinDir bin\Release
+
       - name: Add the real-data test script to the build
         run: Copy-Item tools/tests/Test-RealData.ps1 bin/Release/
 
