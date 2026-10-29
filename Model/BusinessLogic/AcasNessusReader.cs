@@ -146,6 +146,12 @@ namespace Vulnerator.Model.BusinessLogic
             string hostIp = xmlReader.GetAttribute("name");
             try
             {
+                // Each ReportHost starts clean: nothing from the previous host may carry over
+                // (a host without a hostname tag was otherwise filed under the previous host).
+                foreach (string hostParameter in new[] { "DiscoveredHostName", "DisplayedHostName", "FQDN", "NetBIOS",
+                    "ScanIP", "IP_Address", "MAC_Address", "OperatingSystem", "DiscoveredSoftwareName", "DisplayedSoftwareName" })
+                { sqliteCommand.Parameters[hostParameter].Value = string.Empty; }
+                ipAddress = string.Empty;
                 while (xmlReader.Read())
                 {
                     if (xmlReader.IsStartElement())
@@ -203,6 +209,25 @@ namespace Vulnerator.Model.BusinessLogic
                     }
                     else if (xmlReader.NodeType == XmlNodeType.EndElement && xmlReader.Name.Equals("HostProperties"))
                     {
+                        if (string.IsNullOrWhiteSpace(sqliteCommand.Parameters["DiscoveredHostName"].Value?.ToString()))
+                        {
+                            // No hostname tag: use the FQDN, then NetBIOS, then the scanned address.
+                            string fallback = new[]
+                            {
+                                sqliteCommand.Parameters["FQDN"].Value?.ToString(),
+                                sqliteCommand.Parameters["NetBIOS"].Value?.ToString(),
+                                ipAddress,
+                                hostIp
+                            }.FirstOrDefault(v => !string.IsNullOrWhiteSpace(v));
+                            sqliteCommand.Parameters["DiscoveredHostName"].Value = fallback;
+                            sqliteCommand.Parameters["DisplayedHostName"].Value = fallback;
+                        }
+                        if (string.IsNullOrWhiteSpace(ipAddress) && !string.IsNullOrWhiteSpace(hostIp))
+                        {
+                            ipAddress = hostIp;
+                            sqliteCommand.Parameters["IP_Address"].Value = hostIp;
+                            sqliteCommand.Parameters["ScanIP"].Value = hostIp;
+                        }
                         databaseInterface.InsertHardware(sqliteCommand);
                         databaseInterface.InsertAndMapIpAddress(sqliteCommand);
                         databaseInterface.MapHardwareToGroup(sqliteCommand);
@@ -351,8 +376,9 @@ namespace Vulnerator.Model.BusinessLogic
                             case "script_version":
                                 {
                                     string version = xmlReader.ObtainCurrentNodeValue(true).ToString();
-                                    sqliteCommand.Parameters["VulnerabilityVersion"].Value = version.Split('.')[0];
-                                    sqliteCommand.Parameters["VulnerabilityRelease"].Value = version.Split('.')[1];
+                                    string[] versionParts = version.Split('.');
+                                    sqliteCommand.Parameters["VulnerabilityVersion"].Value = versionParts[0];
+                                    sqliteCommand.Parameters["VulnerabilityRelease"].Value = versionParts.Length > 1 ? versionParts[1] : "0";
                                     Regex regex = new Regex(@"\D");
                                     sqliteCommand.Parameters["VulnerabilityRelease"].Value =
                                         regex.Replace(sqliteCommand.Parameters["VulnerabilityRelease"].Value.ToString(),
@@ -519,7 +545,7 @@ namespace Vulnerator.Model.BusinessLogic
             {
                 string rawOutput = sqliteCommand.Parameters["ToolGeneratedOutput"].Value.ToString();
                 string[] regexArray;
-                sqliteCommand.Parameters["Is_OS_Or_Firmware"].Value = "False";
+                sqliteCommand.Parameters["IsOS_OrFirmware"].Value = "False";
                 if (pluginId.Equals("22869"))
                 {
                     if (rawOutput.Contains("Debian"))
@@ -561,6 +587,32 @@ namespace Vulnerator.Model.BusinessLogic
                             continue;
                         }
                         line = line.Trim();
+                        if (pluginId.Equals("22869") && !rawOutput.Contains("Debian") && line.Contains("|"))
+                        {
+                            // RPM: "name-version-release|epoch install-date|vendor|..." - the last two dash-separated
+                            // parts of the first field are version and release (names may contain digits and dashes).
+                            string nvr = line.Split('|')[0].Trim();
+                            string[] parts = nvr.Split('-');
+                            string rpmName = parts.Length >= 3 ? string.Join("-", parts, 0, parts.Length - 2) : nvr;
+                            string rpmVersion = parts.Length >= 3 ? parts[parts.Length - 2] + "-" + parts[parts.Length - 1] : string.Empty;
+                            if (!string.IsNullOrWhiteSpace(rpmName))
+                            {
+                                // Software is keyed by DiscoveredSoftwareName; include the version so different
+                                // versions on different hosts stay separate rows.
+                                sqliteCommand.Parameters["DiscoveredSoftwareName"].Value =
+                                    string.IsNullOrEmpty(rpmVersion) ? rpmName : rpmName + " " + rpmVersion;
+                                sqliteCommand.Parameters["DisplayedSoftwareName"].Value = rpmName;
+                                sqliteCommand.Parameters["SoftwareVersion"].Value = rpmVersion;
+                                sqliteCommand.Parameters["DADMS_ID"].Value = DBNull.Value;
+                                sqliteCommand.Parameters["ReportInAccreditationGlobal"].Value = "False";
+                                sqliteCommand.Parameters["ApprovedForBaselineGlobal"].Value = "False";
+                                databaseInterface.InsertSoftware(sqliteCommand);
+                                databaseInterface.MapHardwareToSoftware(sqliteCommand);
+                            }
+                            foreach (string parameter in new[] { "DiscoveredSoftwareName", "DisplayedSoftwareName", "SoftwareVersion", "InstallDate" })
+                            { sqliteCommand.Parameters[parameter].Value = string.Empty; }
+                            continue;
+                        }
                         foreach (string expression in regexArray)
                         {
                             Regex regex = new Regex(expression);
@@ -667,7 +719,10 @@ namespace Vulnerator.Model.BusinessLogic
         {
             try
             {
-                sqliteCommand.Parameters["Status"].Value = "Ongoing";
+                // Informational plugins (risk factor None -> raw risk IV) are recorded, but as Completed, matching
+                // how Vulnerator treats "informational" results elsewhere; they are not open weaknesses.
+                sqliteCommand.Parameters["Status"].Value =
+                    "IV".Equals(sqliteCommand.Parameters["PrimaryRawRiskIndicator"].Value?.ToString()) ? "Completed" : "Ongoing";
                 sqliteCommand.Parameters.Add(new SQLiteParameter("UniqueFinding_ID", DBNull.Value));
                 sqliteCommand.Parameters["FirstDiscovered"].Value = firstDiscovered;
                 sqliteCommand.Parameters["DeltaAnalysisIsRequired"].Value = "False";

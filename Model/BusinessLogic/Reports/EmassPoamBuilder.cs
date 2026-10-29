@@ -195,6 +195,9 @@ namespace Vulnerator.Model.BusinessLogic.Reports
                 string status = ToEmassStatus(finding.RawStatus, finding.MitigatedStatus);
                 if (status == null || string.IsNullOrWhiteSpace(finding.VulnerabilityIdentifier))
                 { continue; }
+                // Informational results (raw risk IV, e.g. Nessus severity 0) are not weaknesses.
+                if ("IV".Equals((finding.RawRisk ?? string.Empty).Trim(), StringComparison.OrdinalIgnoreCase))
+                { continue; }
                 string key = status + "|" + finding.SourceName + "|" + finding.VulnerabilityIdentifier;
                 List<EmassPoamFinding> list;
                 if (!groups.TryGetValue(key, out list))

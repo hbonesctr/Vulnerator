@@ -233,6 +233,34 @@ try {
     $result = Import-Checklist (Join-Path $fixtures 'fqdn-only.ckl') 'TestGroup'
     $fqdnHost = [int](Get-Scalar "SELECT COUNT(*) FROM Hardware WHERE DiscoveredHostName = 'testhost03.example.test'")
     Assert-That (($result -eq 'Processed') -and ($fqdnHost -eq 1)) ('checklist with only an FQDN imports under the FQDN (got "' + $result + '")')
+
+    # --- ACAS / Nessus ------------------------------------------------------------------------
+    $nessusPath = Join-Path $fixtures 'scan.nessus'
+    $nessusFile = New-Object Vulnerator.Model.Object.File ('scan', 'ACAS - Nessus', 'Ready', $nessusPath, 'True')
+    $result = (New-Object Vulnerator.Model.BusinessLogic.AcasNessusReader).ReadAcasNessusFile($nessusFile, 'TestGroup')
+    Assert-That ($result -eq 'Processed') ('.nessus with software enumeration (plugin 22869) imports (got "' + $result + '")')
+    $ownerSql = 'SELECT H.DiscoveredHostName FROM UniqueFindings UF JOIN Hardware H ON UF.Hardware_ID = H.Hardware_ID ' +
+        'JOIN Vulnerabilities V ON UF.Vulnerability_ID = V.Vulnerability_ID WHERE V.UniqueVulnerabilityIdentifier = @v'
+    $owner = Get-Scalar $ownerSql @{ '@v' = '500002' }
+    Assert-That ($owner -eq 'nessushost02.example.test') ('host without a hostname tag keeps its own findings, named by FQDN (got "' + $owner + '")')
+    $highStatus = Get-Scalar 'SELECT UF.Status FROM UniqueFindings UF JOIN Vulnerabilities V ON UF.Vulnerability_ID = V.Vulnerability_ID WHERE V.UniqueVulnerabilityIdentifier = @v' @{ '@v' = '500001' }
+    $infoStatus = Get-Scalar 'SELECT UF.Status FROM UniqueFindings UF JOIN Vulnerabilities V ON UF.Vulnerability_ID = V.Vulnerability_ID WHERE V.UniqueVulnerabilityIdentifier = @v' @{ '@v' = '19506' }
+    Assert-That ($highStatus -eq 'Ongoing') ('High plugin is an open finding (got "' + $highStatus + '")')
+    Assert-That ($infoStatus -eq 'Completed') ('informational plugin is not an open finding (got "' + $infoStatus + '")')
+    $pyVersion = Get-Scalar "SELECT SoftwareVersion FROM Software WHERE DisplayedSoftwareName = 'python3-libs'"
+    Assert-That ($pyVersion -eq '3.9.18-3.el9') ('RPM with digits in its name parses name and version (got "' + $pyVersion + '")')
+    $mapped = [int](Get-Scalar ("SELECT COUNT(*) FROM SoftwareHardware SH JOIN Hardware H ON SH.Hardware_ID = H.Hardware_ID " +
+        "WHERE H.DiscoveredHostName = 'nessushost01'"))
+    Assert-That ($mapped -ge 3) ('enumerated packages are linked to their host (got ' + $mapped + ')')
+
+    $finding = New-Object Vulnerator.Model.BusinessLogic.Reports.EmassPoamFinding
+    $finding.VulnerabilityIdentifier = '19506'
+    $finding.RawRisk = 'IV'
+    $finding.RawStatus = 'Ongoing'
+    $findingList = New-Object 'System.Collections.Generic.List[Vulnerator.Model.BusinessLogic.Reports.EmassPoamFinding]'
+    $findingList.Add($finding)
+    $poamItems = $builder::Build($findingList, (New-Object Vulnerator.Model.BusinessLogic.Reports.EmassPoamOptions))
+    Assert-That ($poamItems.Count -eq 0) 'informational (raw risk IV) results never become POA&M items'
 }
 catch {
     $script:failures.Add('Unhandled error: ' + $_.Exception.ToString())
