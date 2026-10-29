@@ -27,6 +27,11 @@ jobs:
       - name: Build (Release)
         run: msbuild Vulnerator_v6.sln /p:Configuration=Release /p:Platform="Any CPU" /m /v:minimal
 
+      - name: Test checklist import (CKL and CKLB)
+        shell: powershell
+        timeout-minutes: 5
+        run: .\tools\tests\Test-ChecklistImport.ps1 -BinDir bin\Release
+
       - name: Upload build
         uses: actions/upload-artifact@v4
         with:

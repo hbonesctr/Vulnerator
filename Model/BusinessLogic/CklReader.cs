@@ -41,6 +41,7 @@ namespace Vulnerator.Model.BusinessLogic
         {
             try
             {
+                _groupName = groupName;
                 if (file.FilePath.IsFileInUse())
                 {
                     LogWriter.LogError($"'{file.FileName}' is in use; please close any open instances and try again.");
@@ -85,7 +86,8 @@ namespace Vulnerator.Model.BusinessLogic
                                 }
                             }
                         }
-                        databaseInterface.DeleteRemovedVulnerabilities(sqliteCommand);
+                        // No DeleteRemovedVulnerabilities here: a checklist is one host's results, not the
+                        // authoritative STIG library, so it must not remove library entries.
                     }
                     sqliteTransaction.Commit();
                 }
@@ -244,6 +246,10 @@ namespace Vulnerator.Model.BusinessLogic
         {
             try
             {
+                foreach (string sourceParameter in new[] { "SourceName", "SourceVersion", "SourceRelease",
+                    "SourceSecondaryIdentifier", "SourceDescription", "VulnerabilitySourceFileName" })
+                { sqliteCommand.Parameters[sourceParameter].Value = string.Empty; }
+                sqliteCommand.Parameters["PublishedDate"].Value = DBNull.Value;
                 xmlReader.Read();
                 if (xmlReader.Name.Equals("STIG_TITLE"))
                 {
@@ -289,13 +295,14 @@ namespace Vulnerator.Model.BusinessLogic
                                 case "releaseinfo":
                                     {
                                         string release = ObtainStigInfoSubNodeValue(xmlReader);
-                                        Regex regex = new Regex(Properties.Resources.RegexStigDate);
-                                        sqliteCommand.Parameters.Add(new SQLiteParameter("PublishedDate", DateTime
-                                            .ParseExact(regex.Match(release).ToString(), "dd MMM yyyy", CultureInfo.InvariantCulture)
-                                            .ToShortDateString()));
-                                        if (string.IsNullOrWhiteSpace(sqliteCommand.Parameters["SourceRelease"].Value
-                                            .ToString()))
-                                        { sqliteCommand.Parameters["SourceRelease"].Value = release.Contains(" ") ? release.Split(' ')[1] : release; }
+                                        sqliteCommand.Parameters["PublishedDate"].Value = release.ToStigBenchmarkDate();
+                                        if (string.IsNullOrWhiteSpace(sqliteCommand.Parameters["SourceRelease"].Value?.ToString()))
+                                        {
+                                            Match releaseNumber = Regex.Match(release, @"Release:\s*(\d+)", RegexOptions.IgnoreCase);
+                                            sqliteCommand.Parameters["SourceRelease"].Value = releaseNumber.Success
+                                                ? releaseNumber.Groups[1].Value
+                                                : (release.Contains(" ") ? release.Split(' ')[1] : release);
+                                        }
                                         break;
                                     }
                                 case "stigid":
@@ -665,9 +672,9 @@ namespace Vulnerator.Model.BusinessLogic
                 XmlReaderSettings xmlReaderSettings = new XmlReaderSettings();
                 xmlReaderSettings.IgnoreWhitespace = true;
                 xmlReaderSettings.IgnoreComments = true;
-                xmlReaderSettings.ValidationType = ValidationType.Schema;
-                xmlReaderSettings.ValidationFlags = System.Xml.Schema.XmlSchemaValidationFlags.ProcessInlineSchema;
-                xmlReaderSettings.ValidationFlags = System.Xml.Schema.XmlSchemaValidationFlags.ProcessSchemaLocation;
+                xmlReaderSettings.DtdProcessing = DtdProcessing.Prohibit;
+                xmlReaderSettings.XmlResolver = null;
+                xmlReaderSettings.ValidationType = ValidationType.None;
                 return xmlReaderSettings;
             }
             catch (Exception exception)
@@ -691,7 +698,7 @@ namespace Vulnerator.Model.BusinessLogic
                     if (xmlReader.NodeType == XmlNodeType.EndElement && xmlReader.Name.Equals("SI_DATA"))
                     { return string.Empty; }
                 }
-                return "Read too far!";
+                return string.Empty;
             }
             catch (Exception exception)
             {
@@ -704,9 +711,19 @@ namespace Vulnerator.Model.BusinessLogic
         {
             try
             {
-                while (!xmlReader.Name.Equals("ATTRIBUTE_DATA"))
-                { xmlReader.Read(); }
+                // Advance to ATTRIBUTE_DATA, but never past the end of this STIG_DATA block or the file
+                // (a truncated checklist previously looped forever here).
+                while (!(xmlReader.NodeType == XmlNodeType.Element && xmlReader.Name.Equals("ATTRIBUTE_DATA")))
+                {
+                    if (!xmlReader.Read() ||
+                        (xmlReader.NodeType == XmlNodeType.EndElement && xmlReader.Name.Equals("STIG_DATA")))
+                    { return string.Empty; }
+                }
+                if (xmlReader.IsEmptyElement)
+                { return string.Empty; }
                 xmlReader.Read();
+                if (xmlReader.NodeType == XmlNodeType.EndElement)
+                { return string.Empty; }
                 string value = xmlReader.Value;
                 value = value.Replace("&gt", ">");
                 value = value.Replace("&lt", "<");

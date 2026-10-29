@@ -70,6 +70,17 @@ namespace Vulnerator.Model.DataAccess
         {
             try
             {
+                // Pruning compares every library row for this source against the ingested release date.
+                // Without a date, "PublishedDate IS NOT NULL" would match - and delete - every row.
+                object publishedDate = sqliteCommand.Parameters.Contains("PublishedDate")
+                    ? sqliteCommand.Parameters["PublishedDate"].Value
+                    : null;
+                if (publishedDate == null || publishedDate == DBNull.Value ||
+                    string.IsNullOrWhiteSpace(publishedDate.ToString()))
+                {
+                    LogWriter.LogStatusUpdate("Skipping removed-vulnerability pruning: source has no release date.");
+                    return;
+                }
                 sqliteCommand.CommandText = _ddlReader.ReadDdl(_storedProcedureBase + "Select.VulnerabilitiesForDeletion.dml", assembly);
                 using (SQLiteDataReader sqliteDataReader = sqliteCommand.ExecuteReader())
                 {
@@ -79,9 +90,10 @@ namespace Vulnerator.Model.DataAccess
                     using (SQLiteCommand deleteVulnsCommand = DatabaseBuilder.sqliteConnection.CreateCommand())
                     {
                         deleteVulnsCommand.CommandText = _ddlReader.ReadDdl(_storedProcedureBase + "Delete.Vulnerability.dml", assembly);
+                        deleteVulnsCommand.Parameters.Add(new SQLiteParameter("Vulnerability_ID"));
                         while (sqliteDataReader.Read())
                         {
-                            deleteVulnsCommand.Parameters.Add(new SQLiteParameter("Vulnerability_ID", sqliteDataReader["Vulnerability_ID"].ToString()));
+                            deleteVulnsCommand.Parameters["Vulnerability_ID"].Value = sqliteDataReader["Vulnerability_ID"].ToString();
                             deleteVulnsCommand.ExecuteNonQuery();
                         }
                     }

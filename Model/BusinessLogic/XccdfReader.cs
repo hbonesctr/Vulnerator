@@ -198,10 +198,7 @@ namespace Vulnerator.Model.BusinessLogic
                             case "plain-text":
                                 {
                                     string release = xmlReader.ObtainCurrentNodeValue(false).ToString();
-                                    Regex regex = new Regex(Properties.Resources.RegexStigDate);
-                                    sqliteCommand.Parameters.Add(new SQLiteParameter("PublishedDate", DateTime
-                                        .ParseExact(regex.Match(release).ToString(), "dd MMM yyyy", CultureInfo.InvariantCulture)
-                                        .ToShortDateString()));
+                                    sqliteCommand.Parameters["PublishedDate"].Value = release.ToStigBenchmarkDate();
                                     break;
                                 }
                             case "cdf:version":

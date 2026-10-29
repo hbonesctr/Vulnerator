@@ -113,14 +113,11 @@ namespace Vulnerator.Model.BusinessLogic
                                 if (release.Contains(" "))
                                 {
                                     Regex regex = new Regex(Properties.Resources.RegexRawStigRelease);
-                                    sqliteCommand.Parameters.Add(new SQLiteParameter("SourceRelease", regex.Match(release)));
-                                    regex = new Regex(Properties.Resources.RegexStigDate);
-                                    sqliteCommand.Parameters.Add(new SQLiteParameter("PublishedDate", DateTime
-                                        .ParseExact(regex.Match(release).ToString(), "dd MMM yyyy", CultureInfo.InvariantCulture)
-                                        .ToShortDateString()));
+                                    sqliteCommand.Parameters["SourceRelease"].Value = regex.Match(release).Value;
+                                    sqliteCommand.Parameters["PublishedDate"].Value = release.ToStigBenchmarkDate();
                                 }
                                 else
-                                { sqliteCommand.Parameters.Add(new SQLiteParameter("SourceRelease", release)); }
+                                { sqliteCommand.Parameters["SourceRelease"].Value = release; }
                                 break;
                             }
                         case "version":

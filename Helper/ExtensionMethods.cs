@@ -309,6 +309,31 @@ namespace Vulnerator.Helper
             }
         }
 
+        private static readonly Regex StigBenchmarkDateRegex =
+            new Regex(@"\b\d{1,2}\s+[A-Za-z]{3,9}\s+\d{4}\b", RegexOptions.Compiled);
+
+        /// <summary>
+        /// Extracts the benchmark date from STIG release text such as
+        /// "Release: 4 Benchmark Date: 24 Jul 2025". Returns a DateTime, or DBNull.Value when the
+        /// text carries no recognizable date, so callers never throw on missing or odd release info.
+        /// Parsing is culture-invariant.
+        /// </summary>
+        public static object ToStigBenchmarkDate(this string releaseInfo)
+        {
+            if (string.IsNullOrWhiteSpace(releaseInfo))
+            { return DBNull.Value; }
+            Match match = StigBenchmarkDateRegex.Match(releaseInfo);
+            if (!match.Success)
+            { return DBNull.Value; }
+            string candidate = Regex.Replace(match.Value, @"\s+", " ");
+            string[] formats = { "d MMM yyyy", "dd MMM yyyy", "d MMMM yyyy", "dd MMMM yyyy" };
+            DateTime parsed;
+            if (DateTime.TryParseExact(candidate, formats, System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None, out parsed))
+            { return parsed; }
+            return DBNull.Value;
+        }
+
         /// <summary>
         /// True when an XCCDF ident "system" URI denotes a DISA CCI. DISA moved from
         /// http://iase.disa.mil/cci to http://cyber.mil/cci; both are accepted. Null-safe.
