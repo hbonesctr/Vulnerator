@@ -21,7 +21,20 @@ $script:failures = New-Object System.Collections.Generic.List[string]
 function Assert-That {
     param([bool]$Condition, [string]$Message)
     if ($Condition) { Write-Host ('PASS ' + $Message) }
-    else { Write-Host ('FAIL ' + $Message); $script:failures.Add($Message) }
+    else {
+        Write-Host ('FAIL ' + $Message)
+        Write-Annotation 'error' ('FAIL ' + $Message)
+        $script:failures.Add($Message)
+    }
+}
+
+function Write-Annotation {
+    # GitHub Actions annotation (visible on the run page and through the checks API).
+    param([string]$Level, [string]$Text)
+    if ($env:GITHUB_ACTIONS -ne 'true') { return }
+    $clean = $Text.Replace('%', '%25').Replace("`r", '').Replace("`n", '%0A')
+    if ($clean.Length -gt 3000) { $clean = $clean.Substring(0, 3000) }
+    Write-Host ('::' + $Level + '::' + $clean)
 }
 
 # --- Load the application and point it at a scratch database --------------------------------
@@ -171,6 +184,7 @@ try {
 catch {
     $script:failures.Add('Unhandled error: ' + $_.Exception.ToString())
     Write-Host ('ERROR ' + $_.Exception.ToString())
+    Write-Annotation 'error' ('ERROR ' + $_.Exception.ToString() + ' AT ' + $_.InvocationInfo.PositionMessage)
 }
 
 Write-Host ''
@@ -179,4 +193,6 @@ if ($script:failures.Count -eq 0) {
     exit 0
 }
 Write-Host ([string]$script:failures.Count + ' check(s) failed.')
+$logDir = Join-Path $binPath 'Logs'
+if (Test-Path $logDir) { Get-ChildItem $logDir -Filter '*.txt' | Select-Object -First 1 | ForEach-Object { Write-Annotation 'warning' ('App log tail: ' + ((Get-Content $_.FullName -Tail 25) -join ' | ')) } }
 exit 1
