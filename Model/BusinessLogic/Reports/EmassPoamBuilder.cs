@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -34,6 +34,9 @@ namespace Vulnerator.Model.BusinessLogic.Reports
         public string ImpactDescription = string.Empty;
         public string ResidualRisk = string.Empty;
         public string ProposedMitigation = string.Empty;
+        public string FixText = string.Empty;
+        public string SeverityOverride = string.Empty;
+        public string SeverityJustification = string.Empty;
         public DateTime? FirstDiscovered;
         public DateTime? LastObserved;
         public DateTime? EstimatedCompletion;
@@ -78,20 +81,52 @@ namespace Vulnerator.Model.BusinessLogic.Reports
         internal string SortKey = string.Empty;
     }
 
+    /// <summary>Defaults follow the CKL-CKLB-Processor POA&amp;M rulings (config.json Poam section).</summary>
     public class EmassPoamOptions
     {
-        public string OfficeOrg = string.Empty;
-        public string Resources = string.Empty;
-        public string IdentificationSource = "Vulnerability Management";
-        public int? ScheduledCompletionDays;
-        public string DefaultMilestone = string.Empty;
+        public const string Placeholder = "Organizationally Defined";
+        public string OfficeOrg = Placeholder;
+        public string Resources = Placeholder;
+        public string IdentificationSource = "Security Control Deficiencies";
+        public string MitigationPlaceholder = "Analyst Must Complete";
+        public string DefaultMilestone = string.Empty;   // OQ-01: written by the analyst after the report
+        /// <summary>Days from Date Identified to scheduled completion, by raw severity level (POAM-06).</summary>
+        public Dictionary<string, int> CompletionDays = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
+        { { "Very High", 30 }, { "High", 30 }, { "Moderate", 60 }, { "Low", 180 }, { "Very Low", 180 } };
         public DateTime ExportDate = DateTime.Today;
+
+        /// <summary>
+        /// Reads "30;60;180" (High;Moderate;Low) or a single number for every level. Blank or invalid keeps the defaults.
+        /// </summary>
+        public void SetCompletionDays(string setting)
+        {
+            if (string.IsNullOrWhiteSpace(setting))
+            { return; }
+            string[] parts = setting.Split(new[] { ';', ',', '/' }, StringSplitOptions.RemoveEmptyEntries);
+            int[] days = new int[parts.Length];
+            for (int i = 0; i < parts.Length; i++)
+            {
+                if (!int.TryParse(parts[i].Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out days[i]) || days[i] < 0)
+                { return; }
+            }
+            if (days.Length == 1)
+            { days = new[] { days[0], days[0], days[0] }; }
+            if (days.Length != 3)
+            { return; }
+            CompletionDays["Very High"] = days[0];
+            CompletionDays["High"] = days[0];
+            CompletionDays["Moderate"] = days[1];
+            CompletionDays["Low"] = days[2];
+            CompletionDays["Very Low"] = days[2];
+        }
     }
 
     /// <summary>
-    /// Turns POA&amp;M query rows into eMASS RMF Standard POA&amp;M items, following the template rules:
-    /// one item per rule/plugin and eMASS status; Ongoing and Completed items get one milestone;
-    /// Risk Accepted items get none; controls and security checks are semicolon-separated.
+    /// Turns POA&amp;M query rows into eMASS RMF Standard POA&amp;M items. Template rules: one milestone for Ongoing and
+    /// Completed items, none for Risk Accepted; controls and security checks semicolon-separated. Content rules follow
+    /// the owner's CKL-CKLB-Processor rulings (docs/DECISIONS.md): only open findings (POAM-05, R-19), dates by
+    /// severity from Date Identified (POAM-06, AD-916), and the field derivations noted below. Mitigation data entered
+    /// in Vulnerator takes precedence over the derived values.
     /// </summary>
     public static class EmassPoamBuilder
     {
@@ -102,16 +137,23 @@ namespace Vulnerator.Model.BusinessLogic.Reports
 
         private static readonly string[] Levels = { "Very Low", "Low", "Moderate", "High", "Very High" };
 
-        /// <summary>eMASS POA&amp;M status for a finding, or null when the finding does not belong on a POA&amp;M.</summary>
+        /// <summary>
+        /// eMASS POA&amp;M status for a finding, or null when it does not belong on a POA&amp;M. Only open findings are
+        /// weaknesses (POAM-05); not-reviewed checks are an incomplete assessment, not a weakness (R-19); passing
+        /// checks never become Completed items. A mitigation entered in Vulnerator can mark an open finding
+        /// Completed or Risk Accepted, or take it off (Not Applicable).
+        /// </summary>
         public static string ToEmassStatus(string rawStatus, string mitigatedStatus)
         {
-            string status = (string.IsNullOrWhiteSpace(mitigatedStatus) ? rawStatus : mitigatedStatus) ?? string.Empty;
-            switch (status.Trim().ToLowerInvariant())
+            string raw = (rawStatus ?? string.Empty).Trim().ToLowerInvariant();
+            if (raw != "ongoing" && raw != "open")
+            { return null; }
+            switch ((mitigatedStatus ?? string.Empty).Trim().ToLowerInvariant())
             {
+                case "":
                 case "ongoing":
                 case "open":
                 case "not reviewed":
-                case "error":
                     return Ongoing;
                 case "completed":
                 case "closed":
@@ -119,7 +161,7 @@ namespace Vulnerator.Model.BusinessLogic.Reports
                 case "risk accepted":
                     return RiskAccepted;
                 default:
-                    return null;   // Not Applicable, Archived, blank: not a POA&M weakness
+                    return null;   // Not Applicable, Archived
             }
         }
 
@@ -245,28 +287,44 @@ namespace Vulnerator.Model.BusinessLogic.Reports
                 SplitList(f.Hosts).Count > 0 ? SplitList(f.Hosts) : SplitList(f.Software)));
             item.IdentificationSourceDetails = SourceDetails(first);
 
+            // Mitigations: Vulnerator mitigation text, else the first severity justification, else the placeholder (AD-917).
             item.Mitigations = JoinDistinct(findings.Select(f => f.TechnicalMitigation));
-            item.Severity = ToEmassLevel(FirstNonEmpty(findings.Select(f => f.Severity)));
+            if (string.IsNullOrWhiteSpace(item.Mitigations))
+            { item.Mitigations = FirstNonEmpty(findings.Select(f => f.SeverityJustification)); }
+            if (string.IsNullOrWhiteSpace(item.Mitigations))
+            { item.Mitigations = options.MitigationPlaceholder ?? string.Empty; }
+            // Severity honours a severity override; Impact derives from the rule's own severity (PD-06 / PD-06a).
+            item.Severity = FirstNonEmpty(new[]
+            {
+                ToEmassLevel(FirstNonEmpty(findings.Select(f => f.Severity))),
+                ToEmassLevel(FirstNonEmpty(findings.Select(f => f.SeverityOverride))),
+                item.RawSeverity
+            });
             item.RelevanceOfThreat = ToEmassLevel(FirstNonEmpty(findings.Select(f => f.ThreatRelevance)));
             item.Likelihood = ToEmassLevel(FirstNonEmpty(findings.Select(f => f.Likelihood)));
-            item.Impact = ToEmassLevel(FirstNonEmpty(findings.Select(f => f.Impact)));
+            item.Impact = FirstNonEmpty(new[] { ToEmassLevel(FirstNonEmpty(findings.Select(f => f.Impact))), item.RawSeverity });
+            // Impact Description = Description; Recommendations = Fix Text (POAM-27/29), unless a mitigation says otherwise.
             item.ImpactDescription = JoinDistinct(findings.Select(f => f.ImpactDescription));
+            if (string.IsNullOrWhiteSpace(item.ImpactDescription))
+            { item.ImpactDescription = item.Description; }
             item.ResidualRiskLevel = ToEmassLevel(FirstNonEmpty(findings.Select(f => f.ResidualRisk)));
-            item.Recommendations = JoinDistinct(findings.Select(f => f.ProposedMitigation));
+            string proposed = JoinDistinct(findings.Select(f => f.ProposedMitigation));
+            item.Recommendations = string.IsNullOrWhiteSpace(proposed) ? FirstNonEmpty(findings.Select(f => f.FixText)) : proposed;
             item.Comments = BuildComments(findings);
 
-            item.DateIdentified = Min(findings.Select(f => f.FirstDiscovered));
+            // Date Identified = earliest date for the finding (the checklist's own rule date when it has one),
+            // else the export date; scheduled completion counts from it by severity (AD-916, POAM-06).
+            item.DateIdentified = Min(findings.Select(f => f.FirstDiscovered)) ?? options.ExportDate.Date;
             DateTime? estimated = Max(findings.Select(f => f.EstimatedCompletion));
-            string milestoneText = string.IsNullOrWhiteSpace(item.Recommendations)
-                ? (options.DefaultMilestone ?? string.Empty)
-                : item.Recommendations;
+            string milestoneText = string.IsNullOrWhiteSpace(proposed) ? (options.DefaultMilestone ?? string.Empty) : proposed;
+            int days;
+            DateTime? dueBySeverity = options.CompletionDays != null && options.CompletionDays.TryGetValue(item.RawSeverity, out days)
+                ? item.DateIdentified.Value.Date.AddDays(days)
+                : (DateTime?)null;
 
             if (status == Ongoing)
             {
-                item.ScheduledCompletion = estimated ??
-                    (options.ScheduledCompletionDays.HasValue
-                        ? options.ExportDate.Date.AddDays(options.ScheduledCompletionDays.Value)
-                        : (DateTime?)null);
+                item.ScheduledCompletion = estimated ?? dueBySeverity;
                 item.Milestones.Add(new EmassMilestone
                 {
                     Description = milestoneText,
@@ -290,23 +348,31 @@ namespace Vulnerator.Model.BusinessLogic.Reports
             return item;
         }
 
+        /// <summary>"STIG Title :: Version N, Release: R" (POAM-16).</summary>
         private static string SourceDetails(EmassPoamFinding finding)
         {
             string source = (finding.SourceName ?? string.Empty).Trim();
             string version = (finding.SourceVersion ?? string.Empty).Trim();
             string release = (finding.SourceRelease ?? string.Empty).Trim();
-            if (!string.IsNullOrEmpty(version) && !string.IsNullOrEmpty(release))
-            { source += " V" + version + "R" + release; }
-            else if (!string.IsNullOrEmpty(version))
-            { source += " V" + version; }
+            if (!string.IsNullOrEmpty(version))
+            { source += " :: Version " + version; }
+            if (!string.IsNullOrEmpty(release))
+            { source += ", " + (release.StartsWith("Release", StringComparison.OrdinalIgnoreCase) ? release : "Release: " + release); }
             return source.Trim();
         }
 
+        /// <summary>Per host: Finding Details, "---", Comments (POAM-19); distinct values joined by a blank line.</summary>
         private static string BuildComments(List<EmassPoamFinding> findings)
         {
             StringBuilder text = new StringBuilder();
-            Append(text, null, JoinDistinct(findings.Select(f => f.Comments)));
-            Append(text, "Finding details", JoinDistinct(findings.Select(f => f.FindingDetails)));
+            Append(text, null, JoinDistinct(findings.Select(f =>
+            {
+                string details = (f.FindingDetails ?? string.Empty).Trim();
+                string comments = (f.Comments ?? string.Empty).Trim();
+                if (details.Length > 0 && comments.Length > 0)
+                { return details + "\n---\n" + comments; }
+                return details.Length > 0 ? details : comments;
+            })));
             Append(text, "Predisposing conditions", JoinDistinct(findings.Select(f => f.PredisposingConditions)));
             Append(text, "Threat description", JoinDistinct(findings.Select(f => f.ThreatDescription)));
             return text.ToString().Trim();

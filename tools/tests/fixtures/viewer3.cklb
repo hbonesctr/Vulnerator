@@ -43,8 +43,13 @@
           "false_positives": null,
           "documentable": false,
           "responsibility": "System Administrator",
-          "ccis": ["CCI-000015"],
-          "legacy_ids": ["V-91001", "SV-101001"],
+          "ccis": [
+            "CCI-000015"
+          ],
+          "legacy_ids": [
+            "V-91001",
+            "SV-101001"
+          ],
           "status": "not_a_finding",
           "finding_details": "Automated via script.",
           "comments": "Verified.",
@@ -64,12 +69,21 @@
           "discussion": "Configuration discussion.",
           "check_content": "Verify settings.",
           "fix_text": "Apply settings.",
-          "ccis": ["CCI-000366"],
+          "ccis": [
+            "CCI-000366"
+          ],
           "legacy_ids": [],
           "status": "open",
           "finding_details": "Two settings differ.",
           "comments": null,
-          "overrides": { "severity": { "severity": "low", "reason": "Compensating control in place." } }
+          "overrides": {
+            "severity": {
+              "severity": "low",
+              "reason": "Compensating control in place."
+            }
+          },
+          "createdAt": "2026-02-05T15:00:00.000Z",
+          "updatedAt": "2026-02-03T15:00:00.000Z"
         }
       ]
     }

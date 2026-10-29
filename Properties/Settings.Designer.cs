@@ -697,7 +697,7 @@ namespace Vulnerator.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("Organizationally Defined")]
         public string EmassResourcesRequired {
             get {
                 return ((string)(this["EmassResourcesRequired"]));
@@ -709,7 +709,7 @@ namespace Vulnerator.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("Vulnerability Management")]
+        [global::System.Configuration.DefaultSettingValueAttribute("Security Control Deficiencies")]
         public string EmassIdentificationSource {
             get {
                 return ((string)(this["EmassIdentificationSource"]));
@@ -721,7 +721,7 @@ namespace Vulnerator.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("30;60;180")]
         public string EmassScheduledCompletionDays {
             get {
                 return ((string)(this["EmassScheduledCompletionDays"]));
@@ -733,7 +733,7 @@ namespace Vulnerator.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("Remediate the finding per the security check fix procedure.")]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string EmassDefaultMilestone {
             get {
                 return ((string)(this["EmassDefaultMilestone"]));
@@ -745,13 +745,25 @@ namespace Vulnerator.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("CONTROLLED UNCLASSIFIED INFORMATION")]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string EmassClassificationMarking {
             get {
                 return ((string)(this["EmassClassificationMarking"]));
             }
             set {
                 this["EmassClassificationMarking"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Analyst Must Complete")]
+        public string EmassMitigationPlaceholder {
+            get {
+                return ((string)(this["EmassMitigationPlaceholder"]));
+            }
+            set {
+                this["EmassMitigationPlaceholder"] = value;
             }
         }
     }

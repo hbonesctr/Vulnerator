@@ -195,6 +195,11 @@ try {
     Assert-That ($builder::ToSecurityCheck('21745', '') -eq '21745') 'Nessus plugin ID is kept as-is'
     Assert-That ($builder::ToEmassStatus('Ongoing', 'Completed') -eq 'Completed') 'a mitigation status overrides the scan status'
     Assert-That ($null -eq $builder::ToEmassStatus('Not Applicable', '')) 'Not Applicable findings stay off the POA&M'
+    Assert-That ($null -eq $builder::ToEmassStatus('Completed', '')) 'passing checks never become POA&M items (POAM-05)'
+    Assert-That ($null -eq $builder::ToEmassStatus('Not Reviewed', '')) 'not-reviewed checks stay off the POA&M (R-19)'
+    $cklbDate = Get-Scalar ("SELECT UF.FirstDiscovered FROM UniqueFindings UF JOIN Hardware H ON UF.Hardware_ID = H.Hardware_ID " +
+        "JOIN Vulnerabilities V ON UF.Vulnerability_ID = V.Vulnerability_ID WHERE H.DiscoveredHostName = 'TESTHOST02' AND V.UniqueVulnerabilityIdentifier = 'SV-1002'")
+    Assert-That (([datetime]$cklbDate).ToString('yyyy-MM-dd') -eq '2026-02-03') ('CKLB rule date (earlier of createdAt/updatedAt) is the first-discovered date (got "' + $cklbDate + '")')
     Assert-That ($builder::ToEmassLevel('medium') -eq 'Moderate') 'medium normalizes to Moderate'
 
     # Report filters pick up groups created since launch on the next launch; simulate one.
@@ -226,10 +231,13 @@ try {
 
     # --- Checklists without a host name (e.g. blank STIG baselines) ----------------------------
     $before = Get-Counts
+    $hostsBefore = [int](Get-Scalar 'SELECT COUNT(*) FROM Hardware')
     $result = Import-Checklist (Join-Path $fixtures 'blank-host.ckl') 'TestGroup'
     $after = Get-Counts
-    Assert-That ($result -eq 'Failed; No Host Identified') ('checklist with no host, FQDN or IP fails with a clear status (got "' + $result + '")')
-    Assert-That (($after['UniqueFindings'] -eq $before['UniqueFindings']) -and ($after['Vulnerabilities'] -eq $before['Vulnerabilities'])) 'a checklist with no host writes nothing'
+    Assert-That ($result -eq 'Processed; STIG Baseline (no host)') ('checklist with no host imports as a STIG baseline (got "' + $result + '")')
+    Assert-That ($after['UniqueFindings'] -eq $before['UniqueFindings']) 'a baseline checklist creates no findings'
+    Assert-That ([int](Get-Scalar 'SELECT COUNT(*) FROM Hardware') -eq $hostsBefore) 'a baseline checklist creates no host'
+    Assert-That ([int](Get-Scalar "SELECT COUNT(*) FROM Vulnerabilities WHERE UniqueVulnerabilityIdentifier = 'SV-3002'") -eq 1) 'a baseline checklist adds its rules to the STIG library'
     $result = Import-Checklist (Join-Path $fixtures 'fqdn-only.ckl') 'TestGroup'
     $fqdnHost = [int](Get-Scalar "SELECT COUNT(*) FROM Hardware WHERE DiscoveredHostName = 'testhost03.example.test'")
     Assert-That (($result -eq 'Processed') -and ($fqdnHost -eq 1)) ('checklist with only an FQDN imports under the FQDN (got "' + $result + '")')
@@ -261,6 +269,21 @@ try {
     $findingList.Add($finding)
     $poamItems = $builder::Build($findingList, (New-Object Vulnerator.Model.BusinessLogic.Reports.EmassPoamOptions))
     Assert-That ($poamItems.Count -eq 0) 'informational (raw risk IV) results never become POA&M items'
+
+    # --- eMASS IG/AP import (local file, never in the repo) -----------------------------------
+    $igapResult = [Vulnerator.Model.BusinessLogic.EmassAssessmentProcedureImporter]::Import((Join-Path $fixtures 'igap-sample.xlsx'))
+    Assert-That ($igapResult.StartsWith('Imported assessment procedures for 2 CCI(s)')) ('IG/AP export imports, CCI-NA row skipped (got "' + $igapResult + '")')
+    $apSql = "SELECT NCCI.DOD_AssessmentProcedureMapping || '|' || NCCI.AssessmentProcedureText FROM NIST_ControlsCCIs NCCI JOIN CCIs C ON NCCI.CCI_ID = C.CCI_ID WHERE C.CCI_Number = '000015'"
+    $ap = [string](Get-Scalar $apSql)
+    Assert-That ($ap.StartsWith('AC-02(01).01|Determine if: synthetic procedure') -and $ap.Contains('Potential assessment methods and objectives')) ('CCI mapping carries the AP acronym and procedure (got "' + $ap.Substring(0, [Math]::Min(60, $ap.Length)) + '")')
+    [void](Invoke-Sql 'PRAGMA user_version = 0')
+    [void](New-Object Vulnerator.Model.DataAccess.DatabaseBuilder)
+    $ap = [string](Get-Scalar $apSql)
+    Assert-That ($ap.StartsWith('AC-02(01).01|')) 'imported procedures survive a reference data reload'
+    $notIgap = Join-Path $workDir 'not-igap.xlsx'
+    [System.IO.File]::WriteAllText($notIgap, 'not a workbook')
+    $bad = [Vulnerator.Model.BusinessLogic.EmassAssessmentProcedureImporter]::Import($notIgap)
+    Assert-That ($bad.StartsWith('Could not open the file')) ('an unreadable (e.g. label-encrypted) file gets a clear message (got "' + $bad + '")')
 }
 catch {
     $script:failures.Add('Unhandled error: ' + $_.Exception.ToString())

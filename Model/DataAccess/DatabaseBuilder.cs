@@ -9,6 +9,7 @@ using System.Xml;
 using GalaSoft.MvvmLight.Messaging;
 using GalaSoft.MvvmLight.Threading;
 using Vulnerator.Helper;
+using Vulnerator.Model.BusinessLogic;
 using Vulnerator.Model.Object;
 using Vulnerator.ViewModel;
 using File = System.IO.File;
@@ -143,6 +144,8 @@ namespace Vulnerator.Model.DataAccess
                 PopulateNistControls(sqliteCommand);
                 MapControlsToCci(sqliteCommand);
                 MapControlsToMonitoringFrequency(sqliteCommand);
+                // Assessment procedures the user imported from their own eMASS export survive a reload.
+                EmassAssessmentProcedureImporter.Apply(sqliteCommand);
 
                 sqliteCommand.Parameters.Clear();
                 sqliteCommand.CommandText = $"PRAGMA user_version = {ReferenceDataVersion};";

@@ -18,7 +18,11 @@ namespace Vulnerator.Helper
         {
             { "notafinding", "Completed" },
             { "not a finding", "Completed" },
+            { "not_a_finding", "Completed" },
             { "not_reviewed", "Not Reviewed" },
+            { "notreviewed", "Not Reviewed" },
+            { "not reviewed", "Not Reviewed" },
+            { "not applicable", "Not Applicable" },
             { "open", "Ongoing" },
             { "not_applicable", "Not Applicable" },
             { "pass", "Completed" },
@@ -57,7 +61,11 @@ namespace Vulnerator.Helper
             { "critical", "I" },
             { "high", "I" },
             { "medium", "II" },
+            { "moderate", "II" },
             { "low", "III" },
+            { "cat i", "I" }, { "cat_i", "I" }, { "cati", "I" }, { "i", "I" },
+            { "cat ii", "II" }, { "cat_ii", "II" }, { "catii", "II" }, { "ii", "II" },
+            { "cat iii", "III" }, { "cat_iii", "III" }, { "catiii", "III" }, { "iii", "III" },
             { "informational", "IV" },
             { "unknown", "?" },
             { "\nhigh\n", "I" },
@@ -200,7 +208,7 @@ namespace Vulnerator.Helper
         public static string ToRawRisk(this string _string)
         {
             try
-            { return severityDictionary.TryGetValue(_string.ToLower(), out string rawRisk) ? rawRisk : "?"; }
+            { return severityDictionary.TryGetValue((_string ?? string.Empty).Trim().ToLowerInvariant(), out string rawRisk) ? rawRisk : "?"; }
             catch (Exception exception)
             {
                 LogWriter.LogError($"Unable to convert severity '{_string}' to a raw risk value.");
@@ -244,7 +252,16 @@ namespace Vulnerator.Helper
         public static string ToVulneratorStatus(this string _string)
         {
             try
-            { return rawStatusDictionary.TryGetValue(_string.ToLower(), out string sanitizedStatus) ? sanitizedStatus : _string; }
+            {
+                string key = (_string ?? string.Empty).Trim().ToLowerInvariant();
+                if (key.Length == 0)
+                { return "Not Reviewed"; }
+                if (rawStatusDictionary.TryGetValue(key, out string sanitizedStatus))
+                { return sanitizedStatus; }
+                // Unrecognized statuses are treated as not reviewed rather than stored verbatim (CKL-CKLB-Processor rule).
+                LogWriter.LogStatusUpdate($"Unrecognized status '{_string}'; treated as Not Reviewed.");
+                return "Not Reviewed";
+            }
             catch (Exception exception)
             {
                 LogWriter.LogError($"Unable to convert raw status '{_string}' to a Vulnerator-acceptable status.");
@@ -307,6 +324,23 @@ namespace Vulnerator.Helper
                 LogWriter.LogError($"Unable to convert '{source}' to an ObservableCollection.");
                 throw exception;
             }
+        }
+
+        private static readonly HashSet<string> AssetPlaceholders = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        { "n/a", "na", "none", "tbd", "unknown", "-", "x", "null", "localhost", "localhost.localdomain", "host name", "ip", "mac",
+          "0.0.0.0", "127.0.0.1", "::1", "255.255.255.255" };
+
+        /// <summary>
+        /// True when a checklist asset value is blank or a filler (N/A, TBD, localhost, 127.0.0.1, STIG Viewer's
+        /// "HOST NAME" / "IP" / "MAC" defaults, ...) and so does not identify a host. Same list as the
+        /// CKL-CKLB-Processor asset check (AD-922).
+        /// </summary>
+        public static bool IsAssetPlaceholder(object value)
+        {
+            if (value == null || value == DBNull.Value)
+            { return true; }
+            string text = value.ToString().Trim();
+            return text.Length == 0 || AssetPlaceholders.Contains(text);
         }
 
         private static readonly Regex StigBenchmarkDateRegex =

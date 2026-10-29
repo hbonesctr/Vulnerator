@@ -2,6 +2,9 @@
        V.VulnerabilityGroupTitle,
        V.VulnerabilityTitle,
        V.VulnerabilityDescription,
+       V.FixText,
+       GROUP_CONCAT(DISTINCT UF.SeverityOverride)                              as SeverityOverride,
+       GROUP_CONCAT(DISTINCT UF.SeverityOverrideJustification)                 as SeverityOverrideJustification,
        GROUP_CONCAT(DISTINCT
                     NC.ControlFamily || '-' || NC.ControlNumber ||
                     COALESCE('(' || NC.ControlEnhancement || ')', ''))                                    as NIST_Controls,

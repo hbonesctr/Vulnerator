@@ -477,6 +477,7 @@
     <Compile Include="ViewModel\AsyncObservableCollection.cs" />
     <Compile Include="Model\Object\CciToNist.cs" />
     <Compile Include="Model\BusinessLogic\CklbReader.cs" />
+    <Compile Include="Model\BusinessLogic\EmassAssessmentProcedureImporter.cs" />
     <Compile Include="Model\BusinessLogic\CklReader.cs" />
     <Compile Include="Model\BusinessLogic\DiacapToRmf.cs" />
     <Compile Include="Model\Object\DiscrepancyItem.cs" />
@@ -955,6 +956,8 @@
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Insert\VulnerabilitySourceVulnerabilityMapping.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Select\Hardware.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Select\EmassHardwareList.dml" />
+    <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Update\NistControlsCcisFromEmassAssessmentProcedures.dml" />
+    <EmbeddedResource Include="Resources\DdlFiles\Tables\Create\EmassAssessmentProcedures.ddl" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Select\EmassPoamVulnerabilities.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Select\EmassSoftwareList.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Select\HardwareCklCreationData.dml" />

@@ -26,6 +26,12 @@ namespace Vulnerator.Model.BusinessLogic
         private List<string> ccis = new List<string>();
         private DateTime dateTimeNow = DateTime.Now;
         string _groupName = null;
+
+        /// <summary>CKL STIG_DATA attribute CklbReader writes with a CKLB rule's own date (yyyy-MM-dd).</summary>
+        public const string RuleDateAttribute = "Vulnerator_Rule_Date";
+        public const string BaselineStatus = "Processed; STIG Baseline (no host)";
+        private DateTime? _ruleDate;
+        private bool _baselineOnly;
         private string[] persistentParameters =  {
             "GroupName", "FindingSourceFileName", "SourceName", "SourceVersion", "SourceRelease", "DiscoveredHostName", "ScanIP", "FQDN", "NetBIOS", "FindingType", "VulnerabilityRelease", "PublishedDate"
         };
@@ -42,6 +48,7 @@ namespace Vulnerator.Model.BusinessLogic
             try
             {
                 _groupName = groupName;
+                _baselineOnly = false;
                 if (file.FilePath.IsFileInUse())
                 {
                     LogWriter.LogError($"'{file.FileName}' is in use; please close any open instances and try again.");
@@ -91,12 +98,13 @@ namespace Vulnerator.Model.BusinessLogic
                     }
                     sqliteTransaction.Commit();
                 }
+                if (_baselineOnly)
+                {
+                    LogWriter.LogStatusUpdate($"'{file.FileName}' has no host name, FQDN or IP address; imported as a STIG baseline " +
+                        "(rule content only, no findings). Fill in the asset in STIG Viewer to import it as an assessment.");
+                    return BaselineStatus;
+                }
                 return "Processed";
-            }
-            catch (System.IO.InvalidDataException noHost)
-            {
-                LogWriter.LogError($"'{file.FileName}': {noHost.Message}");
-                return "Failed; No Host Identified";
             }
             catch (Exception exception)
             {
@@ -129,7 +137,7 @@ namespace Vulnerator.Model.BusinessLogic
                             case "HOST_NAME":
                                 {
                                     object hostName = xmlReader.ObtainCurrentNodeValue(true);
-                                    if (!string.IsNullOrWhiteSpace(hostName.ToString()) && !hostName.Equals("HOST NAME"))
+                                    if (!ExtensionMethods.IsAssetPlaceholder(hostName))
                                     {
                                         sqliteCommand.Parameters["DiscoveredHostName"].Value = hostName;
                                         sqliteCommand.Parameters["DisplayedHostName"].Value = hostName;
@@ -174,14 +182,17 @@ namespace Vulnerator.Model.BusinessLogic
                         // Findings must belong to a host. Blank checklists (e.g. a STIG baseline set) have no
                         // host name; fall back to the FQDN, then the IP address, and otherwise stop cleanly
                         // instead of failing on the host-to-group mapping.
-                        if (string.IsNullOrWhiteSpace(sqliteCommand.Parameters["DiscoveredHostName"].Value?.ToString()))
+                        if (ExtensionMethods.IsAssetPlaceholder(sqliteCommand.Parameters["DiscoveredHostName"].Value))
                         {
-                            string fallback = !string.IsNullOrWhiteSpace(fqdn?.ToString()) ? fqdn.ToString().Trim()
-                                : (!string.IsNullOrWhiteSpace(ip?.ToString()) && !ip.Equals("IP") ? ip.ToString().Split(',')[0].Trim() : null);
+                            string firstIp = ip?.ToString().Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+                            string fallback = !ExtensionMethods.IsAssetPlaceholder(fqdn) ? fqdn.ToString().Trim()
+                                : (!ExtensionMethods.IsAssetPlaceholder(firstIp) ? firstIp.Trim() : null);
                             if (fallback == null)
                             {
-                                throw new System.IO.InvalidDataException(
-                                    "the checklist has no host name, FQDN or IP address. Fill in the asset information in STIG Viewer, save, and import again.");
+                                // No host at all: a blank checklist such as a STIG baseline. Import its rules into
+                                // the STIG library without creating a host or findings (CKL-CKLB-Processor R-11).
+                                _baselineOnly = true;
+                                return;
                             }
                             sqliteCommand.Parameters["DiscoveredHostName"].Value = fallback;
                             sqliteCommand.Parameters["DisplayedHostName"].Value = fallback;
@@ -366,6 +377,7 @@ namespace Vulnerator.Model.BusinessLogic
         {
             try
             {
+                _ruleDate = null;
                 sqliteCommand.Parameters["ModifiedDate"].Value = DateTime.Now.ToShortDateString();
                 while (xmlReader.Read())
                 {
@@ -523,6 +535,14 @@ namespace Vulnerator.Model.BusinessLogic
                                     classification = ObtainAttributeDataNodeValue(xmlReader);
                                     break;
                                 }
+                            case RuleDateAttribute:
+                                {
+                                    DateTime ruleDate;
+                                    if (DateTime.TryParseExact(ObtainAttributeDataNodeValue(xmlReader), "yyyy-MM-dd",
+                                        CultureInfo.InvariantCulture, DateTimeStyles.None, out ruleDate))
+                                    { _ruleDate = ruleDate; }
+                                    break;
+                                }
                         }
                     }
                     else if (xmlReader.IsStartElement() && xmlReader.Name.Equals("STATUS"))
@@ -651,7 +671,8 @@ namespace Vulnerator.Model.BusinessLogic
                     }
                     else if (xmlReader.NodeType == XmlNodeType.EndElement && xmlReader.Name.Equals("VULN"))
                     {
-                        PrepareUniqueFinding(sqliteCommand);
+                        if (!_baselineOnly)
+                        { PrepareUniqueFinding(sqliteCommand); }
                         return;
                     }
                 }
@@ -673,7 +694,7 @@ namespace Vulnerator.Model.BusinessLogic
                 sqliteCommand.Parameters["LastObserved"].Value = DateTime.Now;
                 if (string.IsNullOrWhiteSpace(sqliteCommand.Parameters["DeltaAnalysisIsRequired"].Value.ToString()))
                 { sqliteCommand.Parameters["DeltaAnalysisIsRequired"].Value = "False"; }
-                sqliteCommand.Parameters["FirstDiscovered"].Value = DateTime.Now;
+                sqliteCommand.Parameters["FirstDiscovered"].Value = _ruleDate ?? DateTime.Now;
                 sqliteCommand.Parameters["Classification"].Value = classification;
                 sqliteCommand.Parameters["FindingType"].Value = "CKL";
                 databaseInterface.UpdateUniqueFinding(sqliteCommand);

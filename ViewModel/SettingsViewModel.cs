@@ -157,6 +157,31 @@ namespace Vulnerator.ViewModel
             }
         }
 
+        public RelayCommand ImportEmassAssessmentProceduresCommand => new RelayCommand(ImportEmassAssessmentProcedures);
+
+        private void ImportEmassAssessmentProcedures()
+        {
+            try
+            {
+                OpenFileDialog dialog = new OpenFileDialog
+                {
+                    CheckFileExists = true,
+                    Filter = "eMASS IG/AP export (*.xlsx)|*.xlsx",
+                    Title = "Select an eMASS IG/AP export (Implementation Guidance / Assessment Procedures)"
+                };
+                if (dialog.ShowDialog() != true)
+                { return; }
+                string result = EmassAssessmentProcedureImporter.Import(dialog.FileName);
+                MessageBox.Show(result, "eMASS assessment procedures", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception exception)
+            {
+                LogWriter.LogErrorWithDebug("Unable to import the eMASS IG/AP export.", exception);
+                MessageBox.Show("The import failed; see the Vulnerator log for details.", "eMASS assessment procedures",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
         public RelayCommand CreateDatabaseCommand => new RelayCommand(CreateDatabase);
 
         private void CreateDatabase()

@@ -4,10 +4,12 @@
 #
 # Usage (from the unzipped build folder, Windows PowerShell 5.1):
 #   powershell -NoProfile -ExecutionPolicy Bypass -File .\Test-RealData.ps1 -InputDir "C:\path\to\files"
+#   add -IgApFile "C:\path\to\IGAPsExport.xlsx" to also try the eMASS IG/AP import
 # Supported: *.ckl, *.cklb, *.nessus. Pure ASCII; no PowerShell 7 syntax.
 param(
     [Parameter(Mandatory = $true)][string]$InputDir,
-    [string]$BinDir = ''
+    [string]$BinDir = '',
+    [string]$IgApFile = ''
 )
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 2.0
@@ -17,6 +19,7 @@ if ([IntPtr]::Size -eq 8) {
     $ps32 = Join-Path $env:SystemRoot 'SysWOW64\WindowsPowerShell\v1.0\powershell.exe'
     $relaunch = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $PSCommandPath, '-InputDir', $InputDir)
     if ($BinDir -ne '') { $relaunch += @('-BinDir', $BinDir) }
+    if ($IgApFile -ne '') { $relaunch += @('-IgApFile', $IgApFile) }
     & $ps32 @relaunch
     exit $LASTEXITCODE
 }
@@ -68,6 +71,12 @@ foreach ($item in $files) {
     $added = [int](Get-Scalar 'SELECT COUNT(*) FROM UniqueFindings') - $before
     if ($status -ne 'Processed') { $failed++ }
     Write-Host ('{0,-34} {1,7} findings {2,6:N1}s  {3}' -f $status, $added, $watch.Elapsed.TotalSeconds, $item.Name)
+}
+
+if ($IgApFile -ne '') {
+    $igapPath = (Resolve-Path $IgApFile).Path
+    Write-Host ''
+    Write-Host ('eMASS IG/AP export: ' + [Vulnerator.Model.BusinessLogic.EmassAssessmentProcedureImporter]::Import($igapPath))
 }
 
 Write-Host ''

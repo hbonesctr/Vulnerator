@@ -84,7 +84,7 @@ def check_poam(path):
           "header block labels in A2:A6 match the template")
     check(ws["F5"].value == "Test System" and ws["O4"].value == "Pat Tester", "header block carries system name and POC")
     banner = (ws.oddHeader.center.text or "") + (ws.oddFooter.center.text or "")
-    check("CONTROLLED UNCLASSIFIED INFORMATION" in banner, "classification banner in page header and footer")
+    check("UNCLASSIFIED" not in banner, "no classification banner by default (processor ruling R-20)")
 
     items, row = [], 8
     while row <= ws.max_row:
@@ -95,7 +95,7 @@ def check_poam(path):
         if items and text(ws, row, "Milestone Status"):
             items[-1]["milestones"].append(row)
         row += 1
-    check(len(items) == 5, f"5 POA&M items: 3 Ongoing and 2 Completed across 3 rules (got {len(items)})")
+    check(len(items) == 2, f"2 POA&M items: only open findings (POAM-05); passing and not-reviewed checks stay off (got {len(items)})")
 
     by_key = {}
     for item in items:
@@ -105,22 +105,26 @@ def check_poam(path):
         check(text(ws, r, "Office/Org") == "Test Org, Pat Tester, 555-0100, pat.tester@example.test",
               f"row {r}: Office/Org is 'Org, Name, Phone, Email'")
         check(text(ws, r, "Resources") == "Sustainment funding", f"row {r}: Resources from settings (required)")
+        check(text(ws, r, "Identification Source") == "Security Control Deficiencies", f"row {r}: Identification Source default (POAM-15)")
         check(text(ws, r, "Identification Source") in IDENTIFICATION_SOURCES, f"row {r}: Identification Source from the glossary")
+        check(" :: Version " in text(ws, r, "Identification Source Details"), f"row {r}: source details 'Title :: Version N, Release' (POAM-16)")
+        check(text(ws, r, "Impact") == text(ws, r, "Raw Severity"), f"row {r}: Impact = raw severity (PD-06)")
+        check(text(ws, r, "Impact Description") == text(ws, r, "Vulnerability Description"), f"row {r}: Impact Description = Description (POAM-27)")
         check(text(ws, r, "Raw Severity") in LEVELS, f"row {r}: Raw Severity is an eMASS level")
         check(text(ws, r, "POA&M Item ID") == "" and text(ws, r, "Milestone ID") == "", f"row {r}: IDs left for eMASS")
         check(date(ws, r, "Date Identified") is not None, f"row {r}: Date Identified is a real date")
         check(len(item["milestones"]) >= 1, f"row {r}: {item['status']} item has a milestone")
         for m in item["milestones"]:
             check(text(ws, m, "Milestone Status") in MILESTONE_STATUSES, f"row {m}: milestone status is an eMASS value")
-            check(text(ws, m, "Milestone Description") != "", f"row {m}: milestone description present")
             scheduled = date(ws, m, "Milestone Scheduled Completion Date")
             check(scheduled is not None, f"row {m}: milestone scheduled date present")
             if scheduled and date(ws, r, "POA&M Scheduled Completion Date"):
                 check(scheduled <= date(ws, r, "POA&M Scheduled Completion Date"),
                       f"row {m}: milestone date does not exceed the item's scheduled date")
         if item["status"] == "Ongoing":
-            expected = datetime.datetime.combine(datetime.date.today() + datetime.timedelta(days=90), datetime.time())
-            check(date(ws, r, "POA&M Scheduled Completion Date") == expected, f"row {r}: Ongoing scheduled 90 days out (setting)")
+            identified = date(ws, r, "Date Identified")
+            expected = identified + datetime.timedelta(days=90) if identified else None
+            check(date(ws, r, "POA&M Scheduled Completion Date") == expected, f"row {r}: scheduled = Date Identified + 90 days (setting; POAM-06)")
             check(text(ws, item["milestones"][0], "Milestone Status") == "Open", f"row {r}: Ongoing milestone is Open")
         if item["status"] == "Completed":
             check(date(ws, r, "POA&M Completion Date") is not None, f"row {r}: Completed item has a completion date")
@@ -130,10 +134,7 @@ def check_poam(path):
 
     expectations = [
         ("SV-1001r2_rule", "Ongoing", "AC-2(1)", "High", "TESTHOST01"),
-        ("SV-1001r2_rule", "Completed", "AC-2(1)", "High", "TESTHOST02"),
         ("SV-1002r1_rule", "Ongoing", "CM-6", "Moderate", "TESTHOST02"),
-        ("SV-1002r1_rule", "Completed", "CM-6", "Moderate", "TESTHOST01"),
-        ("SV-2001r1_rule", "Ongoing", "AC-1", "Low", "TESTHOST01"),
     ]
     for check_id, status, control, severity, host in expectations:
         r = by_key.get((check_id, status))
@@ -143,6 +144,16 @@ def check_poam(path):
         check(text(ws, r, "Controls / APs") == control, f"{check_id} / {status}: control {control} (got '{text(ws, r, 'Controls / APs')}')")
         check(text(ws, r, "Raw Severity") == severity, f"{check_id} / {status}: raw severity {severity}")
         check(text(ws, r, "Devices Affected") == host, f"{check_id} / {status}: devices '{host}' (got '{text(ws, r, 'Devices Affected')}')")
+    r1, r2 = by_key.get(("SV-1001r2_rule", "Ongoing")), by_key.get(("SV-1002r1_rule", "Ongoing"))
+    if r1:
+        check(text(ws, r1, "Mitigations") == "Analyst Must Complete", "no justification -> 'Analyst Must Complete' (AD-917)")
+        check(text(ws, r1, "Recommendations") == "Configure automated account management.", "Recommendations = Fix Text (POAM-29)")
+        check(text(ws, r1, "Comments") == "Account management is manual.\n---\nTicket 42 opened.", "Comments = details --- comments (POAM-19)")
+        check(text(ws, r1, "Severity") == "High", "Severity = raw severity without an override")
+    if r2:
+        check(text(ws, r2, "Mitigations") == "Compensating control in place.", "Mitigations = severity justification (AD-917)")
+        check(text(ws, r2, "Severity") == "Low" and text(ws, r2, "Raw Severity") == "Moderate", "Severity honours the override; Raw Severity does not (PD-06a)")
+        check(date(ws, r2, "Date Identified") == datetime.datetime(2026, 2, 3), f"Date Identified = CKLB rule date 2026-02-03 (AD-916) (got {date(ws, r2, 'Date Identified')})")
     first_severities = [text(ws, item["row"], "Raw Severity") for item in items]
     order = {"Very High": 0, "High": 1, "Moderate": 2, "Low": 3, "Very Low": 4}
     check(first_severities == sorted(first_severities, key=lambda s: order.get(s, 9)), "items are ordered by severity, CAT I first")
@@ -166,7 +177,7 @@ def check_hwsw(path):
         check(hw.cell(row=r, column=5).value == "00:11:22:33:44:55", "TESTHOST01 MAC address")
         check(hw.cell(row=r, column=1).value in (None, ""), "Asset ID # left for eMASS")
     banner = (hw.oddHeader.center.text or "") + (sw.oddFooter.center.text or "")
-    check("CONTROLLED UNCLASSIFIED INFORMATION" in banner, "classification banner on both sheets")
+    check("UNCLASSIFIED" not in banner, "no classification banner by default (R-20)")
 
 
 def main():

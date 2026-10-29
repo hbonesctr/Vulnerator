@@ -67,20 +67,23 @@ namespace Vulnerator.Model.BusinessLogic.Reports
         public static EmassPoamOptions CreateOptions()
         {
             Properties.Settings settings = Properties.Settings.Default;
+            EmassPoamOptions options = new EmassPoamOptions { ExportDate = DateTime.Today };
+            // Office/Org: the setting, else "Organization, Name, Phone, Email" from the contact settings,
+            // else the processor's placeholder (PD-03).
             string officeOrg = string.IsNullOrWhiteSpace(settings.EmassOfficeOrg)
                 ? EmassPoamBuilder.ComposeOfficeOrg(settings.Organization, settings.Name, settings.Phone, settings.Email)
                 : settings.EmassOfficeOrg.Trim();
-            int days;
-            return new EmassPoamOptions
-            {
-                OfficeOrg = officeOrg,
-                Resources = settings.EmassResourcesRequired ?? string.Empty,
-                IdentificationSource = settings.EmassIdentificationSource ?? string.Empty,
-                ScheduledCompletionDays = int.TryParse(settings.EmassScheduledCompletionDays, NumberStyles.Integer,
-                    CultureInfo.InvariantCulture, out days) && days >= 0 ? days : (int?)null,
-                DefaultMilestone = settings.EmassDefaultMilestone ?? string.Empty,
-                ExportDate = DateTime.Today
-            };
+            if (!string.IsNullOrWhiteSpace(officeOrg))
+            { options.OfficeOrg = officeOrg; }
+            if (!string.IsNullOrWhiteSpace(settings.EmassResourcesRequired))
+            { options.Resources = settings.EmassResourcesRequired.Trim(); }
+            if (!string.IsNullOrWhiteSpace(settings.EmassIdentificationSource))
+            { options.IdentificationSource = settings.EmassIdentificationSource.Trim(); }
+            if (!string.IsNullOrWhiteSpace(settings.EmassMitigationPlaceholder))
+            { options.MitigationPlaceholder = settings.EmassMitigationPlaceholder.Trim(); }
+            options.DefaultMilestone = settings.EmassDefaultMilestone ?? string.Empty;
+            options.SetCompletionDays(settings.EmassScheduledCompletionDays);
+            return options;
         }
 
         public static void Write(string fileName, List<EmassPoamItem> items)
@@ -244,6 +247,9 @@ namespace Vulnerator.Model.BusinessLogic.Reports
                             ImpactDescription = Combine(Text(reader, "GroupImpactDescription"), Text(reader, "UniqueImpactDescription")),
                             ResidualRisk = Prefer(reader, hasGroupColumns, "GroupResidualRisk", "UniqueResidualRisk"),
                             ProposedMitigation = Combine(Text(reader, "GroupProposedMitigations"), Text(reader, "UniqueProposedMitigation")),
+                            FixText = Text(reader, "FixText"),
+                            SeverityOverride = Text(reader, "SeverityOverride"),
+                            SeverityJustification = Text(reader, "SeverityOverrideJustification"),
                             FirstDiscovered = EmassPoamBuilder.ToDate(reader["FirstDiscovered"]),
                             LastObserved = EmassPoamBuilder.ToDate(reader["LastObserved"]),
                             EstimatedCompletion = EmassPoamBuilder.ToDate(

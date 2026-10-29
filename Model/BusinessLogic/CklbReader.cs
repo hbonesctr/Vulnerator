@@ -204,6 +204,11 @@ namespace Vulnerator.Model.BusinessLogic
             }
             foreach (string legacyId in List(Get(rule, "legacy_ids")))
             { WriteStigData(writer, "LEGACY_ID", legacyId); }
+            // The rule's own date (CKL has none): the earlier of createdAt / updatedAt as a local calendar date.
+            // CklReader uses it as the finding's first-discovered date (CKL-CKLB-Processor AD-916 / R-17).
+            DateTime? ruleDate = EarliestDate(Get(rule, "createdAt"), Get(rule, "updatedAt"));
+            if (ruleDate.HasValue)
+            { WriteStigData(writer, CklReader.RuleDateAttribute, ruleDate.Value.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)); }
             foreach (string cci in List(Get(rule, "ccis")))
             { WriteStigData(writer, "CCI_REF", cci); }
 
@@ -237,6 +242,24 @@ namespace Vulnerator.Model.BusinessLogic
             writer.WriteElementString("VULN_ATTRIBUTE", attribute);
             writer.WriteElementString("ATTRIBUTE_DATA", value ?? string.Empty);
             writer.WriteEndElement();
+        }
+
+        private static DateTime? EarliestDate(params object[] values)
+        {
+            DateTime? earliest = null;
+            foreach (object value in values)
+            {
+                string text = Text(value).Trim();
+                DateTimeOffset parsed;
+                if (text.Length > 0 && DateTimeOffset.TryParse(text, System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.AssumeLocal, out parsed))
+                {
+                    DateTime local = parsed.LocalDateTime.Date;
+                    if (!earliest.HasValue || local < earliest.Value)
+                    { earliest = local; }
+                }
+            }
+            return earliest;
         }
 
         private static Dictionary<string, object> Load(string path)

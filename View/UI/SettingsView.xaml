@@ -161,6 +161,13 @@
                         <TextBox Margin="5,0,5,5"
                                  Controls:TextBoxHelper.ButtonContent="{IconPacks:FontAwesomeLight Kind=TimesSquare}"
                                  Controls:TextBoxHelper.ClearTextButton="True"
+                                 Controls:TextBoxHelper.Watermark="POA&amp;M Mitigations when none is recorded"
+                                 vh:DependencyProperties.FloatingWatermark="POA&amp;M Mitigations when none is recorded"
+                                 Style="{StaticResource HeaderedTextBoxStyle}"
+                                 Text="{Binding Source={StaticResource Settings}, Path=Default.EmassMitigationPlaceholder, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBox Margin="5,0,5,5"
+                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:FontAwesomeLight Kind=TimesSquare}"
+                                 Controls:TextBoxHelper.ClearTextButton="True"
                                  Controls:TextBoxHelper.Watermark="POA&amp;M Identification Source"
                                  vh:DependencyProperties.FloatingWatermark="POA&amp;M Identification Source"
                                  Style="{StaticResource HeaderedTextBoxStyle}"
@@ -168,15 +175,15 @@
                         <TextBox Margin="5,0,5,5"
                                  Controls:TextBoxHelper.ButtonContent="{IconPacks:FontAwesomeLight Kind=TimesSquare}"
                                  Controls:TextBoxHelper.ClearTextButton="True"
-                                 Controls:TextBoxHelper.Watermark="Days to schedule completion when no mitigation date is set"
-                                 vh:DependencyProperties.FloatingWatermark="Days to schedule completion when no mitigation date is set"
+                                 Controls:TextBoxHelper.Watermark="Days to completion from Date Identified, High;Moderate;Low (e.g. 30;60;180)"
+                                 vh:DependencyProperties.FloatingWatermark="Days to completion from Date Identified, High;Moderate;Low (e.g. 30;60;180)"
                                  Style="{StaticResource HeaderedTextBoxStyle}"
                                  Text="{Binding Source={StaticResource Settings}, Path=Default.EmassScheduledCompletionDays, UpdateSourceTrigger=PropertyChanged}" />
                         <TextBox Margin="5,0,5,5"
                                  Controls:TextBoxHelper.ButtonContent="{IconPacks:FontAwesomeLight Kind=TimesSquare}"
                                  Controls:TextBoxHelper.ClearTextButton="True"
-                                 Controls:TextBoxHelper.Watermark="Default milestone description"
-                                 vh:DependencyProperties.FloatingWatermark="Default milestone description"
+                                 Controls:TextBoxHelper.Watermark="Default milestone description (blank: analyst writes it)"
+                                 vh:DependencyProperties.FloatingWatermark="Default milestone description (blank: analyst writes it)"
                                  Style="{StaticResource HeaderedTextBoxStyle}"
                                  Text="{Binding Source={StaticResource Settings}, Path=Default.EmassDefaultMilestone, UpdateSourceTrigger=PropertyChanged}" />
                         <TextBox Margin="5,0,5,5"
@@ -265,6 +272,15 @@
                                     Content="{IconPacks:FontAwesomeLight Kind=FileImport}"
                                     ToolTip="Upload" />
                         </Grid>
+                        <Label Style="{StaticResource SecondLevelHeaderStyle}">
+                            <TextBlock Text="eMASS Assessment Procedures"
+                                       TextTrimming="CharacterEllipsis" />
+                        </Label>
+                        <Button Margin="5,0,5,5"
+                                HorizontalAlignment="Left"
+                                Command="{Binding ImportEmassAssessmentProceduresCommand}"
+                                Content="Import eMASS IG/AP export..."
+                                ToolTip="Load assessment procedures from your own eMASS IG/AP export; stays on this machine" />
                         <!--<Label Grid.Column="0" Style="{StaticResource SecondLevelHeaderStyle}">
                         <TextBlock Text="Build Ansible Tower Report Files" TextTrimming="CharacterEllipsis" />
                     </Label>

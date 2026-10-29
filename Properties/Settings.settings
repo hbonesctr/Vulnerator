@@ -171,19 +171,22 @@
       <Value Profile="(Default)" />
     </Setting>
     <Setting Name="EmassResourcesRequired" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+      <Value Profile="(Default)">Organizationally Defined</Value>
     </Setting>
     <Setting Name="EmassIdentificationSource" Type="System.String" Scope="User">
-      <Value Profile="(Default)">Vulnerability Management</Value>
+      <Value Profile="(Default)">Security Control Deficiencies</Value>
     </Setting>
     <Setting Name="EmassScheduledCompletionDays" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+      <Value Profile="(Default)">30;60;180</Value>
     </Setting>
     <Setting Name="EmassDefaultMilestone" Type="System.String" Scope="User">
-      <Value Profile="(Default)">Remediate the finding per the security check fix procedure.</Value>
+      <Value Profile="(Default)" />
     </Setting>
     <Setting Name="EmassClassificationMarking" Type="System.String" Scope="User">
-      <Value Profile="(Default)">CONTROLLED UNCLASSIFIED INFORMATION</Value>
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="EmassMitigationPlaceholder" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Analyst Must Complete</Value>
     </Setting>
   </Settings>
 </SettingsFile>
