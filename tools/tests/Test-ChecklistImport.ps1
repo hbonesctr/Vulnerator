@@ -148,6 +148,8 @@ try {
     $result = Import-Checklist (Join-Path $fixtures 'older-release.ckl') 'TestGroup'
     $remaining = [int](Get-Scalar "SELECT COUNT(*) FROM Vulnerabilities WHERE UniqueVulnerabilityIdentifier = 'SV-1002'")
     Assert-That (($result -eq 'Processed') -and ($remaining -ge 1)) 'importing an older-release CKL does not delete library entries'
+    $serverRelease = Get-Scalar "SELECT SourceRelease FROM VulnerabilitySources WHERE SourceName LIKE '%Test Server%'"
+    Assert-That ([string]$serverRelease -eq '5') ('an older-release CKL does not move the STIG back to release 4 (got "' + $serverRelease + '")')
 
     $before = Get-Counts
     $watch = [System.Diagnostics.Stopwatch]::StartNew()
@@ -348,6 +350,11 @@ try {
     $summary = $importer.Import((Join-Path $stigFixtures 'U_Library_Test_STIG_V2R3_Manual-xccdf.xml'))
     $revisions = [string](Get-Scalar "SELECT GROUP_CONCAT(VulnerabilityVersion) FROM Vulnerabilities WHERE UniqueVulnerabilityIdentifier = 'SV-5001'")
     Assert-That ($importer.Older -eq 1 -and $revisions -eq '3' -and [string](Get-Scalar $sourceSql) -eq '2|4') ('an older release does not overwrite a newer one (got "' + $summary + '")')
+    $result = Import-Checklist (Join-Path $fixtures 'library-test.ckl') 'TestGroup'
+    $source = [string](Get-Scalar $sourceSql)
+    $kept = [string](Get-Scalar $statusSql @{ '@h' = 'LIBHOST01'; '@v' = 'SV-5002' })
+    $r4Date = [string](Get-Scalar "SELECT typeof(PublishedDate) FROM Vulnerabilities WHERE UniqueVulnerabilityIdentifier = 'SV-5001'")
+    Assert-That ($result -eq 'Processed' -and $source -eq '2|4' -and $kept -eq 'Ongoing' -and $r4Date -eq 'integer') ('a release-3 checklist after the release-4 library keeps release 4 and its findings (got "' + $result + '", ' + $source + ', ' + $kept + ', ' + $r4Date + ')')
 
     $summary = $importer.Import((Join-Path $stigFixtures 'Library_SCAP_Test_SCAP_1-2_Benchmark.xml'))
     $scapRule = [string](Get-Scalar "SELECT VulnerabilityVersion || '|' || VulnerabilityGroupIdentifier || '|' || VulnerabilityTitle FROM Vulnerabilities WHERE UniqueVulnerabilityIdentifier = 'SV-6001'")

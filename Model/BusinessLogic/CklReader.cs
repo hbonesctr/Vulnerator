@@ -359,8 +359,17 @@ namespace Vulnerator.Model.BusinessLogic
                         }
                         else if (xmlReader.NodeType == XmlNodeType.EndElement && xmlReader.Name.Equals("STIG_INFO"))
                         {
-                            databaseInterface.UpdateVulnerabilitySource(sqliteCommand);
-                            databaseInterface.InsertVulnerabilitySource(sqliteCommand);
+                            if (databaseInterface.SourceHasNewerRelease(sqliteCommand))
+                            {
+                                // A checklist from an older release: keep the newer release already loaded (its
+                                // rules are where this checklist's results attach) instead of moving the STIG back.
+                                databaseInterface.UseLoadedSourceRelease(sqliteCommand);
+                            }
+                            else
+                            {
+                                databaseInterface.UpdateVulnerabilitySource(sqliteCommand);
+                                databaseInterface.InsertVulnerabilitySource(sqliteCommand);
+                            }
                             return;
                         }
                     }
@@ -579,7 +588,7 @@ namespace Vulnerator.Model.BusinessLogic
                                 }
                             case "Existing Version Is Newer":
                                 {
-                                    databaseInterface.UpdateVulnerabilityDates(sqliteCommand);
+                                    // The finding attaches to the newer rule; its benchmark date is left as it is.
                                     sqliteCommand.Parameters["DeltaAnalysisIsRequired"].Value = "True";
                                     databaseInterface.UpdateDeltaAnalysisFlags(sqliteCommand);
                                     break;

@@ -141,6 +141,30 @@ namespace Vulnerator.Model.DataAccess
             }
         }
 
+        /// <summary>
+        /// Points the source parameters at the release already loaded for this STIG, so results from an older
+        /// checklist or scan are filed under it instead of moving the STIG back to the older release.
+        /// </summary>
+        public void UseLoadedSourceRelease(SQLiteCommand sqliteCommand)
+        {
+            try
+            {
+                sqliteCommand.CommandText = _ddlReader.ReadDdl(_storedProcedureBase + "Select.LoadedSourceRelease.dml", assembly);
+                using (SQLiteDataReader sqliteDataReader = sqliteCommand.ExecuteReader())
+                {
+                    if (!sqliteDataReader.Read())
+                    { return; }
+                    sqliteCommand.Parameters["SourceVersion"].Value = sqliteDataReader["SourceVersion"].ToString();
+                    sqliteCommand.Parameters["SourceRelease"].Value = sqliteDataReader["SourceRelease"].ToString();
+                }
+            }
+            catch (Exception exception)
+            {
+                LogWriter.LogError($"Unable to read the loaded release of source '{sqliteCommand.Parameters["SourceName"].Value}'.");
+                throw exception;
+            }
+        }
+
         public void DeleteMitigationGroupMappingByMitigation(SQLiteCommand sqliteCommand)
         {
             try

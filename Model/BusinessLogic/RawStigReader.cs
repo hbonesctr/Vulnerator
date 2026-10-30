@@ -108,10 +108,18 @@ namespace Vulnerator.Model.BusinessLogic
             Revisions.Clear();
             SetSource(sqliteCommand, benchmark, fileName);
             sqliteCommand.Parameters["FindingType"].Value = findingType;
-            if (isLibrary && databaseInterface.SourceHasNewerRelease(sqliteCommand))
-            { return false; }
-            databaseInterface.UpdateVulnerabilitySource(sqliteCommand);
-            databaseInterface.InsertVulnerabilitySource(sqliteCommand);
+            if (databaseInterface.SourceHasNewerRelease(sqliteCommand))
+            {
+                if (isLibrary)
+                { return false; }
+                // Older scan results: keep the newer release; findings attach to its rules.
+                databaseInterface.UseLoadedSourceRelease(sqliteCommand);
+            }
+            else
+            {
+                databaseInterface.UpdateVulnerabilitySource(sqliteCommand);
+                databaseInterface.InsertVulnerabilitySource(sqliteCommand);
+            }
             foreach (XElement group in Children(benchmark, "Group").SelectMany(SelfAndNestedGroups))
             {
                 foreach (XElement rule in Children(group, "Rule"))
