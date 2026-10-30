@@ -1,51 +1,37 @@
 ﻿<div align="center">
     <img width="25%" src="Vulnerator_Logo_Large_Color_SquareBackground_20190805.png">
-	<h1>Vulnerator</h1>
-	<h2>Vulnerability Continuous Monitoring Made Easy</h2>
-		<a href="https://gitter.im/Vulnerator/Vulnerator">
-			<img src="https://img.shields.io/badge/Gitter-Join%20Chat-green.svg?style=flat-square&colorB=5523ed">
-		</a>
-        <a href="https://join.slack.com/t/vulnerator-chat/shared_invite/enQtMzQxMzc2MTE0NTI4LWQ1MTVmOGRmZjU4M2UzODU4ZDBhZDk1NGNlY2ZmMjgxNGEzNjUxMmE4OTkwNjQ3NTBhYzU3NmQ2OGI4YjViYzM">
-			<img src="https://img.shields.io/badge/Slack-Join%20Chat-green.svg?style=flat-square&colorB=5523ed">
-		</a>
-		<a href="https://github.com/Vulnerator/Vulnerator/releases/latest">
-			<img src="https://img.shields.io/github/release/Vulnerator/Vulnerator.svg?style=flat-square">
-		</a>
-		<a href="https://github.com/Vulnerator/Vulnerator/issues">
-			<img src="https://img.shields.io/github/issues-raw/Vulnerator/Vulnerator.svg?style=flat-square">
-		</a>
-		<a href="https://github.com/Vulnerator/Vulnerator/issues">
-			<img src="https://img.shields.io/github/issues-closed-raw/Vulnerator/Vulnerator.svg?style=flat-square&colorB=green">
-		</a>
-        <a href="https://github.com/Vulnerator/Vulnerator/blob/testing/LICENSE">
-			<img src="https://img.shields.io/github/license/Vulnerator/Vulnerator.svg?style=flat-square&colorB=f77a1b">
-		</a>
+    <h1>Vulnerator 2.0</h1>
+    <h3>Vulnerability continuous monitoring for DoD RMF</h3>
 </div>
 
-### Software Security
-With the move from SoftwareForge to the public domain, the integrity of the application has recently been thrust into the limelight.  To ensure the application is secure, please note the following measures:
-* [Alex Kuchta](https://github.com/amkuchta "Alex Kuchta's GitHub Page") has personally had his hand in every line of code in the application - there is not a single file that has not been touched, modified, or updated by him
-* Only four GitHub users have the power to update the application.  This means that although anybody can fork the repository and change their personal repo, only one of the four "gatekeepers" can authorize a change to the ```master``` branch
-* Each release is listed with both an ```MD5``` and ```SHA256``` checksum value - after you download the application, I encourage you to check the hash yourself to ensure that you downloaded what you expected
-* If the above measures are not enough, please feel free to create your own fork of the repository and compile the application yourself - this will allow you to do a manual code review to ensure that no malicious lines exist before creating an executable.
+Vulnerator 2.0 is a maintained fork of [Vulnerator](https://github.com/Vulnerator/Vulnerator). It brings the tool to
+NIST SP 800-53 Rev 5, current DISA checklist and scan formats, and eMASS POA&M and hardware / software exports, and it
+runs offline on closed networks without administrator rights.
 
-### Helpful Links:
-To get started, please check out (and bookmark!) the following locations - they are a treasure trove of knowledge (which I am told is power, and who doesn't want to be all-powerful?)!  
+### What it does
+- Imports STIG checklists (.ckl, STIG Viewer 3 .cklb), ACAS / Nessus scans (.nessus, CSV), SCAP / SCC XCCDF results and
+  the DISA STIG library.
+- Maps findings to CCIs and NIST SP 800-53 Rev 5 controls (DISA CCI list, CNSSI 1253 baselines), with eMASS assessment
+  procedures from your own IG/AP export.
+- Exports eMASS POA&M and hardware / software workbooks, a Risk Assessment Report, and per-host STIG checklists.
 
-* **Vulnerator Project Page:** https://vulnerator.github.io/Vulnerator/
-* **Software Releases:**  https://github.com/Vulnerator/Vulnerator/releases
-* **Wiki Page(s):** https://github.com/Vulnerator/Vulnerator/wiki
-* **Issue Tracker:** https://github.com/Vulnerator/Vulnerator/issues  
-* **Change Log:** https://github.com/Vulnerator/Vulnerator/wiki/Change-Log  
+### Getting started
+1. Download the zip from [Releases](https://github.com/hbonesctr/Vulnerator/releases) and check its SHA-256 against
+   the release page (`Get-FileHash .\Vulnerator-<version>.zip`).
+2. Extract the whole folder and run `Vulnerator.exe` from inside it (.NET Framework 4.8; no installation, no
+   administrator rights).
+3. Choose **Portable** (database next to the program) or **Persistent** (a database file you pick).
+4. Optional: Settings > STIG library (the DISA quarterly zip) and Settings > Import assessment procedures (your eMASS
+   IG/AP export).
 
-### QuickStart Guide
-Now that you have familiarized yourself with the available resources (you did click the links, didn't you?), jump in to using the software!  
+Before relying on a build, run `Test-RealData.ps1` (in the release folder) against a folder of your own files; it uses a
+throwaway database and sends nothing anywhere. Release notes are in [docs/release-notes](docs/release-notes).
 
-1. Download the software from the [Releases](https://github.com/Vulnerator/Vulnerator/releases) page
-  * **Note:** Chances are, unless you are a coder or interested in seeing "under the hood", you want the compiled release (the download without the word "Source" in it)
-2. Extract the entire folder from the "*.zip" file you just downloaded
-3. Launch the "Vulnerator.exe" file _from within the folder you just extracted_
-  * The executable has hidden files that it depends on to run - they are shipped with the application.  If Vulnerator does not find these files in the directory it is in, it will yell at you, which will make you yell at me... and I don't like being yelled at.
-4. Enjoy!
+### Building
+Builds and tests run in GitHub Actions on Windows (`.github/workflows/build.yml`): reference-data checks, SQL compile
+checks, the Release build, end-to-end import / export tests on synthetic files, and eMASS template checks. Pushing a
+`v*` tag publishes a release with the built zip and its SHA-256. Reference data is regenerated with the scripts in
+[tools/rev5](tools/rev5).
 
-For a more detailed user guide, be sure to check out the [Wiki](https://github.com/Vulnerator/Vulnerator/wiki), and if you have any bugs or suggestions to report, post them on the [Issues](https://github.com/Vulnerator/Vulnerator/issues) page.
+### Credits and license
+Based on Vulnerator by Alex Kuchta and contributors. MIT License (see [LICENSE](LICENSE)).

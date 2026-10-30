@@ -3,12 +3,15 @@ name: Build
 on:
   push:
     branches: [ "v2/**", master ]
+    tags: [ "v*" ]
   pull_request:
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: windows-2022
+    permissions:
+      contents: write   # publish the release on a v* tag
     steps:
       - uses: actions/checkout@v4
 
@@ -96,3 +99,24 @@ jobs:
           path: bin/Release/
           if-no-files-found: error
           retention-days: 30
+
+      - name: Publish release (v* tags only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = '${{ github.ref_name }}'
+          $zip = "Vulnerator-$tag.zip"
+          Get-ChildItem bin/Release -Recurse -Include '*.pdb' | Remove-Item
+          Compress-Archive -Path bin/Release/* -DestinationPath $zip
+          $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          Set-Content "$zip.sha256" "$hash  $zip" -Encoding ascii
+          $notesFile = "docs/release-notes/$tag.md"
+          $notes = if (Test-Path $notesFile) { Get-Content $notesFile -Raw } else { "Vulnerator $tag" }
+          Set-Content notes.md ($notes.TrimEnd() + "`n`n**SHA-256** ``$zip``: ``$hash``") -Encoding utf8
+          $arguments = @('release', 'create', $tag, $zip, "$zip.sha256", '--title', "Vulnerator $tag", '--notes-file', 'notes.md', '--verify-tag')
+          if ($tag -match '-') { $arguments += '--prerelease' }
+          & gh @arguments
+          if ($LASTEXITCODE -ne 0) { Write-Host '::error::release publish failed'; exit 1 }
+          Write-Host "::notice::Published $tag ($hash)"
