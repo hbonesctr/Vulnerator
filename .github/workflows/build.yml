@@ -118,7 +118,8 @@ jobs:
           Set-Content notes.md ($notes.TrimEnd() + "`n`n**SHA-256** ``$zip``: ``$hash``") -Encoding utf8
           $arguments = @('release', 'create', $tag, $zip, "$zip.sha256", '--title', "Vulnerator $tag", '--notes-file', 'notes.md', '--target', '${{ github.sha }}')
           if ($tag -match '-') { $arguments += '--prerelease' }
-          & gh @arguments
-          if ($LASTEXITCODE -ne 0) { Write-Host '::error::release publish failed'; exit 1 }
+          $output = & gh @arguments 2>&1 | Out-String
+          Write-Host $output
+          if ($LASTEXITCODE -ne 0) { Write-Host ('::error::release publish failed: ' + ($output -replace "`r?`n", ' ')); exit 1 }
           Write-Host "::notice::Published $tag ($hash)"
           if ('${{ github.ref }}' -like 'refs/heads/release/*') { git push origin --delete '${{ github.ref_name }}' }
