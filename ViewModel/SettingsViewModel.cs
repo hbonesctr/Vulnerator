@@ -145,8 +145,7 @@ namespace Vulnerator.ViewModel
                 if ((bool)openFileDialog.ShowDialog())
                 {
                     Settings.Default.Database = openFileDialog.FileName;
-                    DatabaseBuilder.databaseConnection =
-                        $@"Data Source = {Settings.Default.Database}; Version=3;";
+                    DatabaseBuilder.databaseConnection = DatabaseBuilder.ConnectionStringFor(Settings.Default.Database);
                     DatabaseBuilder.sqliteConnection = new SQLiteConnection(DatabaseBuilder.databaseConnection);
                 }
             }

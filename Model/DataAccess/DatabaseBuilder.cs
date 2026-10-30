@@ -21,8 +21,14 @@ namespace Vulnerator.Model.DataAccess
         private DdlReader _ddlReader = new DdlReader();
         private Assembly assembly = Assembly.GetExecutingAssembly();
 
-        public static string databaseConnection =
-            $@"Data Source = {Properties.Settings.Default.Database}; Version=3;datetimeformat=Ticks;";
+        /// <summary>
+        /// Every connection uses the same settings: dates are stored as ticks, which the readers and queries rely on
+        /// (a database opened without them would store dates as text).
+        /// </summary>
+        public static string ConnectionStringFor(string databasePath)
+        { return $@"Data Source = {databasePath}; Version=3;datetimeformat=Ticks;"; }
+
+        public static string databaseConnection = ConnectionStringFor(Properties.Settings.Default.Database);
 
         public static SQLiteConnection sqliteConnection = new SQLiteConnection(databaseConnection);
 

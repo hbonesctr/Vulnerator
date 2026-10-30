@@ -60,42 +60,18 @@
                 <controls:WindowCommands DataContext="{Binding Path=DataContext, RelativeSource={RelativeSource AncestorType=controls:MetroWindow}}"
                                          Foreground="{DynamicResource MahApps.Brushes.ThemeForeground}"
                                          ShowLastSeparator="False">
-                    <Button x:Name="projectButton"
-                            Command="{Binding AboutLinksCommand}"
-                            CommandParameter="{Binding Path=Name, RelativeSource={RelativeSource Self}}"
-                            Content="{iconPacks:FontAwesomeSolid Home}"
-                            Foreground="{DynamicResource MahApps.Brushes.ThemeForeground}"
-                            ToolTip="GitHub Project Page" />
                     <Button x:Name="githubButton"
                             Command="{Binding AboutLinksCommand}"
                             CommandParameter="{Binding Path=Name, RelativeSource={RelativeSource Self}}"
                             Content="{iconPacks:FontAwesomeBrand GithubAlt}"
                             Foreground="{DynamicResource MahApps.Brushes.ThemeForeground}"
-                            ToolTip="GitHub Repository" />
-                    <Button x:Name="wikiButton"
-                            Command="{Binding AboutLinksCommand}"
-                            CommandParameter="{Binding Path=Name, RelativeSource={RelativeSource Self}}"
-                            Content="{iconPacks:FontAwesomeSolid GraduationCap}"
-                            Foreground="{DynamicResource MahApps.Brushes.ThemeForeground}"
-                            ToolTip="Wiki" />
+                            ToolTip="Vulnerator 2.0 on GitHub" />
                     <Button x:Name="issueButton"
                             Command="{Binding AboutLinksCommand}"
                             CommandParameter="{Binding Path=Name, RelativeSource={RelativeSource Self}}"
                             Content="{iconPacks:FontAwesomeSolid Bug}"
                             Foreground="{DynamicResource MahApps.Brushes.ThemeForeground}"
-                            ToolTip="Issues" />
-                    <Button x:Name="gitterButton"
-                            Command="{Binding AboutLinksCommand}"
-                            CommandParameter="{Binding Path=Name, RelativeSource={RelativeSource Self}}"
-                            Content="{iconPacks:FontAwesomeBrand Gitter}"
-                            Foreground="{DynamicResource MahApps.Brushes.ThemeForeground}"
-                            ToolTip="Gitter Chat" />
-                    <Button x:Name="slackButton"
-                            Command="{Binding AboutLinksCommand}"
-                            CommandParameter="{Binding Path=Name, RelativeSource={RelativeSource Self}}"
-                            Content="{iconPacks:FontAwesomeBrand Slack}"
-                            Foreground="{DynamicResource MahApps.Brushes.ThemeForeground}"
-                            ToolTip="Slack Workspace (Chat)" />
+                            ToolTip="Report a problem (GitHub issues)" />
                 </controls:WindowCommands>
             </StackPanel>
         </DataTemplate>

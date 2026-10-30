@@ -273,6 +273,14 @@
                                     ToolTip="Upload" />
                         </Grid>
                         <Label Style="{StaticResource SecondLevelHeaderStyle}">
+                            <TextBlock Text="Online Checks"
+                                       TextTrimming="CharacterEllipsis" />
+                        </Label>
+                        <CheckBox Margin="{StaticResource MarginLeftRightBottom5}"
+                                  Content="Check GitHub for new Vulnerator releases and list issues (off by default; leave off on closed networks)"
+                                  IsChecked="{Binding Default.AllowOnlineChecks, Mode=TwoWay, Source={StaticResource Settings}}"
+                                  Style="{StaticResource CustomCheckBox}" />
+                        <Label Style="{StaticResource SecondLevelHeaderStyle}">
                             <TextBlock Text="Assessment Procedures"
                                        TextTrimming="CharacterEllipsis" />
                         </Label>
