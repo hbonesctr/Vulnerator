@@ -1,0 +1,24 @@
+name: Inspect packages (temporary)
+on:
+  push:
+    branches: [ "v2/sqlite2" ]
+    paths: [ ".github/workflows/inspect-packages.yml" ]
+jobs:
+  inspect:
+    runs-on: windows-2022
+    steps:
+      - uses: NuGet/setup-nuget@v2
+      - name: List package contents as annotations
+        shell: pwsh
+        run: |
+          $ids = @('System.Data.SQLite', 'System.Data.SQLite.EF6', 'SourceGear.sqlite3', 'System.Data.SQLite.Linq')
+          foreach ($id in $ids) {
+            $out = nuget install $id -OutputDirectory pk -NonInteractive -Framework net48 2>&1 | Out-String
+            Write-Host $out
+            Write-Host ('::notice::' + $id + ': ' + (($out -split "`n" | Where-Object { $_ -match 'Successfully installed|Unable|not found|WARNING' }) -join ' | '))
+          }
+          $lines = Get-ChildItem pk -Recurse -File | Where-Object { $_.Extension -in '.dll', '.targets', '.props' } | ForEach-Object { $_.FullName.Substring((Resolve-Path pk).Path.Length + 1) }
+          for ($i = 0; $i -lt $lines.Count; $i += 25) { Write-Host ('::notice::' + (($lines[$i..([Math]::Min($i + 24, $lines.Count - 1))]) -join ' ; ')) }
+          foreach ($t in Get-ChildItem pk -Recurse -Include *.targets, *.props) { Write-Host ('::notice::' + $t.Name + ' => ' + ((Get-Content $t -Raw) -replace "`r?`n", ' ' -replace '\s+', ' ').Substring(0, [Math]::Min(1800, (Get-Content $t -Raw).Length))) }
+          foreach ($n in Get-ChildItem pk -Recurse -Filter *.nuspec) { $x = [xml](Get-Content $n); Write-Host ('::notice::' + $n.Name + ' deps: ' + (($x.package.metadata.dependencies.group | ForEach-Object { $_.targetFramework + '=' + (($_.dependency | ForEach-Object { $_.id + ' ' + $_.version }) -join ',') }) -join ' / ')) }
+          foreach ($d in Get-ChildItem pk -Recurse -Include sqlite3.dll, System.Data.SQLite*.dll) { Write-Host ('::notice::VER ' + $d.FullName.Substring((Resolve-Path pk).Path.Length + 1) + ' ' + $d.VersionInfo.ProductVersion + ' / ' + [Reflection.AssemblyName]::GetAssemblyName($d.FullName).Version) 2>$null }
