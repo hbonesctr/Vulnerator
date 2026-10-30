@@ -37,6 +37,22 @@ jobs:
           $output | Where-Object { $_ -match ': error ' } | Select-Object -Unique -First 20 | ForEach-Object { Write-Host ('::error::' + ($_ -replace '^.*\\([^\\]+\.cs)', '$1')) }
           exit $code
 
+      - name: Check shipped native SQLite and log4net
+        shell: pwsh
+        # Scanners (ACAS) flag old SQLite builds in the program folder: report what ships and fail on strays.
+        run: |
+          $bin = 'bin/Release'
+          $managed = (Get-Item "$bin/System.Data.SQLite.dll").VersionInfo.ProductVersion
+          Write-Host ('::notice::System.Data.SQLite ' + $managed + '; log4net ' + (Get-Item "$bin/log4net.dll").VersionInfo.ProductVersion)
+          $bad = 0
+          foreach ($dll in Get-ChildItem $bin -Recurse -Include 'SQLite.Interop.dll', 'sqlite3.dll') {
+            $version = $dll.VersionInfo.ProductVersion
+            Write-Host ('::notice::' + $dll.FullName.Substring((Resolve-Path $bin).Path.Length + 1) + ' ' + $version)
+            if ($dll.Name -eq 'sqlite3.dll' -or $version -ne $managed) { Write-Host ('::error::unexpected native SQLite file ' + $dll.Name + ' ' + $version); $bad++ }
+          }
+          if ((Get-Item "$bin/log4net.dll").VersionInfo.FileVersion -notlike '2.0.17*') { Write-Host '::error::log4net is not 2.0.17'; $bad++ }
+          exit $bad
+
       - name: Test checklist import (CKL and CKLB)
         shell: cmd
         timeout-minutes: 5
