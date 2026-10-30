@@ -26,7 +26,7 @@ namespace Vulnerator.Model.DataAccess
         /// (a database opened without them would store dates as text).
         /// </summary>
         public static string ConnectionStringFor(string databasePath)
-        { return $@"Data Source = {databasePath}; Version=3;datetimeformat=Ticks;"; }
+        { return $@"Data Source={databasePath};Version=3;DateTimeFormat=Ticks;"; } // no spaces around "=": System.Data.SQLite 2.x keeps them in the key
 
         public static string databaseConnection = ConnectionStringFor(Properties.Settings.Default.Database);
 

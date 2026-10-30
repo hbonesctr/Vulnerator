@@ -21,7 +21,7 @@ namespace Vulnerator.View.Validation
         {
             if (File.Exists(fieldText) && !string.IsNullOrWhiteSpace(fieldText))
             {
-                string mitigationDatabaseConnection = @"Data Source = " + fieldText;
+                string mitigationDatabaseConnection = @"Data Source=" + fieldText;
 
                 using (SQLiteConnection connection = new SQLiteConnection(mitigationDatabaseConnection))
                 {
