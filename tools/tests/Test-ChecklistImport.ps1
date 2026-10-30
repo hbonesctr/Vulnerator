@@ -41,7 +41,7 @@ function Write-Annotation {
 
 function Invoke-Sql {
     param([string]$Sql, [hashtable]$Parameters = @{})
-    $connection = New-Object System.Data.SQLite.SQLiteConnection ('Data Source=' + $dbPath + ';Version=3;datetimeformat=Ticks;')
+    $connection = New-Object System.Data.SQLite.SQLiteConnection ('Data Source=' + $dbPath + ';Version=3;DateTimeFormat=Ticks;Foreign Keys=False;')
     $connection.Open()
     try {
         $command = $connection.CreateCommand()

@@ -26,7 +26,12 @@ namespace Vulnerator.Model.DataAccess
         /// (a database opened without them would store dates as text).
         /// </summary>
         public static string ConnectionStringFor(string databasePath)
-        { return $@"Data Source={databasePath};Version=3;DateTimeFormat=Ticks;"; } // no spaces around "=": System.Data.SQLite 2.x keeps them in the key
+        {
+            // No spaces around "=" (System.Data.SQLite 2.x keeps them in the key). Foreign keys stay off as they always
+            // were with 1.x: the SQLite build used by 2.x turns them on by default, and the upstream schema has
+            // foreign keys that do not match their parent tables.
+            return $@"Data Source={databasePath};Version=3;DateTimeFormat=Ticks;Foreign Keys=False;";
+        }
 
         public static string databaseConnection = ConnectionStringFor(Properties.Settings.Default.Database);
 

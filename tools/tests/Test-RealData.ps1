@@ -45,7 +45,7 @@ $indexer.SetValue($defaultSettings, 'real-data-test', [object[]]@('ActiveUser'))
 
 function Get-Scalar {
     param([string]$Sql)
-    $connection = New-Object System.Data.SQLite.SQLiteConnection ('Data Source=' + $dbPath + ';Version=3;DateTimeFormat=Ticks;')
+    $connection = New-Object System.Data.SQLite.SQLiteConnection ('Data Source=' + $dbPath + ';Version=3;DateTimeFormat=Ticks;Foreign Keys=False;')
     $connection.Open()
     try { $command = $connection.CreateCommand(); $command.CommandText = $Sql; return $command.ExecuteScalar() }
     finally { $connection.Dispose() }
