@@ -89,8 +89,11 @@ try {
     $app = [System.Reflection.Assembly]::LoadFrom((Join-Path $binPath 'Vulnerator.exe'))
     [void][System.Reflection.Assembly]::LoadFrom((Join-Path $binPath 'System.Data.SQLite.dll'))
     $log4net = [System.Reflection.Assembly]::LoadFrom((Join-Path $binPath 'log4net.dll'))
-    $configure = $log4net.GetType('log4net.Config.BasicConfigurator').GetMethod('Configure', [Type[]]@())
-    if ($null -ne $configure) { [void]$configure.Invoke($null, $null) }
+    # Keep the app's log in memory so errors it catches and logs can be shown when a check fails.
+    $script:memoryLog = [Activator]::CreateInstance($log4net.GetType('log4net.Appender.MemoryAppender'))
+    $script:memoryLog.GetType().GetMethod('ActivateOptions').Invoke($script:memoryLog, $null)
+    $configure = $log4net.GetType('log4net.Config.BasicConfigurator').GetMethod('Configure', [Type[]]@($log4net.GetType('log4net.Appender.IAppender')))
+    if ($null -ne $configure) { [void]$configure.Invoke($null, [object[]]@($script:memoryLog)) }
 
     # Properties.Settings is internal: set values through the public ApplicationSettingsBase indexer.
     $settingsType = $app.GetType('Vulnerator.Properties.Settings', $true)
@@ -471,6 +474,13 @@ if ($script:failures.Count -eq 0) {
     exit 0
 }
 Write-Host ([string]$script:failures.Count + ' check(s) failed.')
+if ($null -ne $script:memoryLog) {
+    $logged = @($script:memoryLog.GetEvents() | Where-Object { $_.Level.Name -eq 'ERROR' } | Select-Object -First 6)
+    foreach ($logEvent in $logged) {
+        $detail = if ($null -ne $logEvent.ExceptionObject) { $logEvent.ExceptionObject.ToString() } else { '' }
+        Write-Annotation 'error' ('App logged: ' + $logEvent.RenderedMessage + ' ' + $detail)
+    }
+}
 $logDir = Join-Path $binPath 'Logs'
 if (Test-Path $logDir) { Get-ChildItem $logDir -Filter '*.txt' | Select-Object -First 1 | ForEach-Object { Write-Annotation 'warning' ('App log tail: ' + ((Get-Content $_.FullName -Tail 25) -join ' | ')) } }
 exit 1
