@@ -68,7 +68,10 @@ public static class EntityFrameworkProbe
     }
 }
 '@
-    $references = @((Join-Path $binPath 'Vulnerator.exe'), (Join-Path $binPath 'EntityFramework.dll'), 'System.Data.dll', 'System.Core.dll', 'System.ComponentModel.DataAnnotations.dll')
+    # Add-Type only takes .dll references: compile against a copy; at run time the loaded Vulnerator.exe is used.
+    $reference = Join-Path $workDir 'Vulnerator.dll'
+    Copy-Item (Join-Path $binPath 'Vulnerator.exe') $reference
+    $references = @($reference, (Join-Path $binPath 'EntityFramework.dll'), 'System.Data.dll', 'System.Core.dll', 'System.ComponentModel.DataAnnotations.dll')
     Add-Type -TypeDefinition $probe -ReferencedAssemblies $references
     [EntityFrameworkProbe]::RedirectToLoadedAssemblies()
 
