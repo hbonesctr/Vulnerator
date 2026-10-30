@@ -46,14 +46,16 @@ jobs:
         # Scanners (ACAS) flag old SQLite builds in the program folder: report what ships and fail on strays.
         run: |
           $bin = 'bin/Release'
-          $managed = (Get-Item "$bin/System.Data.SQLite.dll").VersionInfo.ProductVersion
-          Write-Host ('::notice::System.Data.SQLite ' + $managed + '; log4net ' + (Get-Item "$bin/log4net.dll").VersionInfo.ProductVersion)
           $bad = 0
-          foreach ($dll in Get-ChildItem $bin -Recurse -Include 'SQLite.Interop.dll', 'sqlite3.dll') {
-            $version = $dll.VersionInfo.ProductVersion
-            Write-Host ('::notice::' + $dll.FullName.Substring((Resolve-Path $bin).Path.Length + 1) + ' ' + $version)
-            if ($dll.Name -eq 'sqlite3.dll' -or $version -ne $managed) { Write-Host ('::error::unexpected native SQLite file ' + $dll.Name + ' ' + $version); $bad++ }
+          $native = Get-Item "$bin/e_sqlite3.dll" -ErrorAction SilentlyContinue
+          if ($null -eq $native) { Write-Host '::error::e_sqlite3.dll (native SQLite) is missing from the build'; $bad++ }
+          else {
+            $sqliteVersion = ([Text.Encoding]::ASCII.GetString([IO.File]::ReadAllBytes($native.FullName)) | Select-String -Pattern '3\.\d{2}\.\d{1,2}' -AllMatches).Matches | Select-Object -First 1
+            $machine = [BitConverter]::ToUInt16([IO.File]::ReadAllBytes($native.FullName), [BitConverter]::ToInt32([IO.File]::ReadAllBytes($native.FullName), 60) + 4)
+            Write-Host ('::notice::System.Data.SQLite ' + (Get-Item "$bin/System.Data.SQLite.dll").VersionInfo.ProductVersion + '; e_sqlite3.dll SQLite ' + $sqliteVersion + ' (' + $(if ($machine -eq 0x14c) { 'x86' } else { 'machine ' + $machine }) + '); log4net ' + (Get-Item "$bin/log4net.dll").VersionInfo.ProductVersion)
+            if ($machine -ne 0x14c) { Write-Host '::error::e_sqlite3.dll is not 32-bit but the build is x86'; $bad++ }
           }
+          foreach ($dll in Get-ChildItem $bin -Recurse -Include 'SQLite.Interop.dll', 'sqlite3.dll', 'System.Data.SQLite.Linq.dll') { Write-Host ('::error::stray ' + $dll.FullName); $bad++ }
           if ((Get-Item "$bin/log4net.dll").VersionInfo.FileVersion -notlike '2.0.17*') { Write-Host '::error::log4net is not 2.0.17'; $bad++ }
           exit $bad
 
