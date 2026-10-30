@@ -30,7 +30,7 @@ throwaway database and sends nothing anywhere. Release notes are in [docs/releas
 ### Building
 Builds and tests run in GitHub Actions on Windows (`.github/workflows/build.yml`): reference-data checks, SQL compile
 checks, the Release build, end-to-end import / export tests on synthetic files, and eMASS template checks. Pushing a
-`v*` tag publishes a release with the built zip and its SHA-256. Reference data is regenerated with the scripts in
+`v*` tag, or a `release/v*` branch, publishes a release with the built zip and its SHA-256. Reference data is regenerated with the scripts in
 [tools/rev5](tools/rev5).
 
 ### Credits and license

@@ -2,7 +2,8 @@ name: Build
 
 on:
   push:
-    branches: [ "v2/**", master ]
+    # release/<tag> (e.g. release/v7.0.0-beta.1) builds, tests and publishes that release, then removes the branch.
+    branches: [ "v2/**", master, "release/**" ]
     tags: [ "v*" ]
   pull_request:
   workflow_dispatch:
@@ -100,13 +101,13 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      - name: Publish release (v* tags only)
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Publish release (v* tag or release/v* branch)
+        if: startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/heads/release/v')
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $tag = '${{ github.ref_name }}'
+          $tag = '${{ github.ref_name }}' -replace '^release/', ''
           $zip = "Vulnerator-$tag.zip"
           Get-ChildItem bin/Release -Recurse -Include '*.pdb' | Remove-Item
           Compress-Archive -Path bin/Release/* -DestinationPath $zip
@@ -115,8 +116,9 @@ jobs:
           $notesFile = "docs/release-notes/$tag.md"
           $notes = if (Test-Path $notesFile) { Get-Content $notesFile -Raw } else { "Vulnerator $tag" }
           Set-Content notes.md ($notes.TrimEnd() + "`n`n**SHA-256** ``$zip``: ``$hash``") -Encoding utf8
-          $arguments = @('release', 'create', $tag, $zip, "$zip.sha256", '--title', "Vulnerator $tag", '--notes-file', 'notes.md', '--verify-tag')
+          $arguments = @('release', 'create', $tag, $zip, "$zip.sha256", '--title', "Vulnerator $tag", '--notes-file', 'notes.md', '--target', '${{ github.sha }}')
           if ($tag -match '-') { $arguments += '--prerelease' }
           & gh @arguments
           if ($LASTEXITCODE -ne 0) { Write-Host '::error::release publish failed'; exit 1 }
           Write-Host "::notice::Published $tag ($hash)"
+          if ('${{ github.ref }}' -like 'refs/heads/release/*') { git push origin --delete '${{ github.ref_name }}' }
