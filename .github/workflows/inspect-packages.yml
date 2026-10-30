@@ -8,17 +8,28 @@ jobs:
     runs-on: windows-2022
     steps:
       - uses: NuGet/setup-nuget@v2
-      - name: List package contents as annotations
+      - name: Show package build files and native library names
         shell: pwsh
         run: |
-          $ids = @('System.Data.SQLite', 'System.Data.SQLite.EF6', 'SourceGear.sqlite3', 'System.Data.SQLite.Linq')
-          foreach ($id in $ids) {
-            $out = nuget install $id -OutputDirectory pk -NonInteractive -Framework net48 2>&1 | Out-String
-            Write-Host $out
-            Write-Host ('::notice::' + $id + ': ' + (($out -split "`n" | Where-Object { $_ -match 'Successfully installed|Unable|not found|WARNING' }) -join ' | '))
+          nuget install System.Data.SQLite.EF6 -OutputDirectory pk -NonInteractive | Out-Null
+          nuget install System.Data.SQLite -Version 2.0.4 -OutputDirectory pk -NonInteractive | Out-Null
+          nuget install SourceGear.sqlite3 -OutputDirectory pk -NonInteractive | Out-Null
+          $root = (Resolve-Path pk).Path
+          foreach ($t in Get-ChildItem pk -Recurse -Include *.targets, *.props | Where-Object { $_.FullName -match 'SourceGear|SQLite' }) {
+            $text = ((Get-Content $t.FullName -Raw) -replace '\s+', ' ')
+            for ($i = 0; $i -lt $text.Length; $i += 2500) { Write-Host ('::notice::' + $t.FullName.Substring($root.Length + 1) + ' [' + $i + '] ' + $text.Substring($i, [Math]::Min(2500, $text.Length - $i))) }
           }
-          $lines = Get-ChildItem pk -Recurse -File | Where-Object { $_.Extension -in '.dll', '.targets', '.props' } | ForEach-Object { $_.FullName.Substring((Resolve-Path pk).Path.Length + 1) }
-          for ($i = 0; $i -lt $lines.Count; $i += 25) { Write-Host ('::notice::' + (($lines[$i..([Math]::Min($i + 24, $lines.Count - 1))]) -join ' ; ')) }
-          foreach ($t in Get-ChildItem pk -Recurse -Include *.targets, *.props) { Write-Host ('::notice::' + $t.Name + ' => ' + ((Get-Content $t -Raw) -replace "`r?`n", ' ' -replace '\s+', ' ').Substring(0, [Math]::Min(1800, (Get-Content $t -Raw).Length))) }
-          foreach ($n in Get-ChildItem pk -Recurse -Filter *.nuspec) { $x = [xml](Get-Content $n); Write-Host ('::notice::' + $n.Name + ' deps: ' + (($x.package.metadata.dependencies.group | ForEach-Object { $_.targetFramework + '=' + (($_.dependency | ForEach-Object { $_.id + ' ' + $_.version }) -join ',') }) -join ' / ')) }
-          foreach ($d in Get-ChildItem pk -Recurse -Include sqlite3.dll, System.Data.SQLite*.dll) { Write-Host ('::notice::VER ' + $d.FullName.Substring((Resolve-Path pk).Path.Length + 1) + ' ' + $d.VersionInfo.ProductVersion + ' / ' + [Reflection.AssemblyName]::GetAssemblyName($d.FullName).Version) 2>$null }
+          foreach ($n in Get-ChildItem pk -Recurse -Filter *.nuspec | Where-Object { $_.Name -match 'SQLite|sqlite3' }) {
+            $x = [xml](Get-Content $n.FullName)
+            $groups = @($x.package.metadata.dependencies.group) | ForEach-Object { $_.targetFramework + '=' + ((@($_.dependency) | ForEach-Object { $_.id + ' ' + $_.version }) -join ',') }
+            Write-Host ('::notice::nuspec ' + $n.Name + ' ' + $x.package.metadata.version + ' deps: ' + ($groups -join ' / '))
+          }
+          foreach ($d in Get-ChildItem pk -Recurse -Include 'System.Data.SQLite.dll', 'System.Data.SQLite.EF6.dll' | Where-Object { $_.FullName -match 'net471' }) {
+            $bytes = [IO.File]::ReadAllBytes($d.FullName)
+            $ascii = [Text.Encoding]::ASCII.GetString($bytes)
+            $uni = [Text.Encoding]::Unicode.GetString($bytes)
+            $names = @('e_sqlite3', 'sqlite3', 'SQLite.Interop', 'winsqlite3') | Where-Object { $ascii.Contains($_) -or $uni.Contains($_) }
+            $ticks = @('DateTimeFormat', 'Ticks', 'datetimeformat') | Where-Object { $ascii.Contains($_) -or $uni.Contains($_) }
+            Write-Host ('::notice::' + $d.FullName.Substring($root.Length + 1) + ' asm ' + [Reflection.AssemblyName]::GetAssemblyName($d.FullName).Version + ' file ' + $d.VersionInfo.FileVersion + ' natives: ' + ($names -join ',') + ' tickstrings: ' + ($ticks -join ','))
+          }
+          foreach ($d in Get-ChildItem pk -Recurse -Filter e_sqlite3.dll) { Write-Host ('::notice::' + $d.FullName.Substring($root.Length + 1) + ' ' + $d.VersionInfo.ProductVersion + ' ' + $d.Length) }
