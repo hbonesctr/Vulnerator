@@ -279,6 +279,14 @@ try {
     $mapped = [int](Get-Scalar ("SELECT COUNT(*) FROM SoftwareHardware SH JOIN Hardware H ON SH.Hardware_ID = H.Hardware_ID " +
         "WHERE H.DiscoveredHostName = 'nessushost01'"))
     Assert-That ($mapped -ge 3) ('enumerated packages are linked to their host (got ' + $mapped + ')')
+    # The same host name seen again with another address (agent scan, then network scan): host matching is by name.
+    $moved = Join-Path $workDir 'scan-moved.nessus'
+    [System.IO.File]::WriteAllText($moved, ([System.IO.File]::ReadAllText($nessusPath) -replace '10\.1\.3\.1', '10.9.9.1' -replace 'nessushost01\.example\.test', 'nessushost01.other.test'))
+    $movedFile = New-Object Vulnerator.Model.Object.File ('scan-moved', 'ACAS - Nessus', 'Ready', $moved, 'True')
+    $result = (New-Object Vulnerator.Model.BusinessLogic.AcasNessusReader).ReadAcasNessusFile($movedFile, 'TestGroup')
+    Assert-That ($result -eq 'Processed') ('a known host name with a new IP / FQDN and software enumeration imports (got "' + $result + '")')
+    $hosts01 = [int](Get-Scalar "SELECT COUNT(*) FROM Hardware WHERE DiscoveredHostName = 'nessushost01'")
+    Assert-That ($hosts01 -eq 1) ('the host is not duplicated (got ' + $hosts01 + ')')
 
     $finding = New-Object Vulnerator.Model.BusinessLogic.Reports.EmassPoamFinding
     $finding.VulnerabilityIdentifier = '19506'
