@@ -542,6 +542,12 @@ try {
     if ($null -ne $fromZip) {
         $result = Import-Checklist $fromZip 'ZipGroup'
         Assert-That ($result -eq 'Processed') ('a CKLB extracted from a zip imports (got "' + $result + '")')
+        if ($result -ne 'Processed' -and $null -ne $script:memoryLog) {
+            foreach ($logEvent in @($script:memoryLog.GetEvents() | Where-Object { $_.Level.Name -eq 'ERROR' } | Select-Object -Last 3)) {
+                $detail = if ($null -ne $logEvent.ExceptionObject) { $logEvent.ExceptionObject.ToString() } else { '' }
+                Write-Annotation 'error' ('Zip CKLB: ' + $logEvent.RenderedMessage + ' ' + $detail)
+            }
+        }
     }
     Assert-That ([Vulnerator.Model.BusinessLogic.IngestionFileCollector]::IsUnderPreviousFolder('HOST\Previous\x\a.cklb')) 'IsUnderPreviousFolder: folder named Previous'
     Assert-That (-not [Vulnerator.Model.BusinessLogic.IngestionFileCollector]::IsUnderPreviousFolder('HOST\Checklist\Previous.cklb')) 'IsUnderPreviousFolder: a file named Previous is not a folder'
