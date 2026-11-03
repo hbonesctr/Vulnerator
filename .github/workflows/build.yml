@@ -51,6 +51,15 @@ jobs:
         # 64-bit Windows PowerShell, like the x64 build, so the follow-up probe can load the program.
         run: '%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools\tests\Test-Launch.ps1 -BinDir bin\Release'
 
+      - name: Turn strong-name bypass off, as DoD .NET hardening does
+        shell: powershell
+        # AllowStrongNameBypass = 0 (.NET Framework STIG): signed assemblies are validated on every load.
+        run: |
+          foreach ($key in 'HKLM:\SOFTWARE\Microsoft\.NETFramework', 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework') {
+            New-ItemProperty -Path $key -Name AllowStrongNameBypass -PropertyType DWord -Value 0 -Force | Out-Null
+          }
+          Write-Host '::notice::AllowStrongNameBypass = 0 for the tests'
+
       - name: Check SQLite comes from Windows; log4net
         shell: pwsh
         # Locked-down machines block native DLLs in user folders: the program folder must carry none for SQLite.
