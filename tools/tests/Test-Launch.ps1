@@ -55,4 +55,21 @@ $logs = @((Join-Path ([Environment]::GetFolderPath('Desktop')) 'Vulnerator_Error
 foreach ($log in $logs) {
     if (Test-Path $log) { Note 'error' ('Log ' + $log + ': ' + ((Get-Content $log -Tail 40) -join "`n")) }
 }
+# Name the missing piece: build the object App.xaml creates first, in this process, and report what fails to load.
+try {
+    [System.IO.Directory]::SetCurrentDirectory($binPath)
+    $app = [System.Reflection.Assembly]::LoadFrom($exe)
+    try { [void][Activator]::CreateInstance($app.GetType('Vulnerator.ViewModel.ViewModelLocator', $true)) ; Note 'warning' 'ViewModelLocator builds in this process' }
+    catch {
+        $inner = $_.Exception
+        while ($null -ne $inner.InnerException) { $inner = $inner.InnerException }
+        $file = if ($inner -is [System.IO.FileNotFoundException]) { $inner.FileName } else { '' }
+        Note 'error' ('ViewModelLocator: ' + $inner.GetType().FullName + ': ' + $inner.Message + ' FILE=' + $file + ' FUSION=' + $inner.FusionLog)
+    }
+}
+catch {
+    $inner = $_.Exception
+    while ($null -ne $inner.InnerException) { $inner = $inner.InnerException }
+    Note 'error' ('Probe failed: ' + $inner.GetType().FullName + ': ' + $inner.Message)
+}
 exit 1
