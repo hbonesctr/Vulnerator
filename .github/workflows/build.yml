@@ -41,6 +41,11 @@ jobs:
           $output | Where-Object { $_ -match ': error ' } | Select-Object -Unique -First 20 | ForEach-Object { Write-Host ('::error::' + ($_ -replace '^.*\\([^\\]+\.cs)', '$1')) }
           exit $code
 
+      - name: Launch test (window appears)
+        shell: pwsh
+        timeout-minutes: 5
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tools/tests/Test-Launch.ps1 -BinDir bin/Release
+
       - name: Check shipped native SQLite and log4net
         shell: pwsh
         # Scanners (ACAS) flag old SQLite builds in the program folder: report what ships and fail on strays.
