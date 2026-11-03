@@ -41,40 +41,40 @@ jobs:
           $output | Where-Object { $_ -match ': error ' } | Select-Object -Unique -First 20 | ForEach-Object { Write-Host ('::error::' + ($_ -replace '^.*\\([^\\]+\.cs)', '$1')) }
           exit $code
 
+      - name: Use Windows' SQLite (winsqlite3) in System.Data.SQLite
+        shell: powershell
+        run: tools/build/Use-WindowsSqlite.ps1 -BinDir bin/Release
+
       - name: Launch test (window appears)
         shell: cmd
         timeout-minutes: 5
-        # 32-bit Windows PowerShell, like the x86 build, so the follow-up probe can load the program.
-        run: '%SystemRoot%\SysWOW64\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools\tests\Test-Launch.ps1 -BinDir bin\Release'
+        # 64-bit Windows PowerShell, like the x64 build, so the follow-up probe can load the program.
+        run: '%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools\tests\Test-Launch.ps1 -BinDir bin\Release'
 
-      - name: Check shipped native SQLite and log4net
+      - name: Check SQLite comes from Windows; log4net
         shell: pwsh
-        # Scanners (ACAS) flag old SQLite builds in the program folder: report what ships and fail on strays.
+        # Locked-down machines block native DLLs in user folders: the program folder must carry none for SQLite.
         run: |
           $bin = 'bin/Release'
           $bad = 0
-          $native = Get-Item "$bin/e_sqlite3.dll" -ErrorAction SilentlyContinue
-          if ($null -eq $native) { Write-Host '::error::e_sqlite3.dll (native SQLite) is missing from the build'; $bad++ }
-          else {
-            $sqliteVersion = ([Text.Encoding]::ASCII.GetString([IO.File]::ReadAllBytes($native.FullName)) | Select-String -Pattern '3\.\d{2}\.\d{1,2}' -AllMatches).Matches | Select-Object -First 1
-            $machine = [BitConverter]::ToUInt16([IO.File]::ReadAllBytes($native.FullName), [BitConverter]::ToInt32([IO.File]::ReadAllBytes($native.FullName), 60) + 4)
-            Write-Host ('::notice::System.Data.SQLite ' + (Get-Item "$bin/System.Data.SQLite.dll").VersionInfo.ProductVersion + '; e_sqlite3.dll SQLite ' + $sqliteVersion + ' (' + $(if ($machine -eq 0x14c) { 'x86' } else { 'machine ' + $machine }) + '); log4net ' + (Get-Item "$bin/log4net.dll").VersionInfo.ProductVersion)
-            if ($machine -ne 0x14c) { Write-Host '::error::e_sqlite3.dll is not 32-bit but the build is x86'; $bad++ }
-          }
-          foreach ($dll in Get-ChildItem $bin -Recurse -Include 'SQLite.Interop.dll', 'sqlite3.dll', 'System.Data.SQLite.Linq.dll') { Write-Host ('::error::stray ' + $dll.FullName); $bad++ }
+          foreach ($dll in Get-ChildItem $bin -Recurse -Include 'e_sqlite3.dll', 'SQLite.Interop.dll', 'sqlite3.dll', 'System.Data.SQLite.Linq.dll') { Write-Host ('::error::native SQLite file shipped: ' + $dll.FullName); $bad++ }
+          $sds = [IO.File]::ReadAllBytes((Resolve-Path "$bin/System.Data.SQLite.dll"))
+          if (-not [Text.Encoding]::ASCII.GetString($sds).Contains('winsqlite3')) { Write-Host '::error::System.Data.SQLite.dll does not reference winsqlite3'; $bad++ }
+          $win = Get-Item "$env:SystemRoot\System32\winsqlite3.dll"
+          Write-Host ('::notice::System.Data.SQLite ' + (Get-Item "$bin/System.Data.SQLite.dll").VersionInfo.ProductVersion + ' -> Windows winsqlite3.dll ' + $win.VersionInfo.ProductVersion + '; log4net ' + (Get-Item "$bin/log4net.dll").VersionInfo.ProductVersion)
           if ((Get-Item "$bin/log4net.dll").VersionInfo.FileVersion -notlike '2.0.17*') { Write-Host '::error::log4net is not 2.0.17'; $bad++ }
           exit $bad
 
       - name: Test checklist import (CKL and CKLB)
         shell: cmd
         timeout-minutes: 5
-        # Release builds target x86, so the test host must be 32-bit Windows PowerShell 5.1.
-        run: '%SystemRoot%\SysWOW64\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools\tests\Test-ChecklistImport.ps1 -BinDir bin\Release -OutDir sample-exports'
+        # Release builds target x64, so the test host is 64-bit Windows PowerShell 5.1.
+        run: '%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools\tests\Test-ChecklistImport.ps1 -BinDir bin\Release -OutDir sample-exports'
 
       - name: Test Entity Framework data loading (screens)
         shell: cmd
         timeout-minutes: 5
-        run: '%SystemRoot%\SysWOW64\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools\tests\Test-EntityFramework.ps1 -BinDir bin\Release'
+        run: '%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools\tests\Test-EntityFramework.ps1 -BinDir bin\Release'
 
       - name: Verify eMASS exports against the templates
         run: |
@@ -131,10 +131,9 @@ jobs:
           $root = (Resolve-Path bin/Release).Path
           Get-ChildItem bin/Release -Recurse -File | Sort-Object FullName | ForEach-Object { (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant() + '  ' + $_.FullName.Substring($root.Length + 1) } | Set-Content $hashFile -Encoding ascii
           $exeHash = (Get-FileHash bin/Release/Vulnerator.exe -Algorithm SHA256).Hash.ToLowerInvariant()
-          $sqliteHash = (Get-FileHash bin/Release/e_sqlite3.dll -Algorithm SHA256).Hash.ToLowerInvariant()
           $notesFile = "docs/release-notes/$tag.md"
           $notes = if (Test-Path $notesFile) { Get-Content $notesFile -Raw } else { "Vulnerator $tag" }
-          $allow = "`n`n**For application control (allow by hash):** ``Vulnerator.exe`` ``$exeHash`` / ``e_sqlite3.dll`` (native SQLite) ``$sqliteHash``. Every file's hash is in ``$hashFile``."
+          $allow = "`n`n**For application control (allow by hash):** ``Vulnerator.exe`` ``$exeHash``. Vulnerator ships no native DLLs (SQLite comes from Windows); every file's hash is in ``$hashFile``."
           Set-Content notes.md ($notes.TrimEnd() + "`n`n**SHA-256** ``$zip``: ``$hash``" + $allow) -Encoding utf8
           $arguments = @('release', 'create', $tag, $zip, "$zip.sha256", $hashFile, '--title', "Vulnerator $tag", '--notes-file', 'notes.md', '--target', '${{ github.sha }}')
           if ($tag -match '-') { $arguments += '--prerelease' }

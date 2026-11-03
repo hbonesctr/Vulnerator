@@ -15,9 +15,9 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 2.0
 
-# The build is 32-bit (x86): relaunch in 32-bit Windows PowerShell when started from the 64-bit one.
-if ([IntPtr]::Size -eq 8) {
-    $ps32 = Join-Path $env:SystemRoot 'SysWOW64\WindowsPowerShell\v1.0\powershell.exe'
+# The build is 64-bit (x64): relaunch in 64-bit Windows PowerShell when started from a 32-bit one.
+if ([IntPtr]::Size -eq 4) {
+    $ps32 = Join-Path $env:SystemRoot 'Sysnative\WindowsPowerShell\v1.0\powershell.exe'
     $relaunch = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $PSCommandPath, '-InputDir', $InputDir)
     if ($BinDir -ne '') { $relaunch += @('-BinDir', $BinDir) }
     if ($IgApFile -ne '') { $relaunch += @('-IgApFile', $IgApFile) }

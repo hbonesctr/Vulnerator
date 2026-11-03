@@ -60,7 +60,8 @@
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>x86</PlatformTarget>
+    <!-- 64-bit: SQLite comes from Windows (winsqlite3.dll, System32); see tools/build/Use-WindowsSqlite.ps1. -->
+    <PlatformTarget>x64</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -896,15 +897,6 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <!-- Native SQLite for System.Data.SQLite 2.x (SourceGear.sqlite3), next to Vulnerator.exe; replace this file to update SQLite. -->
-    <Content Include="packages\SourceGear.sqlite3.3.53.4\runtimes\win-x86\native\e_sqlite3.dll" Condition="'$(PlatformTarget)' == 'x86'">
-      <Link>e_sqlite3.dll</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="packages\SourceGear.sqlite3.3.53.4\runtimes\win-x64\native\e_sqlite3.dll" Condition="'$(PlatformTarget)' != 'x86'">
-      <Link>e_sqlite3.dll</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <EmbeddedResource Include="LICENSE">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>

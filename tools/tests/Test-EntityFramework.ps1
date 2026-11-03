@@ -2,8 +2,8 @@
 # import tests do not touch. Runs with Vulnerator.exe.config as the configuration file, builds a scratch database,
 # imports one synthetic checklist, then runs the same EF queries as the Vulnerability Management screen.
 #
-# Windows PowerShell 5.1, 32-bit (the build is x86). Pure ASCII; no PowerShell 7 syntax.
-# Usage: %SystemRoot%\SysWOW64\WindowsPowerShell\v1.0\powershell.exe -File tools\tests\Test-EntityFramework.ps1 -BinDir bin\Release
+# Windows PowerShell 5.1, 64-bit (the build is x64). Pure ASCII; no PowerShell 7 syntax.
+# Usage: %SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe -File tools\tests\Test-EntityFramework.ps1 -BinDir bin\Release
 param([Parameter(Mandatory = $true)][string]$BinDir)
 $ErrorActionPreference = 'Stop'
 

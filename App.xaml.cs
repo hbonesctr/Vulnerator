@@ -62,18 +62,14 @@ namespace Vulnerator
                 while (inner.InnerException != null)
                 { inner = inner.InnerException; }
                 string folder = AppDomain.CurrentDomain.BaseDirectory;
-                string native = Path.Combine(folder, "e_sqlite3.dll");
+                string native = Path.Combine(Environment.SystemDirectory, "winsqlite3.dll");
                 Helper.LogWriter.LogErrorWithDebug($"SQLite could not be loaded ('{native}', exists: {File.Exists(native)}).", exception);
                 MessageBox.Show(
                     "Vulnerator cannot load its database engine, so files cannot be imported and nothing will be saved." + Environment.NewLine + Environment.NewLine +
                     inner.Message + Environment.NewLine + Environment.NewLine +
-                    "File: " + native + (File.Exists(native) ? string.Empty : " (missing)") + Environment.NewLine + Environment.NewLine +
-                    "Usually one of these:" + Environment.NewLine +
-                    "- The files still carry the \"downloaded from the internet\" mark: unblock the zip before extracting it, or run" + Environment.NewLine +
-                    "  Get-ChildItem -Recurse | Unblock-File   in PowerShell from the Vulnerator folder." + Environment.NewLine +
-                    "- Endpoint security / application control blocks or quarantined e_sqlite3.dll: ask your administrator to allow it" + Environment.NewLine +
-                    "  (SHA-256 is listed in the release notes)." + Environment.NewLine +
-                    "- The file is missing: extract the whole zip again.",
+                    "Vulnerator uses the SQLite that is part of Windows (winsqlite3.dll in System32, 64-bit Windows 10 / 11 or " +
+                    "Server 2016 and later). If this message appears, that file is missing or blocked on this computer; " +
+                    "details are in the Vulnerator log.",
                     "Vulnerator - database engine unavailable", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
