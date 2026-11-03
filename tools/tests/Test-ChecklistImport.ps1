@@ -233,6 +233,20 @@ try {
     $rarPath = Join-Path $OutDir 'sample-Risk-Assessment-Report.xlsx'
     $rarResult = (New-Object Vulnerator.Model.BusinessLogic.Reports.OpenXmlRiskAssessmentReportCreator).CreateRiskAssessmentReport($rarPath)
     Assert-That (($rarResult -like '*successful*') -and [System.IO.File]::Exists($rarPath)) ('Risk Assessment Report export runs (got "' + $rarResult + '")')
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $markedPath = Join-Path $workDir 'marked-RAR.xlsx'
+    Copy-Item $rarPath $markedPath
+    [Vulnerator.Helper.ExportMarking]::ApplyToWorkbook($markedPath, 'CUI//SYNTHETIC')
+    $zip = [System.IO.Compression.ZipFile]::OpenRead($markedPath)
+    try {
+        $sheetText = ''
+        foreach ($entry in @($zip.Entries | Where-Object { $_.FullName -like 'xl/worksheets/*.xml' })) { $reader = New-Object System.IO.StreamReader($entry.Open()); $sheetText += $reader.ReadToEnd(); $reader.Dispose() }
+        $customEntry = $zip.GetEntry('docProps/custom.xml')
+        $customText = if ($null -ne $customEntry) { $reader = New-Object System.IO.StreamReader($customEntry.Open()); $reader.ReadToEnd(); $reader.Dispose() } else { '' }
+    }
+    finally { $zip.Dispose() }
+    Assert-That ($sheetText.Contains('***** CUI//SYNTHETIC *****') -and $sheetText.Contains('oddFooter')) 'export marking printed in every sheet header and footer'
+    Assert-That ($customText.Contains('name="Classification"') -and $customText.Contains('CUI//SYNTHETIC')) 'export marking stored as the Classification document property'
 
     # --- Checklists without a host name (e.g. blank STIG baselines) ----------------------------
     $before = Get-Counts
@@ -276,6 +290,14 @@ try {
     Assert-That ($poamItems.Count -eq 0) 'informational (raw risk IV) results never become POA&M items'
 
     # --- eMASS IG/AP import (local file, never in the repo) -----------------------------------
+    $labeled = Join-Path $fixtures 'igap-labeled.xlsx'
+    $label = [Vulnerator.Model.BusinessLogic.EmassAssessmentProcedureImporter]::SensitivityLabel($labeled)
+    Assert-That ($label -eq 'Synthetic Test Label') ('sensitivity label of an input workbook detected (got "' + $label + '")')
+    Assert-That ($null -eq [Vulnerator.Model.BusinessLogic.EmassAssessmentProcedureImporter]::SensitivityLabel((Join-Path $fixtures 'igap-sample.xlsx'))) 'unlabeled workbook has no label'
+    $declined = [Vulnerator.Model.BusinessLogic.EmassAssessmentProcedureImporter]::Import($labeled, [Func[string, bool]] { param($l) $false })
+    Assert-That ($declined.StartsWith('Import cancelled')) ('declining the label prompt imports nothing (got "' + $declined + '")')
+    $accepted = [Vulnerator.Model.BusinessLogic.EmassAssessmentProcedureImporter]::Import($labeled, [Func[string, bool]] { param($l) $true })
+    Assert-That ($accepted.StartsWith('Imported assessment procedures')) ('accepting the label imports the workbook (got "' + $accepted + '")')
     $igapResult = [Vulnerator.Model.BusinessLogic.EmassAssessmentProcedureImporter]::Import((Join-Path $fixtures 'igap-sample.xlsx'))
     Assert-That ($igapResult.StartsWith('Imported assessment procedures for 2 CCI(s)')) ('IG/AP export imports, CCI-NA row skipped (got "' + $igapResult + '")')
     $apSql = "SELECT NCCI.DOD_AssessmentProcedureMapping || '|' || NCCI.AssessmentProcedureText FROM NIST_ControlsCCIs NCCI JOIN CCIs C ON NCCI.CCI_ID = C.CCI_ID WHERE C.CCI_Number = '000015'"
@@ -321,8 +343,14 @@ try {
 
     $hostsBefore = [int](Get-Scalar 'SELECT COUNT(*) FROM Hardware')
     $importer = New-Object Vulnerator.Model.BusinessLogic.StigLibraryImporter
+    Assert-That (-not [Vulnerator.Model.BusinessLogic.StigLibraryImporter]::LastLibraryImport().HasValue) 'no STIG library recorded before one is loaded'
+    $extracted = Join-Path $workDir 'extracted-benchmarks'
+    $written = [Vulnerator.Model.BusinessLogic.StigLibraryImporter]::ExtractBenchmarks($libraryZip, $extracted)
+    $extractedFiles = @(Get-ChildItem $extracted -Filter *.xml | ForEach-Object { $_.Name })
+    Assert-That ($written -eq 1 -and $extractedFiles.Count -eq 1 -and $extractedFiles[0] -eq 'U_Library_Test_STIG_V2R3_Manual-xccdf.xml') ('library zip extracts to its benchmark files only, SCAP skipped (got ' + $written + ': ' + ($extractedFiles -join ', ') + ')')
     $summary = $importer.Import($libraryZip)
     Assert-That ($importer.Parsed -eq 1 -and $importer.Failed -eq 0 -and $importer.Rules -eq 3) ('library zip (zip in zip) loads one STIG, 3 rules; SCAP copy skipped (got "' + $summary + '")')
+    Assert-That ([Vulnerator.Model.BusinessLogic.StigLibraryImporter]::LastLibraryImport().HasValue) 'STIG library load recorded in the database (ingestion warning stays quiet)'
     $ruleSql = 'SELECT VulnerabilityVersion || ''|'' || PrimaryRawRiskIndicator || ''|'' || VulnerabilityGroupIdentifier || ''|'' || SecondaryVulnerabilityIdentifier || ''|'' || CheckContent || ''|'' || IsDocumentable || ''|'' || VulnerabilityDescription FROM Vulnerabilities WHERE UniqueVulnerabilityIdentifier = @v'
     $rule = [string](Get-Scalar $ruleSql @{ '@v' = 'SV-5001' })
     Assert-That ($rule -eq '2|I|V-5001|LIB-00-000010|Verify rule one.|false|Rule one discussion with & and <b> markup.') ('benchmark rule fields read (got "' + $rule + '")')
@@ -437,13 +465,16 @@ try {
     $stigSource.SourceName = 'Library Test STIG'
     $exportDir = Join-Path $workDir 'ckl-export'
     [void][System.IO.Directory]::CreateDirectory($exportDir)
-    $cklPath = (New-Object Vulnerator.Model.BusinessLogic.CklCreator).CreateCklFromHardware($hardware, $stigSource, $exportDir)
+    $cklCreator = New-Object Vulnerator.Model.BusinessLogic.CklCreator
+    $cklCreator.Marking = 'CUI//SYNTHETIC'
+    $cklPath = $cklCreator.CreateCklFromHardware($hardware, $stigSource, $exportDir)
     Assert-That ([System.IO.File]::Exists($cklPath)) ('CKL written (got "' + $cklPath + '")')
     $ckl = New-Object System.Xml.XmlDocument
     $ckl.LoadXml([System.IO.File]::ReadAllText($cklPath))
     $vulns = @($ckl.SelectNodes('/CHECKLIST/STIGS/iSTIG/VULN'))
     Assert-That ($vulns.Count -eq 4) ('every rule of the STIG is in the checklist, one revision each (got ' + $vulns.Count + ')')
     $hostNode = $ckl.SelectSingleNode('/CHECKLIST/ASSET')
+    Assert-That ($hostNode.MARKING -eq 'CUI//SYNTHETIC') ('CKL export carries the marking (got "' + $hostNode.MARKING + '")')
     Assert-That ($hostNode.HOST_NAME -eq 'LIBHOST01' -and $hostNode.HOST_IP -eq '10.1.2.9') ('asset from the host record (got "' + $hostNode.HOST_NAME + '" / "' + $hostNode.HOST_IP + '")')
     $releaseInfo = $ckl.SelectSingleNode("//SI_DATA[SID_NAME='releaseinfo']/SID_DATA").InnerText
     Assert-That ($releaseInfo -eq 'Release: 4 Benchmark Date: 01 May 2026') ('release info in STIG Viewer form (got "' + $releaseInfo + '")')

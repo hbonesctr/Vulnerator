@@ -170,7 +170,11 @@ namespace Vulnerator.ViewModel
                 };
                 if (dialog.ShowDialog() != true)
                 { return; }
-                string result = EmassAssessmentProcedureImporter.Import(dialog.FileName);
+                string result = EmassAssessmentProcedureImporter.Import(dialog.FileName, label => MessageBox.Show(
+                    $"This file carries the sensitivity label \"{label}\"." + Environment.NewLine + Environment.NewLine +
+                    "Its content will be stored in the Vulnerator database, which does not keep the label: handle the database " +
+                    "and the exports at that level (exports carry the marking you set in Settings)." + Environment.NewLine + Environment.NewLine +
+                    "Import it?", "Labeled file", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.Yes);
                 MessageBox.Show(result, "Assessment procedures", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception exception)
@@ -213,18 +217,77 @@ namespace Vulnerator.ViewModel
                 if (openFileDialog != null)
                 { openFileDialog = null; }
                 openFileDialog = new OpenFileDialog();
-                openFileDialog.Multiselect = false;
+                openFileDialog.Multiselect = true;
                 openFileDialog.CheckFileExists = true;
-                openFileDialog.Filter = "STIG library, STIG zip or benchmark (*.zip;*.xml)|*.zip;*.xml";
-                openFileDialog.Title = "Select a DISA STIG library zip, a STIG zip or a benchmark (XCCDF) file to ingest";
-                openFileDialog.ShowDialog();
-                if (openFileDialog.FileName != null)
-                { StigLibraryLocation = openFileDialog.FileName; }
+                openFileDialog.Filter = "STIG library, STIG zips or benchmarks (*.zip;*.xml)|*.zip;*.xml";
+                openFileDialog.Title = "Select the DISA STIG library zip, STIG zips, or STIG benchmark (.xml) files";
+                if (openFileDialog.ShowDialog() == true && openFileDialog.FileNames.Length > 0)
+                { StigLibraryLocation = string.Join(";", openFileDialog.FileNames); }
             }
             catch (Exception exception)
             {
                 string error = "Unable to retrieve STIG Library.";
                 LogWriter.LogErrorWithDebug(error, exception);
+            }
+        }
+
+        private string _lastLibraryLoad;
+
+        /// <summary>When a STIG library was last loaded into the open database, for the Settings page.</summary>
+        public string LastLibraryLoad
+        {
+            get => _lastLibraryLoad ?? (_lastLibraryLoad = DescribeLastLibraryLoad());
+            set
+            {
+                if (_lastLibraryLoad != value)
+                {
+                    _lastLibraryLoad = value;
+                    RaisePropertyChanged("LastLibraryLoad");
+                }
+            }
+        }
+
+        private static string DescribeLastLibraryLoad()
+        {
+            DateTime? last = StigLibraryImporter.LastLibraryImport();
+            return last.HasValue ? "Last loaded into this database: " + last.Value.ToString("d MMM yyyy HH:mm") : "No STIG library loaded into this database yet";
+        }
+
+        public RelayCommand ExtractStigBenchmarksCommand => new RelayCommand(ExtractStigBenchmarks);
+
+        /// <summary>
+        /// Unpacks a DISA library zip into individual STIG benchmark .xml files, for moving to a machine where the zip
+        /// itself is not allowed; those files are then loaded with the STIG library button.
+        /// </summary>
+        private void ExtractStigBenchmarks()
+        {
+            try
+            {
+                OpenFileDialog zipDialog = new OpenFileDialog
+                {
+                    CheckFileExists = true,
+                    Filter = "STIG library or STIG zip (*.zip)|*.zip",
+                    Title = "Select the DISA STIG library zip to extract"
+                };
+                if (zipDialog.ShowDialog() != true)
+                { return; }
+                CommonOpenFileDialog folderDialog = new CommonOpenFileDialog
+                {
+                    IsFolderPicker = true,
+                    Title = "Select an empty folder for the STIG benchmark files"
+                };
+                if (folderDialog.ShowDialog() != CommonFileDialogResult.Ok)
+                { return; }
+                int written = StigLibraryImporter.ExtractBenchmarks(zipDialog.FileName, folderDialog.FileName);
+                MessageBox.Show($"{written} STIG benchmark file(s) written to:{Environment.NewLine}{folderDialog.FileName}{Environment.NewLine}{Environment.NewLine}" +
+                                "Move the .xml files to the Vulnerator machine and load them with the STIG library button (you can select them all at once).",
+                    "STIG library", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception exception)
+            {
+                LogWriter.LogErrorWithDebug("Unable to extract STIG benchmarks.", exception);
+                MessageBox.Show("The STIG benchmarks could not be extracted; see the Vulnerator log for details.", "STIG library",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
 
@@ -276,7 +339,8 @@ namespace Vulnerator.ViewModel
                             Messenger.Default.Send(guiFeedback);
                         }
                     };
-                    importer.Import(StigLibraryLocation);
+                    importer.Import(StigLibraryLocation.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Select(p => p.Trim()).ToArray());
+                    LastLibraryLoad = DescribeLastLibraryLoad();
                     stigFilesAttempted = importer.Attempted;
                     stigFilesParsed = importer.Parsed + importer.Older;
                     databaseInterface.CreateVulnerabilityRelatedIndices();

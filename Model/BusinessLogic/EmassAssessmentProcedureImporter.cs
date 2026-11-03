@@ -35,7 +35,21 @@ namespace Vulnerator.Model.BusinessLogic
         /// order. Returns a one-line result for the user.
         /// </summary>
         public static string Import(string path)
+        { return Import(path, null); }
+
+        /// <summary>
+        /// As <see cref="Import(string)"/>; when the workbook carries a sensitivity label, <paramref name="confirmLabel"/>
+        /// is shown the label and the import goes ahead only if it returns true (null: accept).
+        /// </summary>
+        public static string Import(string path, Func<string, bool> confirmLabel)
         {
+            string label = SensitivityLabel(path);
+            if (label != null)
+            {
+                LogWriter.LogStatusUpdate($"'{path}' carries the sensitivity label '{label}'.");
+                if (confirmLabel != null && !confirmLabel(label))
+                { return $"Import cancelled: the file carries the sensitivity label \"{label}\"."; }
+            }
             List<List<string[]>> tables;
             try
             {
@@ -163,6 +177,47 @@ namespace Vulnerator.Model.BusinessLogic
                 }
             }
             return numbers;
+        }
+
+        /// <summary>
+        /// The Microsoft Purview / AIP sensitivity label of an Office workbook (its name, or its id when the name is not
+        /// stored), or null when it has none. Encrypted (protected) files cannot be read at all and are reported on open.
+        /// </summary>
+        public static string SensitivityLabel(string path)
+        {
+            try
+            {
+                using (System.IO.Compression.ZipArchive package = System.IO.Compression.ZipFile.OpenRead(path))
+                {
+                    System.IO.Compression.ZipArchiveEntry custom = package.GetEntry("docProps/custom.xml");
+                    if (custom != null)
+                    {
+                        System.Xml.Linq.XDocument properties;
+                        using (Stream stream = custom.Open())
+                        { properties = System.Xml.Linq.XDocument.Load(stream); }
+                        foreach (System.Xml.Linq.XElement property in properties.Root.Elements())
+                        {
+                            string name = (string)property.Attribute("name") ?? string.Empty;
+                            if (name.StartsWith("MSIP_Label_", StringComparison.OrdinalIgnoreCase) && name.EndsWith("_Name", StringComparison.OrdinalIgnoreCase))
+                            { return property.Value.Trim(); }
+                        }
+                    }
+                    System.IO.Compression.ZipArchiveEntry labelInfo = package.GetEntry("docMetadata/LabelInfo.xml");
+                    if (labelInfo != null)
+                    {
+                        System.Xml.Linq.XDocument info;
+                        using (Stream stream = labelInfo.Open())
+                        { info = System.Xml.Linq.XDocument.Load(stream); }
+                        System.Xml.Linq.XElement entry = info.Descendants().FirstOrDefault(e => e.Name.LocalName == "label");
+                        string id = (string)entry?.Attribute("id");
+                        if (!string.IsNullOrWhiteSpace(id) && (string)entry.Attribute("removed") != "1")
+                        { return "label " + id; }
+                    }
+                }
+            }
+            catch (Exception)
+            { /* not a zip package (CSV, or an encrypted workbook): no readable label */ }
+            return null;
         }
 
         private static bool IsWorkbook(string path)

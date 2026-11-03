@@ -440,10 +440,15 @@ namespace Vulnerator.ViewModel.ConfigurationManagement.Tabs
             get { return new RelayCommand<object>(p => GenerateCkl(p)); }
         }
 
+        private string cklMarking;
+
         private void GenerateCkl(object param)
         {
             try
             {
+                cklMarking = ExportMarking.Confirm("STIG checklist (CKL)");
+                if (cklMarking == null)
+                { return; }
                 CommonOpenFileDialog commonOpenFileDialog = new CommonOpenFileDialog();
                 commonOpenFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
                 commonOpenFileDialog.IsFolderPicker = true;
@@ -475,7 +480,7 @@ namespace Vulnerator.ViewModel.ConfigurationManagement.Tabs
             try
             {
                 GuiFeedback guiFeedback = new GuiFeedback();
-                CklCreator cklCreator = new CklCreator();
+                CklCreator cklCreator = new CklCreator { Marking = cklMarking };
                 cklCreator.CreateCklFromHardware(SelectedHardware, vulnerabilitySource, saveDirectory);
                 guiFeedback.SetFields(
                     $"{vulnerabilitySource.SourceName} CKL created for {SelectedHardware.DisplayedHostName}",

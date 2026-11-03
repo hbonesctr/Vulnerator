@@ -189,10 +189,14 @@
                         <TextBox Margin="5,0,5,5"
                                  Controls:TextBoxHelper.ButtonContent="{IconPacks:FontAwesomeLight Kind=TimesSquare}"
                                  Controls:TextBoxHelper.ClearTextButton="True"
-                                 Controls:TextBoxHelper.Watermark="Classification marking for eMASS exports"
-                                 vh:DependencyProperties.FloatingWatermark="Classification marking for eMASS exports"
+                                 Controls:TextBoxHelper.Watermark="Classification / handling marking for exports"
+                                 vh:DependencyProperties.FloatingWatermark="Classification / handling marking for exports"
                                  Style="{StaticResource HeaderedTextBoxStyle}"
                                  Text="{Binding Source={StaticResource Settings}, Path=Default.EmassClassificationMarking, UpdateSourceTrigger=PropertyChanged}" />
+                        <CheckBox Margin="{StaticResource MarginLeftRightBottom5}"
+                                  Content="Ask to accept or change the marking before every export"
+                                  IsChecked="{Binding Default.ConfirmExportMarking, Mode=TwoWay, Source={StaticResource Settings}}"
+                                  Style="{StaticResource CustomCheckBox}" />
                         <Label Grid.Column="0"
                                Style="{StaticResource SecondLevelHeaderStyle}">
                             <TextBlock Text="Database File"
@@ -222,8 +226,7 @@
                                     Content="{IconPacks:FontAwesomeLight Kind=FilePlus}"
                                     ToolTip="Create" />
                         </Grid>
-                        <Grid Grid.Column="0"
-                              Visibility="Collapsed">
+                        <Grid Grid.Column="0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
@@ -232,21 +235,16 @@
                             </Grid.ColumnDefinitions>
                             <Label Grid.Column="0"
                                    Style="{StaticResource SecondLevelHeaderStyle}">
-                                <TextBlock Text="Update STIG Library"
+                                <TextBlock Text="STIG Library"
                                            TextTrimming="CharacterEllipsis" />
                             </Label>
                             <Label Grid.Column="2"
                                    VerticalAlignment="Bottom">
-                                <TextBlock Text="Last Update:"
-                                           TextTrimming="CharacterEllipsis" />
-                            </Label>
-                            <Label Grid.Column="3"
-                                   VerticalAlignment="Bottom">
-                                <TextBlock Text="{Binding Source={StaticResource Settings}, Path=Default.StigLibraryIngestDate}"
+                                <TextBlock Text="{Binding LastLibraryLoad}"
                                            TextTrimming="CharacterEllipsis" />
                             </Label>
                         </Grid>
-                        <Grid Visibility="Collapsed">
+                        <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition />
                                 <ColumnDefinition Width="Auto" />
@@ -258,20 +256,25 @@
                                      VerticalAlignment="Center"
                                      Controls:TextBoxHelper.ButtonContent="{IconPacks:FontAwesomeLight Kind=TimesSquare}"
                                      Controls:TextBoxHelper.ClearTextButton="True"
-                                     Controls:TextBoxHelper.Watermark="STIG Library or Single STIG (ZIP File)"
+                                     Controls:TextBoxHelper.Watermark="DISA library zip, STIG zips or benchmark .xml files (search, then load)"
                                      Style="{StaticResource NonHeaderedTextBoxStyle}"
                                      Text="{Binding StigLibraryLocation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                             <Button Grid.Column="1"
                                     Margin="5,0,5,5"
                                     Command="{Binding SelectStigLibraryCommand}"
                                     Content="{IconPacks:FontAwesomeLight Kind=FileSearch}"
-                                    ToolTip="Search" />
+                                    ToolTip="Select the library zip or STIG files" />
                             <Button Grid.Column="2"
                                     Margin="5,0,5,5"
                                     Command="{Binding IngestStigLibraryCommand}"
                                     Content="{IconPacks:FontAwesomeLight Kind=FileImport}"
-                                    ToolTip="Upload" />
+                                    ToolTip="Load the selected files into the database" />
                         </Grid>
+                        <Button Margin="5,0,5,5"
+                                HorizontalAlignment="Left"
+                                Command="{Binding ExtractStigBenchmarksCommand}"
+                                Content="Extract benchmarks from a library zip..."
+                                ToolTip="Unpacks the DISA library zip into individual STIG .xml files, for moving to a machine where the zip is not allowed" />
                         <Label Style="{StaticResource SecondLevelHeaderStyle}">
                             <TextBlock Text="Online Checks"
                                        TextTrimming="CharacterEllipsis" />

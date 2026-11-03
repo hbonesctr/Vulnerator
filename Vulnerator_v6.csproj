@@ -352,6 +352,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Helper\DelimitedText.cs" />
+    <Compile Include="Helper\ExportMarking.cs" />
     <Compile Include="Helper\BackgroundWorkerFactory.cs" />
     <Compile Include="Helper\DdlReader.cs" />
     <Compile Include="Helper\Logger.cs" />
@@ -964,6 +965,7 @@
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Select\EmassHardwareList.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Update\NistControlsCcisFromEmassAssessmentProcedures.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\Tables\Create\EmassAssessmentProcedures.ddl" />
+    <EmbeddedResource Include="Resources\DdlFiles\Tables\Create\StigLibraryImports.ddl" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Select\EmassPoamVulnerabilities.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Select\EmassSoftwareList.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Select\HardwareCklCreationData.dml" />

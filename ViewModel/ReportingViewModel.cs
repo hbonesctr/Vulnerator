@@ -827,8 +827,13 @@ namespace Vulnerator.ViewModel
                 {
                     if ((bool)GetExcelReportName())
                     {
-                        OpenXmlReportCreator openXmlReportCreator = new OpenXmlReportCreator();
-                        openXmlReportCreator.CreateExcelReport(saveExcelFile.FileName);
+                        string exportMarking = ExportMarking.Confirm("Excel report");
+                        if (exportMarking != null)
+                        {
+                            OpenXmlReportCreator openXmlReportCreator = new OpenXmlReportCreator();
+                            openXmlReportCreator.CreateExcelReport(saveExcelFile.FileName);
+                            ExportMarking.ApplyToWorkbook(saveExcelFile.FileName, exportMarking);
+                        }
                     }
                 }
                 guiFeedback.SetFields("Report creation complete", "Collapsed", true);
@@ -1103,11 +1108,15 @@ namespace Vulnerator.ViewModel
                     {
                         if ((bool) GetExcelReportName())
                         {
+                            string exportMarking = ExportMarking.Confirm("eMASS POA&M");
+                            if (exportMarking == null)
+                            { e.Result = "Cancelled"; return; }
                             
                             guiFeedback.SetFields("Creating eMASS POA&M...", "Visible", false);
                             Messenger.Default.Send(guiFeedback);
                             OpenXmlEmassPoamReportCreator openXmlEmassPoamReportCreator = new OpenXmlEmassPoamReportCreator();
                             openXmlEmassPoamReportCreator.CreateEmassPoam(saveExcelFile.FileName);
+                            ExportMarking.ApplyToWorkbook(saveExcelFile.FileName, exportMarking);
                             e.Result = "Success";
                             guiFeedback.SetFields("eMASS POA&M creation completed...", "Collapsed", false);
                             Messenger.Default.Send(guiFeedback);
@@ -1122,9 +1131,13 @@ namespace Vulnerator.ViewModel
                     {
                         if ((bool) GetExcelReportName())
                         {
+                            string exportMarking = ExportMarking.Confirm("Risk Assessment Report");
+                            if (exportMarking == null)
+                            { e.Result = "Cancelled"; return; }
                             guiFeedback.SetFields("Creating Risk Assessment Report...", "Visible", false);
                             Messenger.Default.Send(guiFeedback);
                             new OpenXmlRiskAssessmentReportCreator().CreateRiskAssessmentReport(saveExcelFile.FileName);
+                            ExportMarking.ApplyToWorkbook(saveExcelFile.FileName, exportMarking);
                             e.Result = "Success";
                             guiFeedback.SetFields("Risk Assessment Report creation completed...", "Collapsed", false);
                             Messenger.Default.Send(guiFeedback);
@@ -1139,9 +1152,13 @@ namespace Vulnerator.ViewModel
                     {
                         if ((bool) GetExcelReportName())
                         {
+                            string exportMarking = ExportMarking.Confirm("eMASS Hardware / Software list");
+                            if (exportMarking == null)
+                            { e.Result = "Cancelled"; return; }
                             guiFeedback.SetFields("Creating eMASS Hardware/Software list...", "Visible", false);
                             Messenger.Default.Send(guiFeedback);
                             new OpenXmlEmassHardwareSoftwareReportCreator().CreateHardwareSoftwareList(saveExcelFile.FileName);
+                            ExportMarking.ApplyToWorkbook(saveExcelFile.FileName, exportMarking);
                             e.Result = "Success";
                             guiFeedback.SetFields("eMASS Hardware/Software list creation completed...", "Collapsed", false);
                             Messenger.Default.Send(guiFeedback);
@@ -1156,10 +1173,14 @@ namespace Vulnerator.ViewModel
                     {
                         if ((bool) GetExcelReportName())
                         {
+                            string exportMarking = ExportMarking.Confirm("STIG Discrepancies report");
+                            if (exportMarking == null)
+                            { e.Result = "Cancelled"; return; }
                             guiFeedback.SetFields("Creating STIG Discrepancies Report...", "Visible", false);
                             Messenger.Default.Send(guiFeedback);
                             OpenXmlStigDiscrepanciesReportCreator openXmlStigDiscrepanciesReportCreator = new OpenXmlStigDiscrepanciesReportCreator();
                             openXmlStigDiscrepanciesReportCreator.CreateDiscrepanciesReport(saveExcelFile.FileName);
+                            ExportMarking.ApplyToWorkbook(saveExcelFile.FileName, exportMarking);
                             e.Result = "Success";
                             guiFeedback.SetFields("STIG Discrepancies report creation completed...", "Collapsed", false);
                             Messenger.Default.Send(guiFeedback);
@@ -1212,6 +1233,14 @@ namespace Vulnerator.ViewModel
                     return;
                 }
 
+                string exportMarking = ExportMarking.Confirm("reports");
+                if (exportMarking == null)
+                {
+                    e.Result = "Cancelled";
+                    return;
+                }
+                string stamp = DateTime.Now.ToString("yyyyMMdd-HHmmss", new CultureInfo("en-US"));
+
                 foreach (RequiredReportUserSelection report in VulnerabilityReports)
                 {
                     if (report.IsReportSelected.Equals("False"))
@@ -1224,23 +1253,31 @@ namespace Vulnerator.ViewModel
                     {
                         case 1:
                         {
-                            new OpenXmlEmassPoamReportCreator().CreateEmassPoam($"{location}\\eMASS-POA&M_{DateTime.Now.ToString("yyyyMMdd-HHmmss", new CultureInfo("en-US"))}.xlsx");
+                            string eMASSPOAMPath = $"{location}\\eMASS-POA&M_{stamp}.xlsx";
+                            new OpenXmlEmassPoamReportCreator().CreateEmassPoam(eMASSPOAMPath);
+                            ExportMarking.ApplyToWorkbook(eMASSPOAMPath, exportMarking);
                             break;
                         }
                         case 5:
                         {
-                            new OpenXmlEmassHardwareSoftwareReportCreator().CreateHardwareSoftwareList($"{location}\\eMASS-HW-SW-List_{DateTime.Now.ToString("yyyyMMdd-HHmmss", new CultureInfo("en-US"))}.xlsx");
+                            string eMASSHWSWListPath = $"{location}\\eMASS-HW-SW-List_{stamp}.xlsx";
+                            new OpenXmlEmassHardwareSoftwareReportCreator().CreateHardwareSoftwareList(eMASSHWSWListPath);
+                            ExportMarking.ApplyToWorkbook(eMASSHWSWListPath, exportMarking);
                             break;
                         }
                         case 2:
                         {
-                            new OpenXmlRiskAssessmentReportCreator().CreateRiskAssessmentReport($"{location}\\Risk-Assessment-Report_{DateTime.Now.ToString("yyyyMMdd-HHmmss", new CultureInfo("en-US"))}.xlsx");
+                            string RiskAssessmentReportPath = $"{location}\\Risk-Assessment-Report_{stamp}.xlsx";
+                            new OpenXmlRiskAssessmentReportCreator().CreateRiskAssessmentReport(RiskAssessmentReportPath);
+                            ExportMarking.ApplyToWorkbook(RiskAssessmentReportPath, exportMarking);
                             break;
                         }
                         case 3:
                         {
                             OpenXmlStigDiscrepanciesReportCreator openXmlStigDiscrepanciesReportCreator = new OpenXmlStigDiscrepanciesReportCreator();
-                            openXmlStigDiscrepanciesReportCreator.CreateDiscrepanciesReport($"{location}\\STIG-Discrepancies_{DateTime.Now.ToString("yyyyMMdd-HHmmss", new CultureInfo("en-US"))}.xlsx");
+                            string STIGDiscrepanciesPath = $"{location}\\STIG-Discrepancies_{stamp}.xlsx";
+                            openXmlStigDiscrepanciesReportCreator.CreateDiscrepanciesReport(STIGDiscrepanciesPath);
+                            ExportMarking.ApplyToWorkbook(STIGDiscrepanciesPath, exportMarking);
                             break;
                         }
                     }

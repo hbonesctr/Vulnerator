@@ -23,6 +23,9 @@ namespace Vulnerator.Model.BusinessLogic
         private readonly Assembly assembly = Assembly.GetExecutingAssembly();
         private const string StoredProcedureBase = "Vulnerator.Resources.DdlFiles.StoredProcedures.";
 
+        /// <summary>The checklist's MARKING (classification / handling); from Settings when not set.</summary>
+        public string Marking { get; set; }
+
         /// <summary>Writes the checklist into <paramref name="saveDirectory"/>; returns the file's path.</summary>
         public string CreateCklFromHardware(Hardware hardware, VulnerabilitySource vulnerabilitySource, string saveDirectory)
         {
@@ -64,7 +67,7 @@ namespace Vulnerator.Model.BusinessLogic
                     xmlWriter.WriteComment("DISA STIG Viewer :: 2.18");
                     xmlWriter.WriteComment("Written by Vulnerator");
                     xmlWriter.WriteStartElement("CHECKLIST");
-                    WriteAsset(xmlWriter, asset, hostName);
+                    WriteAsset(xmlWriter, asset, hostName, Marking ?? Properties.Settings.Default.EmassClassificationMarking ?? string.Empty);
                     xmlWriter.WriteStartElement("STIGS");
                     xmlWriter.WriteStartElement("iSTIG");
                     WriteStigInformation(xmlWriter, rules);
@@ -103,14 +106,14 @@ namespace Vulnerator.Model.BusinessLogic
             return rows;
         }
 
-        private static void WriteAsset(XmlWriter xmlWriter, Dictionary<string, string> asset, string hostName)
+        private static void WriteAsset(XmlWriter xmlWriter, Dictionary<string, string> asset, string hostName, string marking)
         {
             string site = Value(asset, "WebDB_Site", string.Empty);
             string instance = Value(asset, "WebDB_Instance", string.Empty);
             xmlWriter.WriteStartElement("ASSET");
             xmlWriter.WriteElementString("ROLE", Value(asset, "Role", "None"));
             xmlWriter.WriteElementString("ASSET_TYPE", "Computing");
-            xmlWriter.WriteElementString("MARKING", string.Empty);
+            xmlWriter.WriteElementString("MARKING", marking.Trim());
             xmlWriter.WriteElementString("HOST_NAME", hostName);
             xmlWriter.WriteElementString("HOST_IP", FirstOf(Value(asset, "IpAddresses", string.Empty)));
             xmlWriter.WriteElementString("HOST_MAC", FirstOf(Value(asset, "MacAddresses", string.Empty)));
