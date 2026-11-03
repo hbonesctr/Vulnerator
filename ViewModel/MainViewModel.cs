@@ -1,4 +1,4 @@
-using Enterwell.Clients.Wpf.Notifications;
+﻿using Enterwell.Clients.Wpf.Notifications;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Command;
 using GalaSoft.MvvmLight.Messaging;
@@ -155,9 +155,10 @@ namespace Vulnerator.ViewModel
                 LogWriter.LogStatusUpdate("'Logger' successfully initialized.");
                 LogWriter.LogStatusUpdate("Initializing 'MainViewModel'.");
                 githubActions = new GitHubActions();
+                // The user must be known before the database is checked: report settings are created for this user.
+                Properties.Settings.Default.ActiveUser = Environment.UserName;
                 databaseBuilder = new DatabaseBuilder();
                 VersionTest();
-                Properties.Settings.Default.ActiveUser = Environment.UserName;
                 Messenger.Default.Register<GuiFeedback>(this, (guiFeedback) => UpdateGui(guiFeedback));
                 LogWriter.LogStatusUpdate("'UpdateGui' Messenger registered.");
                 Messenger.Default.Register<string>(this, (databaseLocation) => InstantiateNewDatabase(databaseLocation));

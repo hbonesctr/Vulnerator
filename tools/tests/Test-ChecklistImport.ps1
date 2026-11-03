@@ -576,6 +576,16 @@ try {
         Assert-That ($result -eq 'Processed') ('a .nessus extracted from a zip imports (got "' + $result + '")')
     }
     Assert-That ([Vulnerator.ViewModel.VulnerabilityViewModel]::IsProcessed([Vulnerator.Model.BusinessLogic.CklReader]::BaselineStatus)) 'a STIG baseline import counts as processed, not failed'
+    # --- Reports for a user the database was not built for -------------------------------------------
+    $reportsBefore = [int](Get-Scalar 'SELECT COUNT(*) FROM RequiredReportUserSelections WHERE UserName = @u' @{ '@u' = 'second-user' })
+    $indexer.SetValue($defaultSettings, 'second-user', [object[]]@('ActiveUser'))
+    $ensured = [Vulnerator.Model.DataAccess.DatabaseBuilder]::EnsureUserReportSettings()
+    $reportsAfter = [int](Get-Scalar 'SELECT COUNT(*) FROM RequiredReportUserSelections WHERE UserName = @u' @{ '@u' = 'second-user' })
+    $filtersAfter = [int](Get-Scalar 'SELECT COUNT(*) FROM ReportSeverityUserSettings WHERE UserName = @u' @{ '@u' = 'second-user' })
+    Assert-That ($ensured -and $reportsBefore -eq 0 -and $reportsAfter -ge 5 -and $filtersAfter -ge 20) ('report list and filters are created for a new user (got ' + $reportsBefore + ' -> ' + $reportsAfter + ' reports, ' + $filtersAfter + ' severity filters)')
+    [void][Vulnerator.Model.DataAccess.DatabaseBuilder]::EnsureUserReportSettings()
+    $again = [int](Get-Scalar 'SELECT COUNT(*) FROM RequiredReportUserSelections WHERE UserName = @u' @{ '@u' = 'second-user' })
+    Assert-That ($again -eq $reportsAfter) ('creating report settings twice adds nothing (got ' + $again + ')')
 }
 catch {
     $script:failures.Add('Unhandled error: ' + $_.Exception.ToString())

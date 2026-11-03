@@ -345,9 +345,21 @@ namespace Vulnerator.ViewModel
         {
             try
             {
+                DatabaseBuilder.CurrentUser();
                 using (DatabaseContext databaseContext = new DatabaseContext())
                 {
                     Groups = databaseContext.Groups.AsNoTracking().ToList();
+                    PopulateReports(databaseContext);
+                }
+                if (VulnerabilityReports == null || VulnerabilityReports.Count == 0)
+                {
+                    // Databases built before the user name was known (or used by another account) have no report
+                    // rows for this user: create them, then load again.
+                    LogWriter.LogStatusUpdate($"No report settings for '{Properties.Settings.Default.ActiveUser}'; creating them.");
+                    DatabaseBuilder.EnsureUserReportSettings();
+                }
+                using (DatabaseContext databaseContext = new DatabaseContext())
+                {
                     PopulateReports(databaseContext);
                     PopulateGlobalLists(databaseContext);
                 }

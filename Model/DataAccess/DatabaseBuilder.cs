@@ -37,6 +37,48 @@ namespace Vulnerator.Model.DataAccess
 
         public static SQLiteConnection sqliteConnection = new SQLiteConnection(databaseConnection);
 
+        private DatabaseBuilder(bool createDatabase)
+        { }
+
+        /// <summary>The Windows account name; reports and their filters are stored per user.</summary>
+        public static string CurrentUser()
+        {
+            if (string.IsNullOrWhiteSpace(Properties.Settings.Default.ActiveUser))
+            { Properties.Settings.Default.ActiveUser = Environment.UserName; }
+            return Properties.Settings.Default.ActiveUser;
+        }
+
+        /// <summary>
+        /// Makes sure the current user has the report list and report filters (one row per report, finding type,
+        /// severity, status and group). Safe to call at any time; existing rows are kept. Returns false on error.
+        /// </summary>
+        public static bool EnsureUserReportSettings()
+        {
+            bool wasOpen = sqliteConnection.State == System.Data.ConnectionState.Open;
+            try
+            {
+                if (!wasOpen)
+                { sqliteConnection.Open(); }
+                using (SQLiteTransaction sqliteTransaction = sqliteConnection.BeginTransaction())
+                {
+                    using (SQLiteCommand sqliteCommand = sqliteConnection.CreateCommand())
+                    { new DatabaseBuilder(false).InsertUserReportSettings(sqliteCommand); }
+                    sqliteTransaction.Commit();
+                }
+                return true;
+            }
+            catch (Exception exception)
+            {
+                LogWriter.LogErrorWithDebug("Unable to create the report settings for the current user.", exception);
+                return false;
+            }
+            finally
+            {
+                if (!wasOpen)
+                { sqliteConnection.Close(); }
+            }
+        }
+
         public DatabaseBuilder()
         {
             try
@@ -722,7 +764,8 @@ namespace Vulnerator.Model.DataAccess
         {
             try
             {
-                LogWriter.LogStatusUpdate("Inserting user-specific report requirements.");
+                LogWriter.LogStatusUpdate($"Inserting user-specific report requirements for '{CurrentUser()}'.");
+                sqliteCommand.Parameters.Clear();
                 string[] severities = {"CAT I", "CAT II", "CAT III", "CAT IV"};
                 string[] statuses = {"Ongoing", "Not Reviewed", "Not Applicable", "Completed", "Error"};
                 string storedProcedureBase = "Vulnerator.Resources.DdlFiles.StoredProcedures.Select.";
@@ -769,7 +812,7 @@ namespace Vulnerator.Model.DataAccess
                     }
                 }
 
-                sqliteCommand.Parameters.Add(new SQLiteParameter("UserName", Properties.Settings.Default.ActiveUser));
+                sqliteCommand.Parameters.Add(new SQLiteParameter("UserName", CurrentUser()));
                 storedProcedureBase = "Vulnerator.Resources.DdlFiles.StoredProcedures.Insert.";
                 foreach (string report in reportIds)
                 {
