@@ -343,14 +343,14 @@ try {
 
     $hostsBefore = [int](Get-Scalar 'SELECT COUNT(*) FROM Hardware')
     $importer = New-Object Vulnerator.Model.BusinessLogic.StigLibraryImporter
-    Assert-That (-not [Vulnerator.Model.BusinessLogic.StigLibraryImporter]::LastLibraryImport().HasValue) 'no STIG library recorded before one is loaded'
+    Assert-That ($null -eq [Vulnerator.Model.BusinessLogic.StigLibraryImporter]::LastLibraryImport()) 'no STIG library recorded before one is loaded'
     $extracted = Join-Path $workDir 'extracted-benchmarks'
     $written = [Vulnerator.Model.BusinessLogic.StigLibraryImporter]::ExtractBenchmarks($libraryZip, $extracted)
     $extractedFiles = @(Get-ChildItem $extracted -Filter *.xml | ForEach-Object { $_.Name })
     Assert-That ($written -eq 1 -and $extractedFiles.Count -eq 1 -and $extractedFiles[0] -eq 'U_Library_Test_STIG_V2R3_Manual-xccdf.xml') ('library zip extracts to its benchmark files only, SCAP skipped (got ' + $written + ': ' + ($extractedFiles -join ', ') + ')')
     $summary = $importer.Import($libraryZip)
     Assert-That ($importer.Parsed -eq 1 -and $importer.Failed -eq 0 -and $importer.Rules -eq 3) ('library zip (zip in zip) loads one STIG, 3 rules; SCAP copy skipped (got "' + $summary + '")')
-    Assert-That ([Vulnerator.Model.BusinessLogic.StigLibraryImporter]::LastLibraryImport().HasValue) 'STIG library load recorded in the database (ingestion warning stays quiet)'
+    Assert-That ($null -ne [Vulnerator.Model.BusinessLogic.StigLibraryImporter]::LastLibraryImport()) 'STIG library load recorded in the database (ingestion warning stays quiet)'
     $ruleSql = 'SELECT VulnerabilityVersion || ''|'' || PrimaryRawRiskIndicator || ''|'' || VulnerabilityGroupIdentifier || ''|'' || SecondaryVulnerabilityIdentifier || ''|'' || CheckContent || ''|'' || IsDocumentable || ''|'' || VulnerabilityDescription FROM Vulnerabilities WHERE UniqueVulnerabilityIdentifier = @v'
     $rule = [string](Get-Scalar $ruleSql @{ '@v' = 'SV-5001' })
     Assert-That ($rule -eq '2|I|V-5001|LIB-00-000010|Verify rule one.|false|Rule one discussion with & and <b> markup.') ('benchmark rule fields read (got "' + $rule + '")')
