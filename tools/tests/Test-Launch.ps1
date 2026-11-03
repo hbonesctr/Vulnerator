@@ -80,7 +80,19 @@ try {
             catch { Note 'error' ('Missing: ' + $reference.FullName + ' (needed by ' + $assembly.GetName().Name + ')') }
         }
     }
-    try { [void][Activator]::CreateInstance($app.GetType('Vulnerator.ViewModel.ViewModelLocator', $true)) ; Note 'warning' 'ViewModelLocator builds in this process' }
+    $config = Join-Path $binPath 'Vulnerator.exe.config'
+    Note 'warning' ('Vulnerator.exe.config present: ' + (Test-Path $config) + '; CommonServiceLocator redirect: ' + ((Test-Path $config) -and ((Get-Content $config -Raw) -match 'CommonServiceLocator')))
+    foreach ($name in 'CommonServiceLocator', 'GalaSoft.MvvmLight', 'GalaSoft.MvvmLight.Extras', 'GalaSoft.MvvmLight.Platform', 'MahApps.Metro', 'ControlzEx') {
+        $path = Join-Path $binPath ($name + '.dll')
+        if (Test-Path $path) { Note 'warning' ($name + '.dll ' + [System.Reflection.AssemblyName]::GetAssemblyName($path).Version + ' refs: ' + ((@([System.Reflection.Assembly]::ReflectionOnlyLoadFrom($path).GetReferencedAssemblies()) | ForEach-Object { $_.Name + ' ' + $_.Version }) -join ', ')) }
+        else { Note 'error' ($name + '.dll is not in the program folder') }
+    }
+    # Same objects in a separate domain that uses Vulnerator.exe.config (its binding redirects), as the real program does.
+    $setup = New-Object System.AppDomainSetup
+    $setup.ApplicationBase = $binPath
+    $setup.ConfigurationFile = $config
+    $domain = [AppDomain]::CreateDomain('VulneratorProbe', $null, $setup)
+    try { [void]$domain.CreateInstanceFromAndUnwrap($exe, 'Vulnerator.ViewModel.ViewModelLocator') ; Note 'warning' 'ViewModelLocator builds with the program configuration' }
     catch {
         $inner = $_.Exception
         while ($null -ne $inner.InnerException) { $inner = $inner.InnerException }
