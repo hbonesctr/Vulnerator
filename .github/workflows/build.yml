@@ -126,10 +126,17 @@ jobs:
           Compress-Archive -Path bin/Release/* -DestinationPath $zip
           $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant()
           Set-Content "$zip.sha256" "$hash  $zip" -Encoding ascii
+          # Hashes of every program file, for administrators who allow software by hash (application control).
+          $hashFile = "Vulnerator-$tag-file-hashes.txt"
+          $root = (Resolve-Path bin/Release).Path
+          Get-ChildItem bin/Release -Recurse -File | Sort-Object FullName | ForEach-Object { (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant() + '  ' + $_.FullName.Substring($root.Length + 1) } | Set-Content $hashFile -Encoding ascii
+          $exeHash = (Get-FileHash bin/Release/Vulnerator.exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          $sqliteHash = (Get-FileHash bin/Release/e_sqlite3.dll -Algorithm SHA256).Hash.ToLowerInvariant()
           $notesFile = "docs/release-notes/$tag.md"
           $notes = if (Test-Path $notesFile) { Get-Content $notesFile -Raw } else { "Vulnerator $tag" }
-          Set-Content notes.md ($notes.TrimEnd() + "`n`n**SHA-256** ``$zip``: ``$hash``") -Encoding utf8
-          $arguments = @('release', 'create', $tag, $zip, "$zip.sha256", '--title', "Vulnerator $tag", '--notes-file', 'notes.md', '--target', '${{ github.sha }}')
+          $allow = "`n`n**For application control (allow by hash):** ``Vulnerator.exe`` ``$exeHash`` / ``e_sqlite3.dll`` (native SQLite) ``$sqliteHash``. Every file's hash is in ``$hashFile``."
+          Set-Content notes.md ($notes.TrimEnd() + "`n`n**SHA-256** ``$zip``: ``$hash``" + $allow) -Encoding utf8
+          $arguments = @('release', 'create', $tag, $zip, "$zip.sha256", $hashFile, '--title', "Vulnerator $tag", '--notes-file', 'notes.md', '--target', '${{ github.sha }}')
           if ($tag -match '-') { $arguments += '--prerelease' }
           $output = & gh @arguments 2>&1 | Out-String
           Write-Host $output

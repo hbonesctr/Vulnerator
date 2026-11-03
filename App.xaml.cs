@@ -32,6 +32,7 @@ namespace Vulnerator
 
         void Application_Startup(object sender, StartupEventArgs e)
         {
+            CheckSqlite();
             if (Vulnerator.Properties.Settings.Default["Environment"].ToString().Equals("Undefined"))
             {
                 SplashWindow splashWindow = new SplashWindow();
@@ -41,6 +42,39 @@ namespace Vulnerator
             {
                 MainWindow mainWindow = new MainWindow();
                 mainWindow.Show();
+            }
+        }
+
+        /// <summary>
+        /// Opens an in-memory database once. If the native SQLite library (e_sqlite3.dll) cannot be loaded, nothing in
+        /// Vulnerator can read or write data, so say so plainly instead of failing quietly on every screen.
+        /// </summary>
+        private static void CheckSqlite()
+        {
+            try
+            {
+                using (System.Data.SQLite.SQLiteConnection connection = new System.Data.SQLite.SQLiteConnection("Data Source=:memory:"))
+                { connection.Open(); }
+            }
+            catch (Exception exception)
+            {
+                Exception inner = exception;
+                while (inner.InnerException != null)
+                { inner = inner.InnerException; }
+                string folder = AppDomain.CurrentDomain.BaseDirectory;
+                string native = Path.Combine(folder, "e_sqlite3.dll");
+                Helper.LogWriter.LogErrorWithDebug($"SQLite could not be loaded ('{native}', exists: {File.Exists(native)}).", exception);
+                MessageBox.Show(
+                    "Vulnerator cannot load its database engine, so files cannot be imported and nothing will be saved." + Environment.NewLine + Environment.NewLine +
+                    inner.Message + Environment.NewLine + Environment.NewLine +
+                    "File: " + native + (File.Exists(native) ? string.Empty : " (missing)") + Environment.NewLine + Environment.NewLine +
+                    "Usually one of these:" + Environment.NewLine +
+                    "- The files still carry the \"downloaded from the internet\" mark: unblock the zip before extracting it, or run" + Environment.NewLine +
+                    "  Get-ChildItem -Recurse | Unblock-File   in PowerShell from the Vulnerator folder." + Environment.NewLine +
+                    "- Endpoint security / application control blocks or quarantined e_sqlite3.dll: ask your administrator to allow it" + Environment.NewLine +
+                    "  (SHA-256 is listed in the release notes)." + Environment.NewLine +
+                    "- The file is missing: extract the whole zip again.",
+                    "Vulnerator - database engine unavailable", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
