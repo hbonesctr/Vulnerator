@@ -59,7 +59,7 @@
                         <Label Grid.Row="0"
                                Grid.Column="1"
                                VerticalAlignment="Center"
-                               Content="Vulnerator"
+                               Content="Vulnerator 2.0"
                                Style="{StaticResource TopLevelHeaderStyle}" />
                         <StackPanel Grid.Row="1"
                                     Grid.Column="1"
@@ -82,6 +82,10 @@
                         <TextBlock Text="Contributors"
                                    TextTrimming="CharacterEllipsis" />
                     </Label>
+                    <TextBlock
+                               Margin="5,0"
+                               Text="Hector L. Bones - Vulnerator 2.0 application rewrite"
+                               TextWrapping="NoWrap" />
                     <TextBlock
                                Margin="5,0"
                                Text="Alex Kuchta - Redesign, ACAS Integration"

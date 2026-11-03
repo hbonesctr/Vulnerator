@@ -11,7 +11,7 @@
                       xmlns:cm="clr-namespace:Vulnerator.View.UI.ConfigurationManagement"
                       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                       xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
-                      Title="Vulnerator"
+                      Title="Vulnerator 2.0"
                       MinWidth="750"
                       MinHeight="300"
                       HorizontalContentAlignment="Stretch"
@@ -184,15 +184,15 @@
                 </controls:HamburgerMenu.ItemsSource>
                 <controls:HamburgerMenu.OptionsItemsSource>
                     <controls:HamburgerMenuItemCollection>
-                        <!--<Controls:HamburgerMenuIconItem Label="User Guide"
+                        <controls:HamburgerMenuIconItem Label="Help"
                                                         Tag="{StaticResource userGuideView}"
-                                                        ToolTip="User Guide">
-                            <Controls:HamburgerMenuIconItem.Icon>
-                                <IconPacks:PackIconFontAwesomeLight HorizontalAlignment="Center"
-                                                            VerticalAlignment="Center"
-                                                            Kind="Books" />
-                            </Controls:HamburgerMenuIconItem.Icon>
-                        </Controls:HamburgerMenuIconItem>-->
+                                                        ToolTip="Help (user guide)">
+                            <controls:HamburgerMenuIconItem.Icon>
+                                <iconPacks:PackIconFontAwesomeLight HorizontalAlignment="Center"
+                                                                    VerticalAlignment="Center"
+                                                                    Kind="Bookmark" />
+                            </controls:HamburgerMenuIconItem.Icon>
+                        </controls:HamburgerMenuIconItem>
                         <controls:HamburgerMenuIconItem Label="Settings"
                                                         Tag="{StaticResource settingsView}"
                                                         ToolTip="Settings">

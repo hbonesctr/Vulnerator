@@ -361,6 +361,7 @@
     <Compile Include="Model\BusinessLogic\AcasNessusReader.cs" />
     <Compile Include="Model\BusinessLogic\AcasCsvReader.cs" />
     <Compile Include="Model\BusinessLogic\CklCreator.cs" />
+    <Compile Include="Model\BusinessLogic\IngestionFileCollector.cs" />
     <Compile Include="Model\BusinessLogic\Reports\EmassPoamBuilder.cs" />
     <Compile Include="Model\BusinessLogic\Reports\EmassWorkbookWriter.cs" />
     <Compile Include="Model\BusinessLogic\Reports\FilterTextCreator.cs" />

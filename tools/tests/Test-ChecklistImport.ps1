@@ -492,6 +492,76 @@ try {
     [System.IO.File]::WriteAllText($notIgap, 'not a workbook')
     $bad = [Vulnerator.Model.BusinessLogic.EmassAssessmentProcedureImporter]::Import($notIgap)
     Assert-That ($bad.StartsWith('Could not open the file')) ('an unreadable (e.g. label-encrypted) file gets a clear message (got "' + $bad + '")')
+    # --- Zip files and folders for ingestion (Evaluate-STIG layout, ACAS folder of zips) ---------
+    Add-Type -AssemblyName System.IO.Compression
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    function New-TestZip {
+        param([string]$ZipPath, [hashtable]$Entries)
+        $stream = [System.IO.File]::Open($ZipPath, [System.IO.FileMode]::Create)
+        $zip = New-Object System.IO.Compression.ZipArchive ($stream, [System.IO.Compression.ZipArchiveMode]::Create)
+        foreach ($name in $Entries.Keys) {
+            $entry = $zip.CreateEntry($name)
+            $writer = $entry.Open()
+            $bytes = [byte[]]$Entries[$name]
+            $writer.Write($bytes, 0, $bytes.Length)
+            $writer.Dispose()
+        }
+        $zip.Dispose()
+        $stream.Dispose()
+    }
+    $cklbBytes = [System.IO.File]::ReadAllBytes((Join-Path $fixtures 'viewer3.cklb'))
+    $cklBytes = [System.IO.File]::ReadAllBytes((Join-Path $fixtures 'library-test.ckl'))
+    $nessusBytes = [System.IO.File]::ReadAllBytes((Join-Path $fixtures 'scan.nessus'))
+    $textBytes = [System.Text.Encoding]::ASCII.GetBytes('summary')
+
+    $evalRoot = Join-Path $workDir 'EvaluateStig'
+    [void][System.IO.Directory]::CreateDirectory((Join-Path $evalRoot 'HOSTB\Checklist'))
+    [void][System.IO.Directory]::CreateDirectory((Join-Path $evalRoot 'HOSTB\Previous\2026-01-01\Checklist'))
+    [System.IO.File]::WriteAllBytes((Join-Path $evalRoot 'HOSTB\Checklist\HOSTB_Library.ckl'), $cklBytes)
+    [System.IO.File]::WriteAllBytes((Join-Path $evalRoot 'HOSTB\Previous\2026-01-01\Checklist\HOSTB_Library.ckl'), $cklBytes)
+    New-TestZip (Join-Path $evalRoot 'HOSTA.zip') @{
+        'HOSTA/Checklist/HOSTA_Viewer3.cklb' = $cklbBytes
+        'HOSTA/Previous/2026-01-01/Checklist/HOSTA_Viewer3.cklb' = $cklbBytes
+        'HOSTA/Checklist/Summary.txt' = $textBytes
+    }
+    $innerZip = Join-Path $workDir 'inner.zip'
+    New-TestZip $innerZip @{ 'Checklist/HOSTC_Library.ckl' = $cklBytes }
+    New-TestZip (Join-Path $evalRoot 'outer.zip') @{ 'nested/inner.zip' = [System.IO.File]::ReadAllBytes($innerZip) }
+
+    $collector = New-Object Vulnerator.Model.BusinessLogic.IngestionFileCollector (,[string[]]@('.ckl', '.cklb'))
+    $collector.SkipPreviousFolders = $true
+    $collector.ExtractionFolder = Join-Path $workDir 'extracted-ckl'
+    $collector.Add([string]$evalRoot)
+    $found = @($collector.Files | ForEach-Object { $_.Path })
+    $names = @($collector.Files | ForEach-Object { $_.DisplayName }) -join ', '
+    Assert-That ($found.Count -eq 3) ('folder with zips, nested zips and a Previous folder yields 3 current checklists (got ' + $found.Count + ': ' + $names + ')')
+    Assert-That ($collector.SkippedPrevious -eq 2) ('checklists under "Previous" folders are skipped, in folders and in zips (got ' + $collector.SkippedPrevious + ')')
+    Assert-That (@($found | Where-Object { $_ -match '\\Previous\\' }).Count -eq 0) 'no collected checklist comes from a Previous folder'
+    Assert-That (@($found | Where-Object { $_ -like '*HOSTC_Library.ckl' }).Count -eq 1) 'a checklist inside a zip inside a zip is found'
+    $fromZip = @($found | Where-Object { $_ -like '*HOSTA_Viewer3.cklb' })[0]
+    if ($null -ne $fromZip) {
+        $result = Import-Checklist $fromZip 'ZipGroup'
+        Assert-That ($result -eq 'Processed') ('a CKLB extracted from a zip imports (got "' + $result + '")')
+    }
+    Assert-That ([Vulnerator.Model.BusinessLogic.IngestionFileCollector]::IsUnderPreviousFolder('HOST\Previous\x\a.cklb')) 'IsUnderPreviousFolder: folder named Previous'
+    Assert-That (-not [Vulnerator.Model.BusinessLogic.IngestionFileCollector]::IsUnderPreviousFolder('HOST\Checklist\Previous.cklb')) 'IsUnderPreviousFolder: a file named Previous is not a folder'
+
+    $acasRoot = Join-Path $workDir 'AcasScans'
+    [void][System.IO.Directory]::CreateDirectory($acasRoot)
+    New-TestZip (Join-Path $acasRoot 'scan-week1.zip') @{ 'results/scan.nessus' = $nessusBytes }
+    New-TestZip (Join-Path $acasRoot 'scan-week2.zip') @{ 'results/scan.nessus' = $nessusBytes; '../escaped.nessus' = $nessusBytes }
+    $acasCollector = New-Object Vulnerator.Model.BusinessLogic.IngestionFileCollector (,[string[]]@('.nessus', '.csv'))
+    $acasCollector.ExtractionFolder = Join-Path $workDir 'extracted-acas'
+    $acasCollector.Add([string]$acasRoot)
+    $acasFound = @($acasCollector.Files | ForEach-Object { $_.Path })
+    Assert-That ($acasFound.Count -eq 2) ('a folder of zips, each with a .nessus file, yields one file per zip (got ' + $acasFound.Count + ')')
+    Assert-That (-not (Test-Path (Join-Path $workDir 'escaped.nessus')) -and -not (Test-Path (Join-Path $workDir 'extracted-acas\escaped.nessus'))) 'a zip entry with ".." is not extracted outside its folder'
+    if ($acasFound.Count -ge 1) {
+        $zipScan = New-Object Vulnerator.Model.Object.File ('scan-week1', 'ACAS - Nessus', 'Ready', $acasFound[0], 'True')
+        $result = (New-Object Vulnerator.Model.BusinessLogic.AcasNessusReader).ReadAcasNessusFile($zipScan, 'TestGroup')
+        Assert-That ($result -eq 'Processed') ('a .nessus extracted from a zip imports (got "' + $result + '")')
+    }
+    Assert-That ([Vulnerator.ViewModel.VulnerabilityViewModel]::IsProcessed([Vulnerator.Model.BusinessLogic.CklReader]::BaselineStatus)) 'a STIG baseline import counts as processed, not failed'
 }
 catch {
     $script:failures.Add('Unhandled error: ' + $_.Exception.ToString())

@@ -6,10 +6,10 @@ using System.Windows;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("Vulnerator")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Vulnerator 2.0 - vulnerability and STIG data consolidation for eMASS (NIST SP 800-53 Rev 5)")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Vulnerator")]
-[assembly: AssemblyProduct("Vulnerator")]
+[assembly: AssemblyProduct("Vulnerator 2.0")]
 [assembly: AssemblyCopyright("")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

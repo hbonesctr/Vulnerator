@@ -9,8 +9,8 @@ NIST SP 800-53 Rev 5, current DISA checklist and scan formats, and eMASS POA&M a
 runs offline on closed networks without administrator rights.
 
 ### What it does
-- Imports STIG checklists (.ckl, STIG Viewer 3 .cklb), ACAS / Nessus scans (.nessus, CSV), SCAP / SCC XCCDF results and
-  the DISA STIG library.
+- Imports STIG checklists (.ckl, STIG Viewer 3 .cklb, Evaluate-STIG output), ACAS / Nessus scans (.nessus, CSV), SCAP /
+  SCC XCCDF results and the DISA STIG library, from files, zip files or whole folders.
 - Maps findings to CCIs and NIST SP 800-53 Rev 5 controls (DISA CCI list, CNSSI 1253 baselines), with eMASS assessment
   procedures from your own IG/AP export.
 - Exports eMASS POA&M and hardware / software workbooks, a Risk Assessment Report, and per-host STIG checklists.
@@ -34,4 +34,5 @@ checks, the Release build, end-to-end import / export tests on synthetic files, 
 [tools/rev5](tools/rev5).
 
 ### Credits and license
-Based on Vulnerator by Alex Kuchta and contributors. MIT License (see [LICENSE](LICENSE)).
+Vulnerator 2.0 application rewrite: Hector L. Bones. Based on Vulnerator by Alex Kuchta, Jeff Vanerwegen, Rick Murphy,
+Jeff Purcell and contributors. MIT License (see [LICENSE](LICENSE)).

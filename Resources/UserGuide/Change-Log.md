@@ -1,3 +1,22 @@
+﻿# Vulnerator 2.0 (7.0.0)
+###### Pre-release builds, 2026
+
+Application rewrite by Hector L. Bones.
+
+| Change Description |
+| :----------------- |
+| NIST SP 800-53 Rev 5 controls, DISA CCI list and CNSSI 1253 baselines; eMASS assessment procedures from your own IG/AP export |
+| eMASS POA&M and hardware / software exports; classification / handling marking on every export |
+| STIG Viewer 3 (.cklb) checklists, Evaluate-STIG output (zips and folders, "Previous" folders skipped), STIG baselines |
+| ACAS imports from .nessus, CSV, zip files and folders of zips |
+| SCAP / SCC XCCDF 1.1 and 1.2 results and the DISA STIG library (zip or extracted benchmark files) |
+| Per-host STIG checklist (.ckl) export from the STIG library |
+| Runs offline by default; Windows built-in SQLite engine; 64-bit; works where strong-name bypass is disabled |
+| Help pages rewritten |
+
+
+----------
+
 # Version 6.1.7
 ###### Release Date: 05 January 2017
 
