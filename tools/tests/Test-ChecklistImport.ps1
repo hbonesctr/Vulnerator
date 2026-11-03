@@ -233,6 +233,9 @@ try {
     $rarPath = Join-Path $OutDir 'sample-Risk-Assessment-Report.xlsx'
     $rarResult = (New-Object Vulnerator.Model.BusinessLogic.Reports.OpenXmlRiskAssessmentReportCreator).CreateRiskAssessmentReport($rarPath)
     Assert-That (($rarResult -like '*successful*') -and [System.IO.File]::Exists($rarPath)) ('Risk Assessment Report export runs (got "' + $rarResult + '")')
+    $discPath = Join-Path $OutDir 'sample-STIG-Discrepancies.xlsx'
+    $discResult = (New-Object Vulnerator.Model.BusinessLogic.Reports.OpenXmlStigDiscrepanciesReportCreator).CreateDiscrepanciesReport($discPath)
+    Assert-That (($discResult -like '*successful*') -and [System.IO.File]::Exists($discPath)) ('SCAP & STIG Discrepancies export runs (got "' + $discResult + '")')
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     $markedPath = Join-Path $workDir 'marked-RAR.xlsx'
     Copy-Item $rarPath $markedPath
