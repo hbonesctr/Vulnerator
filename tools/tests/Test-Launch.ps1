@@ -59,6 +59,27 @@ foreach ($log in $logs) {
 try {
     [System.IO.Directory]::SetCurrentDirectory($binPath)
     $app = [System.Reflection.Assembly]::LoadFrom($exe)
+    # Every assembly the program references, followed through the program folder: report what is neither there nor in the GAC.
+    $seen = @{}
+    $queue = New-Object System.Collections.Queue
+    $queue.Enqueue($app)
+    while ($queue.Count -gt 0) {
+        $assembly = $queue.Dequeue()
+        foreach ($reference in $assembly.GetReferencedAssemblies()) {
+            if ($seen.ContainsKey($reference.FullName)) { continue }
+            $seen[$reference.FullName] = $true
+            $local = Join-Path $binPath ($reference.Name + '.dll')
+            try {
+                if (Test-Path $local) {
+                    $loaded = [System.Reflection.Assembly]::LoadFrom($local)
+                    if ($loaded.GetName().Version -lt $reference.Version) { Note 'error' ('Older than referenced: ' + $reference.FullName + ' (folder has ' + $loaded.GetName().Version + ', needed by ' + $assembly.GetName().Name + ')') }
+                    $queue.Enqueue($loaded)
+                }
+                else { [void][System.Reflection.Assembly]::Load($reference) }
+            }
+            catch { Note 'error' ('Missing: ' + $reference.FullName + ' (needed by ' + $assembly.GetName().Name + ')') }
+        }
+    }
     try { [void][Activator]::CreateInstance($app.GetType('Vulnerator.ViewModel.ViewModelLocator', $true)) ; Note 'warning' 'ViewModelLocator builds in this process' }
     catch {
         $inner = $_.Exception
