@@ -34,14 +34,7 @@
         <DataTemplate>
             <Border Width="48"
                     Background="{DynamicResource MahApps.Brushes.Gray10}">
-                <iconPacks:PackIconFontAwesomeBrands Width="24"
-                                                     Height="24"
-                                                     Margin="4"
-                                                     HorizontalAlignment="Center"
-                                                     VerticalAlignment="Center"
-                                                     Flip="Horizontal"
-                                                     Foreground="{DynamicResource MahApps.Brushes.ThemeForeground}"
-                                                     Kind="Vulnerator" />
+                <Image Width="24" Height="24" Margin="4" HorizontalAlignment="Center" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality" Source="pack://application:,,,/Vulnerator;component/Resources/Logo/vulnerator-icon.png" />
             </Border>
         </DataTemplate>
     </controls:MetroWindow.IconTemplate>

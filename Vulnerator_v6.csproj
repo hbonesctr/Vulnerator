@@ -1019,6 +1019,8 @@
   <ItemGroup>
     <Resource Include="Windows Logo.png" />
     <Resource Include="Resources\vulnerator.ico" />
+    <Resource Include="Resources\Logo\vulnerator-icon.png" />
+    <Resource Include="Resources\Logo\vulnerator-2.0-mark.png" />
     <Resource Include="Resources\DllFiles\MahApps.Metro.IconPacks.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>

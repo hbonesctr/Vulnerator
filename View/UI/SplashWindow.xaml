@@ -27,13 +27,7 @@
     <Controls:MetroWindow.IconTemplate>
         <DataTemplate>
             <Border Width="48">
-                <IconPacks:PackIconFontAwesomeBrands Width="{TemplateBinding Width}"
-                                                     Height="{TemplateBinding Height}"
-                                                     Margin="4"
-                                                     HorizontalAlignment="Center"
-                                                     Flip="Horizontal"
-                                                     Foreground="{DynamicResource MahApps.Brushes.ThemeForeground}"
-                                                     Kind="Vulnerator" />
+                <Image Width="{TemplateBinding Width}" Height="{TemplateBinding Height}" Margin="4" HorizontalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality" Source="pack://application:,,,/Vulnerator;component/Resources/Logo/vulnerator-icon.png" />
             </Border>
         </DataTemplate>
     </Controls:MetroWindow.IconTemplate>

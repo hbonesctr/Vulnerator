@@ -1,6 +1,5 @@
 ﻿<div align="center">
-    <img width="25%" src="Vulnerator_Logo_Large_Color_SquareBackground_20190805.png">
-    <h1>Vulnerator 2.0</h1>
+    <img width="70%" alt="Vulnerator 2.0" src="docs/logo/vulnerator-2.0-wordmark.png">
     <h3>Vulnerability continuous monitoring for DoD RMF</h3>
 </div>
 
