@@ -43,7 +43,7 @@ jobs:
 
       - name: Use Windows' SQLite (winsqlite3) in System.Data.SQLite
         shell: powershell
-        run: tools/build/Use-WindowsSqlite.ps1 -BinDir bin/Release
+        run: tools/ci/Use-WindowsSqlite.ps1 -BinDir bin/Release
 
       - name: Launch test (window appears)
         shell: cmd

@@ -60,7 +60,7 @@
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <!-- 64-bit: SQLite comes from Windows (winsqlite3.dll, System32); see tools/build/Use-WindowsSqlite.ps1. -->
+    <!-- 64-bit: SQLite comes from Windows (winsqlite3.dll, System32); see tools/ci/Use-WindowsSqlite.ps1. -->
     <PlatformTarget>x64</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>false</Optimize>
