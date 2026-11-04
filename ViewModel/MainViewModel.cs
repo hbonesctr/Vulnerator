@@ -47,6 +47,9 @@ namespace Vulnerator.ViewModel
         public INotificationMessageManager NotificationMessageManager { get; set; } = new NotificationMessageManager();
         public Logger logger = new Logger();
 
+        /// <summary>The release version shown on the About page (for example "7.3.0" or "7.3.0-beta.1").</summary>
+        public string DisplayVersion => AppVersion.Display;
+
         public string ApplicationVersion
         {
             get

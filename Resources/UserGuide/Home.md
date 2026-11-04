@@ -1,4 +1,6 @@
-# Vulnerator 2.0
+﻿# Vulnerator 2.0
+
+**Version {{VERSION}}** - see the Change Log page for what is new.
 
 Vulnerator 2.0 consolidates vulnerability and STIG compliance data for DoD Risk Management Framework (RMF) work and
 produces eMASS-ready outputs. It is a maintained rewrite of the original Vulnerator, updated for NIST SP 800-53 Rev 5,

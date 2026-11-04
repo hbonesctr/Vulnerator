@@ -352,6 +352,7 @@
     </ApplicationDefinition>
     <Compile Include="Helper\DelimitedText.cs" />
     <Compile Include="Helper\ExportMarking.cs" />
+    <Compile Include="Helper\AppVersion.cs" />
     <Compile Include="Helper\BackgroundWorkerFactory.cs" />
     <Compile Include="Helper\DdlReader.cs" />
     <Compile Include="Helper\Logger.cs" />

@@ -31,6 +31,20 @@ jobs:
       - name: Restore NuGet packages
         run: nuget restore Vulnerator_v6.sln
 
+      - name: Stamp the release version
+        shell: pwsh
+        # The version people see (About, Help): the release tag for release/v* branches and v* tags, else "<file version>-dev.<commit>".
+        run: |
+          $info = 'Properties/AssemblyInfo.cs'
+          $text = Get-Content $info -Raw
+          $file = [regex]::Match($text, 'AssemblyFileVersion\("([^"]+)"\)').Groups[1].Value
+          if ($env:GITHUB_REF -match '^refs/(heads/release|tags)/v?(.+)$') { $display = $Matches[2] -replace '^v', '' }
+          else { $display = $file + '-dev.' + $env:GITHUB_SHA.Substring(0, 7) }
+          $text = [regex]::Replace($text, '(?m)^\[assembly: AssemblyInformationalVersion\(.*\)\]\s*$', '')
+          Set-Content $info ($text.TrimEnd() + "`r`n[assembly: AssemblyInformationalVersion(`"$display`")]`r`n") -Encoding utf8
+          "VULNERATOR_VERSION=$display" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          Write-Host "::notice::Version shown in the program: $display"
+
       - name: Build (Release)
         shell: pwsh
         # Compiler errors are re-emitted as annotations so they show on the run page and through the checks API.

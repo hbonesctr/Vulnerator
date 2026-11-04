@@ -60,7 +60,7 @@
                                     Orientation="Horizontal">
                             <Label Content="Version: "
                                    Style="{StaticResource SecondLevelHeaderStyle}" />
-                            <Label Content="{Binding ApplicationVersion}"
+                            <Label Content="{Binding DisplayVersion}"
                                    Style="{StaticResource SecondLevelHeaderStyle}" />
                         </StackPanel>
                     </Grid>

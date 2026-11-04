@@ -112,7 +112,7 @@ namespace Vulnerator.ViewModel
                 using (Stream stream = assembly.GetManifestResourceStream(resource))
                 {
                     using (StreamReader streamReader = new StreamReader(stream))
-                    { return streamReader.ReadToEnd(); }
+                    { return streamReader.ReadToEnd().Replace("{{VERSION}}", AppVersion.Display); }
                 }
             }
             catch (Exception exception)

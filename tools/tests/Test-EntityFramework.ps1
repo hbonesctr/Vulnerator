@@ -118,6 +118,9 @@ public static class EntityFrameworkProbe
     foreach ($name in 'ClearSelectedSoftwareCommand', 'DeleteSoftwareCommand', 'ModifySoftwareCommand', 'AddHardwareToSoftwareCommand', 'RemoveHardwareFromSoftwareCommand') {
         if ($null -eq $softwareTab.GetType().GetProperty($name)) { Fail ('Software tab has no ' + $name) }
     }
+    $shown = [Vulnerator.Helper.AppVersion]::Display
+    Write-Host ('Version shown on About / Help: ' + $shown)
+    if ($env:VULNERATOR_VERSION -and $shown -ne $env:VULNERATOR_VERSION) { Fail ('About / Help show "' + $shown + '", expected "' + $env:VULNERATOR_VERSION + '"') }
     Write-Host 'Entity Framework (System.Data.SQLite.EF6) queries passed.'
     exit 0
 }

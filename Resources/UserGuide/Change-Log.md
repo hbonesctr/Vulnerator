@@ -5,6 +5,7 @@
 | :----------------- |
 | Configuration Management > Hardware: every button works (clear, add / update, delete, IP / MAC / group / software / port links) |
 | Configuration Management > Software: clear, add / update, delete, add / remove hardware |
+| About and Help show the release version (for example 7.3.0) |
 
 
 ----------

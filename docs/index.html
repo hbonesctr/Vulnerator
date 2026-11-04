@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vulnerator 2.0</title>
+<meta name="description" content="Vulnerator 2.0 - vulnerability and STIG data consolidation for DoD RMF and eMASS (NIST SP 800-53 Rev 5).">
+<meta name="author" content="Hector L. Bones">
+<link rel="icon" type="image/png" href="logo/vulnerator-2.0-icon.png">
+<style>
+  :root {
+    --bg: #f6f8fb; --panel: #ffffff; --text: #1d2939; --muted: #5b6b7f; --rule: #dde3ec;
+    --side: #0f1b2d; --side-text: #d7e2f0; --side-muted: #91a4bd;
+    --accent: #2f8fc2; --accent-2: #7a5fd6; --button: #18304f; --button-hover: #22416a; --code: #eef2f7;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0b1320; --panel: #111b2c; --text: #dbe5f1; --muted: #93a5bc; --rule: #22324a; --code: #18253a; }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font: 16px/1.6 "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif; }
+  a { color: var(--accent); }
+  .wrap { display: grid; grid-template-columns: 320px 1fr; min-height: 100vh; background: linear-gradient(to right, var(--side) 320px, transparent 320px); }
+  aside { background: var(--side); color: var(--side-text); padding: 40px 28px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  aside img { width: 112px; height: 112px; display: block; margin-bottom: 18px; }
+  aside h1 { margin: 0; font-size: 30px; letter-spacing: -0.5px; color: #fff; }
+  aside h1 span { background: linear-gradient(90deg, #5ec8e5, #9273e6); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  aside .tagline { color: var(--side-muted); margin: 8px 0 26px; font-size: 15px; }
+  .buttons { display: grid; gap: 10px; }
+  .btn { display: block; text-decoration: none; color: #fff; background: var(--button); border: 1px solid #2c4a72;
+         border-radius: 8px; padding: 11px 14px; font-weight: 600; font-size: 15px; }
+  .btn small { display: block; font-weight: 400; color: var(--side-muted); font-size: 12.5px; margin-top: 2px; }
+  .btn:hover { background: var(--button-hover); }
+  .btn.primary { background: linear-gradient(90deg, #2f8fc2, #7a5fd6); border-color: transparent; }
+  .btn.primary small { color: #e8eefc; }
+  aside .meta { margin-top: 26px; font-size: 13px; color: var(--side-muted); }
+  aside .meta a { color: var(--side-text); }
+  main { padding: 48px 56px 64px; max-width: 920px; }
+  section { margin-bottom: 40px; }
+  h2 { font-size: 22px; margin: 0 0 12px; color: var(--text); }
+  h2::before { content: "// "; color: var(--accent-2); }
+  h3 { font-size: 17px; margin: 22px 0 6px; }
+  p, li { color: var(--text); }
+  .muted { color: var(--muted); }
+  ul, ol { padding-left: 22px; }
+  li { margin: 4px 0; }
+  code { background: var(--code); padding: 1px 6px; border-radius: 4px; font-size: 14px; font-family: Consolas, "Cascadia Mono", monospace; }
+  pre { background: var(--code); padding: 12px 14px; border-radius: 8px; overflow-x: auto; font-size: 14px; }
+  pre code { background: none; padding: 0; }
+  hr { border: 0; border-top: 1px solid var(--rule); margin: 36px 0; }
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .card { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 14px 16px; }
+  .card h3 { margin-top: 0; }
+  .release { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 16px 18px; }
+  .release .tag { font-size: 20px; font-weight: 700; }
+  .note { font-size: 14px; color: var(--muted); }
+  footer { color: var(--muted); font-size: 14px; border-top: 1px solid var(--rule); padding-top: 18px; }
+  @media (max-width: 860px) {
+    .wrap { grid-template-columns: minmax(0, 1fr); background: none; }
+    .wrap > * { min-width: 0; }
+    aside { position: static; height: auto; padding: 28px 16px; }
+    aside img { width: 84px; height: 84px; }
+    main { padding: 28px 16px 48px; }
+    .grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <aside>
+    <img src="logo/vulnerator-2.0-icon.png" alt="Vulnerator 2.0 logo">
+    <h1>Vulnerator <span>2.0</span></h1>
+    <p class="tagline">Vulnerability and STIG data consolidation for DoD RMF and eMASS.</p>
+    <div class="buttons">
+      <a class="btn primary" id="dl-release" href="https://github.com/hbonesctr/Vulnerator/releases/latest">Get the latest Release<small id="dl-release-note">Compiled, ready to run</small></a>
+      <a class="btn" href="https://github.com/hbonesctr/Vulnerator/archive/refs/heads/master.zip">Get the source .zip file<small>Latest source code</small></a>
+      <a class="btn" href="https://github.com/hbonesctr/Vulnerator/archive/refs/heads/master.tar.gz">Get the source .tar.gz file<small>Latest source code</small></a>
+      <a class="btn" href="https://github.com/hbonesctr/Vulnerator">View project on GitHub<small>hbonesctr/Vulnerator</small></a>
+    </div>
+    <p class="meta">MIT License &middot; Application rewrite by Hector L. Bones &middot; Based on <a href="https://github.com/Vulnerator/Vulnerator">Vulnerator</a> by Alex Kuchta and contributors.</p>
+  </aside>
+
+  <main>
+    <section>
+      <h2>Get Started</h2>
+      <p>Select a download option on the left:</p>
+      <ul>
+        <li><strong>Release</strong> - the latest compiled version of the software (recommended).</li>
+        <li><strong>.zip</strong> - a compressed folder containing the latest source for the application.</li>
+        <li><strong>.tar.gz</strong> - the same source, as a .tar.gz archive.</li>
+      </ul>
+      <p class="note">If you want to view or contribute to the source, fork the repository on GitHub. Builds and tests run in
+        GitHub Actions; there is no local development environment to set up.</p>
+    </section>
+
+    <section>
+      <h2>Using the Release</h2>
+      <ol>
+        <li>Download <code>Vulnerator-&lt;version&gt;.zip</code> and check its SHA-256 against the release page:
+          <pre><code>Get-FileHash .\Vulnerator-&lt;version&gt;.zip</code></pre></li>
+        <li>If Windows marks the zip as downloaded from the internet, right-click it, choose <strong>Properties</strong>,
+          tick <strong>Unblock</strong>, then extract it. <strong>It is important that you extract all of the files.</strong></li>
+        <li>Run <code>Vulnerator.exe</code> from inside the extracted folder. To make a desktop shortcut, right-click
+          <code>Vulnerator.exe</code> and choose <strong>Send to &gt; Desktop (create shortcut)</strong>.</li>
+        <li>Choose <strong>Portable</strong> (a database next to the program) or <strong>Persistent</strong> (a database
+          file you pick), then complete the one-time setup under <strong>Settings</strong>: your details, the eMASS
+          export values and marking, the DISA STIG library and your eMASS IG/AP export.</li>
+      </ol>
+      <p class="note">Requirements: 64-bit Windows with .NET Framework 4.8. No installation and no administrator rights.
+        Works on hardened DoD workstations: the database engine is <code>winsqlite3.dll</code>, part of Windows, and the
+        program runs with .NET strong-name bypass disabled. It works offline; nothing contacts the internet unless you
+        turn on Settings &gt; Online Checks. The release zip also holds <code>LICENSE.txt</code>,
+        <code>THIRD-PARTY-NOTICES.txt</code>, a per-file hash list for application allow-listing and
+        <code>Test-RealData.ps1</code>, which checks a folder of your own files against a throwaway database.</p>
+    </section>
+
+    <section>
+      <h2>What Vulnerator 2.0 Does</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Imports</h3>
+          <ul>
+            <li>STIG checklists: .ckl, STIG Viewer 3 .cklb and Evaluate-STIG output (older results in <em>Previous</em> folders are skipped)</li>
+            <li>ACAS / Nessus: .nessus and CSV, from files, zips or folders of zips</li>
+            <li>SCAP / SCC XCCDF results and the DISA STIG library</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>NIST SP 800-53 Rev 5</h3>
+          <ul>
+            <li>Findings mapped to CCIs and Rev 5 controls (DISA CCI list, CNSSI 1253 baselines)</li>
+            <li>eMASS assessment procedures from your own IG/AP export, kept on your machine</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Reports</h3>
+          <ul>
+            <li>eMASS POA&amp;M and Hardware / Software import workbooks</li>
+            <li>STIG Details, PDF Summary, Risk Assessment Report, SCAP &amp; STIG Discrepancies</li>
+            <li>Ports, Protocols &amp; Services (PPSM starting point) and per-host STIG checklists</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Handling</h3>
+          <ul>
+            <li>Classification / handling marking on every export</li>
+            <li>Labeled input files imported only after you confirm the label</li>
+            <li>Hardware, software, groups and ports managed in Configuration Management</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Latest Release</h2>
+      <div class="release" id="release">
+        <div class="tag" id="release-tag">See the releases page</div>
+        <div class="muted" id="release-date"></div>
+        <p id="release-links"><a href="https://github.com/hbonesctr/Vulnerator/releases">All releases and release notes</a></p>
+      </div>
+    </section>
+
+    <section>
+      <h2>Further Information</h2>
+      <ul>
+        <li><strong>Help</strong> - the program's Help page (left menu) covers setup, importing, findings, reports and the log.</li>
+        <li><a href="https://github.com/hbonesctr/Vulnerator/issues">Vulnerator 2.0 Issue Tracker</a> - report problems or
+          request features. Remove host names, IP addresses and anything sensitive before posting, and never attach scans,
+          checklists or exports.</li>
+        <li><a href="https://github.com/hbonesctr/Vulnerator/tree/master/docs/release-notes">Release notes</a> for every version.</li>
+        <li><a href="https://github.com/Vulnerator/Vulnerator">The original Vulnerator project</a>.</li>
+      </ul>
+      <p>Thank you for your continued support for the project!</p>
+    </section>
+
+    <footer>
+      Vulnerator 2.0 &middot; MIT License &middot; Vulnerator 2.0 application rewrite: Hector L. Bones &middot; Based on Vulnerator by
+      Alex Kuchta, Jeff Vanerwegen, Rick Murphy, Jeff Purcell and contributors.
+    </footer>
+  </main>
+</div>
+<script>
+  // Fill in the latest release from the GitHub API; the static links above work without it.
+  (function () {
+    if (!window.fetch) return;
+    fetch('https://api.github.com/repos/hbonesctr/Vulnerator/releases/latest', { headers: { 'Accept': 'application/vnd.github+json' } })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (release) {
+        if (!release || !release.tag_name) return;
+        var zip = (release.assets || []).filter(function (a) { return /\.zip$/i.test(a.name); })[0];
+        var sha = (release.assets || []).filter(function (a) { return /\.sha256$/i.test(a.name); })[0];
+        var title = release.name || 'Vulnerator 2.0';
+        document.getElementById('release-tag').textContent = title.indexOf(release.tag_name) >= 0 ? title : title + ' (' + release.tag_name + ')';
+        if (release.published_at) {
+          document.getElementById('release-date').textContent = 'Published ' + new Date(release.published_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+        }
+        var links = document.getElementById('release-links');
+        links.textContent = '';
+        function add(href, text) {
+          var a = document.createElement('a'); a.href = href; a.textContent = text;
+          if (links.childNodes.length) links.appendChild(document.createTextNode(' · '));
+          links.appendChild(a);
+        }
+        if (zip) add(zip.browser_download_url, 'Download ' + zip.name);
+        if (sha) add(sha.browser_download_url, 'SHA-256');
+        add(release.html_url, 'Release notes');
+        if (zip) {
+          document.getElementById('dl-release').href = zip.browser_download_url;
+          document.getElementById('dl-release-note').textContent = release.tag_name + ' · ' + zip.name;
+        }
+      })
+      .catch(function () { });
+  })();
+</script>
+</body>
+</html>
