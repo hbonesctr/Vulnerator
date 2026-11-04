@@ -355,7 +355,10 @@ namespace Vulnerator.ViewModel.ConfigurationManagement.Tabs
                     PortsProtocolsServices = databaseContext.PortsProtocolsServices
                         .Include(p => p.HardwarePortsProtocolsServices
                             .Select(h => h.Hardware))
+                        .Where(p => p.Port > 0)
                         .AsNoTracking()
+                        .ToList()
+                        .OrderBy(p => p.Port).ThenBy(p => p.Protocol)
                         .ToList();
                     //Contacts = databaseContext.Contacts
                     //    .Include(c => c.Groups)
@@ -531,581 +534,146 @@ namespace Vulnerator.ViewModel.ConfigurationManagement.Tabs
             }
         }
 
-        public RelayCommand AddGroupToHardwareCommand => new RelayCommand(AddGroupToHardware);
+        // ----- Edits (Configuration Management > Hardware) ---------------------------------------------------
+        // Values are captured on the UI thread (the combo boxes clear their selection when their button fires), the
+        // database change runs in the background, then every tab reloads and this host stays selected.
 
-        private void AddGroupToHardware()
+        public RelayCommand ClearSelectedHardwareCommand => new RelayCommand(() =>
         {
-            try
-            {
-                if (SelectedHardware is null || SelectedGroup is null)
-                { return; }
-
-                // Combobox controls clear the bound SelectedItem when the command fires;
-                // mapping those values to an arguments class prevents a race condition
-                GroupHardwareMappingDoWorkArguments doWorkArguments = new GroupHardwareMappingDoWorkArguments()
-                { GroupName = SelectedGroup.GroupName, DiscoveredHostName = SelectedHardware.DiscoveredHostName };
-                _backgroundWorkerFactory.Build(AddGroupToHardwareBackgroundWorker_DoWork, null, doWorkArguments);
-            }
-            catch (Exception exception)
-            {
-                string error = SelectedGroup is null ? "'SelectedGroup' has a value of 'null'." :
-                    SelectedHardware is null ? "'SelectedHardware' has a value of 'null'." :
-                    $"Unable to associate group '{SelectedGroup.GroupName}' to hardware asset '{SelectedHardware.DisplayedHostName}'.";
-                LogWriter.LogErrorWithDebug(error, exception);
-            }
-        }
-
-        private void AddGroupToHardwareBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
-        {
-            try
-            {
-                if (!DatabaseBuilder.sqliteConnection.State.Equals(ConnectionState.Open))
-                {
-                    DatabaseBuilder.sqliteConnection.Open();
-                }
-
-                using (SQLiteTransaction sqliteTransaction = DatabaseBuilder.sqliteConnection.BeginTransaction())
-                {
-                    using (SQLiteCommand sqliteCommand = DatabaseBuilder.sqliteConnection.CreateCommand())
-                    {
-                        GroupHardwareMappingDoWorkArguments arguments =
-                            e.Argument as GroupHardwareMappingDoWorkArguments;
-                        databaseInterface.InsertParameterPlaceholders(sqliteCommand);
-                        sqliteCommand.Parameters["GroupName"].Value = arguments.GroupName;
-                        sqliteCommand.Parameters["DiscoveredHostName"].Value = arguments.DiscoveredHostName;
-                        databaseInterface.MapHardwareToGroup(sqliteCommand);
-                    }
-
-                    sqliteTransaction.Commit();
-                }
-            }
-            catch (Exception exception)
-            {
-                LogWriter.LogError("Group to Hardware association background worker failed.");
-                throw exception;
-            }
-        }
+            SelectedHardware = null;
+            NewHardware = new Model.Entity.Hardware();
+        });
 
         public RelayCommand ModifyHardwareCommand => new RelayCommand(ModifyHardware);
 
         private void ModifyHardware()
         {
+            long? lifecycle = SelectedLifecycleStatus?.LifecycleStatus_ID;
             if (SelectedHardware == null)
             {
-                _backgroundWorkerFactory.Build(AddHardwareBackgroundWorker_DoWork, 
-                    ModifyHardwareBackgroundWorker_RunWorkerCompleted);
+                Model.Entity.Hardware hardware = NewHardware;
+                RunEdit("Add hardware", () => AssetEditor.AddHardware(hardware, lifecycle), null, true);
             }
             else
             {
-                _backgroundWorkerFactory.Build(UpdateHardwareBackgroundWorker_DoWork, 
-                    ModifyHardwareBackgroundWorker_RunWorkerCompleted);
+                Model.Entity.Hardware hardware = EditableHardware ?? SelectedHardware;
+                RunEdit("Update hardware", () => { AssetEditor.UpdateHardware(hardware, lifecycle); return hardware.Hardware_ID; }, hardware.Hardware_ID);
             }
         }
 
-        private void AddHardwareBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
-        {
-            try
-            {
-                if (NewHardware == null)
-                {
-                    return;
-                }
-
-                if (DatabaseBuilder.sqliteConnection.State == ConnectionState.Closed)
-                {
-                    DatabaseBuilder.sqliteConnection.Open();
-                }
-
-                using (SQLiteCommand sqliteCommand = DatabaseBuilder.sqliteConnection.CreateCommand())
-                {
-                    databaseInterface.InsertParameterPlaceholders(sqliteCommand);
-                    sqliteCommand.Parameters["DiscoveredHostName"].Value = NewHardware.DisplayedHostName;
-                    sqliteCommand.Parameters["DisplayedHostName"].Value = NewHardware.DisplayedHostName;
-                    sqliteCommand.Parameters["IsVirtualServer"].Value = NewHardware.IsVirtualServer;
-                    sqliteCommand.Parameters["ScanIp"].Value = NewHardware.ScanIP;
-                    sqliteCommand.Parameters["IP_Address"].Value = NewHardware.ScanIP;
-                    sqliteCommand.Parameters["NIAP_Level"].Value = NewHardware.NIAP_Level;
-                    sqliteCommand.Parameters["Manufacturer"].Value = NewHardware.Manufacturer;
-                    sqliteCommand.Parameters["ModelNumber"].Value = NewHardware.ModelNumber;
-                    sqliteCommand.Parameters["IsIA_Enabled"].Value = NewHardware.IsIA_Enabled;
-                    sqliteCommand.Parameters["SerialNumber"].Value = NewHardware.SerialNumber;
-                    sqliteCommand.Parameters["Role"].Value = NewHardware.Role;
-                    sqliteCommand.Parameters["OperatingSystem"].Value = NewHardware.OperatingSystem;
-                    sqliteCommand.Parameters["Found21745"].Value = "False";
-                    sqliteCommand.Parameters["Found26917"].Value = "False";
-                    if (SelectedLifecycleStatus != null)
-                    {
-                        sqliteCommand.Parameters["LifecycleStatus_ID"].Value = SelectedLifecycleStatus.LifecycleStatus_ID;
-                    }
-                    databaseInterface.InsertHardware(sqliteCommand);
-                    databaseInterface.InsertAndMapIpAddress(sqliteCommand);
-                }
-            }
-            catch (Exception exception)
-            {
-                string error = "Unable to add a new hardware to the database.";
-                LogWriter.LogErrorWithDebug(error, exception);
-            }
-            finally
-            {
-                DatabaseBuilder.sqliteConnection.Close();
-            }
-        }
-
-        private void UpdateHardwareBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
-        {
-            try
-            {
-                if (DatabaseBuilder.sqliteConnection.State == ConnectionState.Closed)
-                {
-                    DatabaseBuilder.sqliteConnection.Open();
-                }
-
-                using (SQLiteCommand sqliteCommand = DatabaseBuilder.sqliteConnection.CreateCommand())
-                {
-                    databaseInterface.InsertParameterPlaceholders(sqliteCommand);
-                    sqliteCommand.Parameters["Hardware_ID"].Value = EditableHardware.Hardware_ID;
-                    sqliteCommand.Parameters["DiscoveredHostName"].Value = EditableHardware.DisplayedHostName;
-                    sqliteCommand.Parameters["DisplayedHostName"].Value = EditableHardware.DisplayedHostName;
-                    sqliteCommand.Parameters["IsVirtualServer"].Value = EditableHardware.IsVirtualServer;
-                    sqliteCommand.Parameters["ScanIp"].Value = EditableHardware.ScanIP;
-                    sqliteCommand.Parameters["NIAP_Level"].Value = EditableHardware.NIAP_Level;
-                    sqliteCommand.Parameters["Manufacturer"].Value = EditableHardware.Manufacturer;
-                    sqliteCommand.Parameters["ModelNumber"].Value = EditableHardware.ModelNumber;
-                    sqliteCommand.Parameters["IsIA_Enabled"].Value = EditableHardware.IsIA_Enabled;
-                    sqliteCommand.Parameters["SerialNumber"].Value = EditableHardware.SerialNumber;
-                    sqliteCommand.Parameters["Role"].Value = EditableHardware.Role;
-                    sqliteCommand.Parameters["OperatingSystem"].Value = EditableHardware.OperatingSystem;
-                    if (SelectedLifecycleStatus != null)
-                    {
-                        sqliteCommand.Parameters["LifecycleStatus_ID"].Value = SelectedLifecycleStatus.LifecycleStatus_ID;
-                    }
-                    databaseInterface.UpdateHardware(sqliteCommand);
-                }
-            }
-            catch (Exception exception)
-            {
-                string error = $"Unable to update hardware with 'Hardware_ID' value '{SelectedHardware.Hardware_ID}'.";
-                LogWriter.LogErrorWithDebug(error, exception);
-            }
-            finally
-            {
-                DatabaseBuilder.sqliteConnection.Close();
-            }
-        }
-
-        private void ModifyHardwareBackgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
-        {
-            try
-            {
-                Messenger.Default.Send(new NotificationMessage<string>("ModelUpdate", "AllModels"),
-                    MessengerToken.ModelUpdated);
-                SelectedHardware = null;
-                NewHardware = new Model.Entity.Hardware();
-            }
-            catch (Exception exception)
-            {
-                LogWriter.LogError("Unable to run Delete Hardware post-modification background worker RunWorkerCompleted tasks.");
-                throw exception;
-            }
-        }
-        
         public RelayCommand DeleteHardwareCommand => new RelayCommand(DeleteHardware);
 
         private void DeleteHardware()
         {
-            _backgroundWorkerFactory.Build(DeleteHardwareBackgroundWorker_DoWork, 
-                DeleteHardwareBackgroundWorker_RunWorkerCompleted);
+            Model.Entity.Hardware hardware = SelectedHardware;
+            if (hardware == null)
+            { return; }
+            if (System.Windows.MessageBox.Show(
+                    $"Delete '{hardware.DisplayedHostName}' and all of its findings, addresses, group, software and port links?",
+                    "Delete Hardware", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Warning) != System.Windows.MessageBoxResult.Yes)
+            { return; }
+            RunEdit("Delete hardware", () => { AssetEditor.DeleteHardware(hardware.Hardware_ID); return 0; }, null);
         }
 
-        private void DeleteHardwareBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
+        public RelayCommand AddGroupToHardwareCommand => new RelayCommand(() =>
         {
-            try
+            long? hardwareId = SelectedHardware?.Hardware_ID;
+            long? groupId = SelectedGroup?.Group_ID;
+            if (hardwareId == null || groupId == null) return;
+            RunEdit("Add group", () => { AssetEditor.AddGroup(hardwareId.Value, groupId.Value); return 0; }, hardwareId);
+        });
+
+        public RelayCommand<object> RemoveGroupFromHardwareCommand => new RelayCommand<object>(parameter =>
+        {
+            long? hardwareId = SelectedHardware?.Hardware_ID;
+            long groupId;
+            if (hardwareId == null || parameter == null || !long.TryParse(parameter.ToString(), out groupId)) return;
+            RunEdit("Remove group", () => { AssetEditor.RemoveGroup(hardwareId.Value, groupId); return 0; }, hardwareId);
+        });
+
+        public RelayCommand AssociateIpAddressToHardwareCommand => new RelayCommand(() =>
+        {
+            long? hardwareId = SelectedHardware?.Hardware_ID;
+            string ip = SelectedIpAddress;
+            if (hardwareId == null) return;
+            RunEdit("Add IP address", () => { AssetEditor.AddIpAddress(hardwareId.Value, ip); return 0; }, hardwareId);
+        });
+
+        public RelayCommand<object> RemoveIpAddressFromHardwareCommand => new RelayCommand<object>(parameter =>
+        {
+            long? hardwareId = SelectedHardware?.Hardware_ID;
+            long ipId;
+            if (hardwareId == null || parameter == null || !long.TryParse(parameter.ToString(), out ipId)) return;
+            RunEdit("Remove IP address", () => { AssetEditor.RemoveIpAddress(hardwareId.Value, ipId); return 0; }, hardwareId);
+        });
+
+        public RelayCommand AssociateMacAddressToHardwareCommand => new RelayCommand(() =>
+        {
+            long? hardwareId = SelectedHardware?.Hardware_ID;
+            string mac = SelectedMacAddress;
+            if (hardwareId == null) return;
+            RunEdit("Add MAC address", () => { AssetEditor.AddMacAddress(hardwareId.Value, mac); return 0; }, hardwareId);
+        });
+
+        public RelayCommand<object> RemoveMacAddressFromHardwareCommand => new RelayCommand<object>(parameter =>
+        {
+            long? hardwareId = SelectedHardware?.Hardware_ID;
+            long macId;
+            if (hardwareId == null || parameter == null || !long.TryParse(parameter.ToString(), out macId)) return;
+            RunEdit("Remove MAC address", () => { AssetEditor.RemoveMacAddress(hardwareId.Value, macId); return 0; }, hardwareId);
+        });
+
+        public RelayCommand AssociateSoftwareToHardwareCommand => new RelayCommand(() =>
+        {
+            long? hardwareId = SelectedHardware?.Hardware_ID;
+            long? softwareId = SelectedSoftware?.Software_ID;
+            if (hardwareId == null || softwareId == null) return;
+            RunEdit("Add software", () => { AssetEditor.AddSoftwareToHardware(hardwareId.Value, softwareId.Value); return 0; }, hardwareId);
+        });
+
+        public RelayCommand<object> RemoveSoftwareFromHardwareCommand => new RelayCommand<object>(parameter =>
+        {
+            long? hardwareId = SelectedHardware?.Hardware_ID;
+            long softwareId;
+            if (hardwareId == null || parameter == null || !long.TryParse(parameter.ToString(), out softwareId)) return;
+            RunEdit("Remove software", () => { AssetEditor.RemoveSoftwareFromHardware(hardwareId.Value, softwareId); return 0; }, hardwareId);
+        });
+
+        public RelayCommand AssociatePpsToHardwareCommand => new RelayCommand(() =>
+        {
+            long? hardwareId = SelectedHardware?.Hardware_ID;
+            long? ppsId = SelectedPps?.PortProtocolService_ID;
+            if (hardwareId == null || ppsId == null) return;
+            RunEdit("Add port / protocol / service", () => { AssetEditor.AddPortProtocolService(hardwareId.Value, ppsId.Value); return 0; }, hardwareId);
+        });
+
+        public RelayCommand<object> RemovePpsFromHardwareCommand => new RelayCommand<object>(parameter =>
+        {
+            long? hardwareId = SelectedHardware?.Hardware_ID;
+            long ppsId;
+            if (hardwareId == null || parameter == null || !long.TryParse(parameter.ToString(), out ppsId)) return;
+            RunEdit("Remove port / protocol / service", () => { AssetEditor.RemovePortProtocolService(hardwareId.Value, ppsId); return 0; }, hardwareId);
+        });
+
+        /// <summary>Runs a database edit in the background, then reloads every tab and selects the given host again.</summary>
+        private void RunEdit(string description, Func<long> edit, long? reselectId, bool selectResult = false)
+        {
+            BackgroundWorker worker = new BackgroundWorker();
+            worker.DoWork += (sender, e) => e.Result = edit();
+            worker.RunWorkerCompleted += (sender, e) =>
             {
-                if (SelectedHardware == null)
+                if (e.Error != null)
                 {
+                    LogWriter.LogErrorWithDebug($"{description} failed.", e.Error);
+                    System.Windows.MessageBox.Show(e.Error.Message, description, System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                     return;
                 }
-
-                if (DatabaseBuilder.sqliteConnection.State == ConnectionState.Closed)
-                {
-                    DatabaseBuilder.sqliteConnection.Open();
-                }
-
-                using (SQLiteTransaction sqliteTransaction = DatabaseBuilder.sqliteConnection.BeginTransaction())
-                {
-                    using (SQLiteCommand sqliteCommand = DatabaseBuilder.sqliteConnection.CreateCommand())
-                    {
-                        databaseInterface.InsertParameterPlaceholders(sqliteCommand);
-                        sqliteCommand.Parameters["Hardware_ID"].Value = SelectedHardware.Hardware_ID;
-                        databaseInterface.DeleteHardwareContactsMappingByHardware(sqliteCommand);
-                        databaseInterface.DeleteHardwareEnumeratedWindowsGroupsMappingByHardware(sqliteCommand);
-                        databaseInterface.DeleteHardwareGroupsMappingByHardware(sqliteCommand);
-                        databaseInterface.DeleteHardwareIpAddressMappingByHardware(sqliteCommand);
-                        databaseInterface.DeleteHardwareMacAddressMappingByHardware(sqliteCommand);
-                        databaseInterface.DeleteHardwarePortsProtocolsServicesMappingByHardware(sqliteCommand);
-                        databaseInterface.DeleteHardwareLocationMappingByHardware(sqliteCommand);
-                        databaseInterface.DeleteSoftwareHardwareMappingByHardware(sqliteCommand);
-                        databaseInterface.DeleteScapScoresByHardware(sqliteCommand);
-                        databaseInterface.DeleteUniqueFindingsByHardware(sqliteCommand);
-                        databaseInterface.DeleteHardware(sqliteCommand);
-                    }
-
-                    sqliteTransaction.Commit();
-                }
-            }
-            catch (Exception exception)
-            {
-                string error = $"Unable to delete hardware with 'Hardware_ID' value '{SelectedHardware.Hardware_ID}'.";
-                LogWriter.LogErrorWithDebug(error, exception);
-            }
-            finally
-            {
-                DatabaseBuilder.sqliteConnection.Close();
-            }
-        }
-
-        private void DeleteHardwareBackgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
-        {
-            try
-            {
-                Messenger.Default.Send(new NotificationMessage<string>("ModelUpdate", "AllModels"),
-                    MessengerToken.ModelUpdated);
-                SelectedHardware = null;
+                long? select = selectResult && e.Result is long ? (long)e.Result : reselectId;
+                Messenger.Default.Send(new NotificationMessage<string>("ModelUpdate", "AllModels"), MessengerToken.ModelUpdated);
                 NewHardware = new Model.Entity.Hardware();
-            }
-            catch (Exception exception)
-            {
-                LogWriter.LogError("Unable to run Delete Hardware post-modification background worker RunWorkerCompleted tasks.");
-                throw exception;
-            }
-        }
-
-        public RelayCommand AssociateIpAddressToHardwareCommand => new RelayCommand(AssociateIpAddressToHardware);
-
-        private void AssociateIpAddressToHardware()
-        {
-            _backgroundWorkerFactory.Build(AssociateIpAddressToHardwareBackgroundWorker_DoWork,
-                ModifyHardwareBackgroundWorker_RunWorkerCompleted);
-        }
-
-        private void AssociateIpAddressToHardwareBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
-        {
-            try
-            {
-                if (SelectedHardware == null || string.IsNullOrWhiteSpace(SelectedIpAddress))
-                {
-                    return;
-                }
-
-                if (DatabaseBuilder.sqliteConnection.State == ConnectionState.Closed)
-                {
-                    DatabaseBuilder.sqliteConnection.Open();
-                }
-
-                using (SQLiteCommand sqliteCommand = DatabaseBuilder.sqliteConnection.CreateCommand())
-                {
-                    sqliteCommand.Parameters.Add(new SQLiteParameter("IP_Address", SelectedIpAddress));
-                    sqliteCommand.Parameters.Add(new SQLiteParameter("DiscoveredHostName", SelectedHardware.DiscoveredHostName));
-                    databaseInterface.InsertAndMapIpAddress(sqliteCommand);
-                }
-            }
-            catch (Exception exception)
-            {
-                string error =
-                    $"Unable to associate IP Address '{SelectedIpAddress}' to hardware with 'Hardware_ID' value '{SelectedHardware.Hardware_ID}'.";
-                LogWriter.LogErrorWithDebug(error, exception);
-            }
-            finally
-            {
-                DatabaseBuilder.sqliteConnection.Close();
-            }
-        }
-
-        public RelayCommand<object> RemoveIpAddressFromHardwareCommand => new RelayCommand<object>(RemoveIpAddressFromHardware);
-
-        private void RemoveIpAddressFromHardware(object parameter)
-        {
-            if (SelectedHardware == null || parameter == null)
-            { return; }
-
-            int ipAddressId = int.Parse(parameter.ToString());
-            _backgroundWorkerFactory.Build(RemoveIpAddressFromHardwareBackgroundWorker_DoWork,
-                ModifyHardwareBackgroundWorker_RunWorkerCompleted,
-                ipAddressId);
-        }
-
-        private void RemoveIpAddressFromHardwareBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
-        {
-            try
-            {
-                if (DatabaseBuilder.sqliteConnection.State == ConnectionState.Closed)
-                {
-                    DatabaseBuilder.sqliteConnection.Open();
-                }
-
-                using (SQLiteCommand sqliteCommand = DatabaseBuilder.sqliteConnection.CreateCommand())
-                {
-                    sqliteCommand.Parameters.Add(new SQLiteParameter("IP_Address_ID", e.Argument));
-                    sqliteCommand.Parameters.Add(new SQLiteParameter("Hardware_ID", SelectedHardware.Hardware_ID));
-                    databaseInterface.DeleteHardwareIpAddressMapping(sqliteCommand);
-                }
-            }
-            catch (Exception exception)
-            {
-                string error =
-                    $"Unable to remove IP Address with 'IP_Address_ID' value '{e.Argument}' from hardware with 'Hardware_ID' value '{SelectedHardware.Hardware_ID}'.";
-                LogWriter.LogErrorWithDebug(error, exception);
-            }
-            finally
-            {
-                DatabaseBuilder.sqliteConnection.Close();
-            }
-        }
-
-        public RelayCommand AssociateMacAddressToHardwareCommand => new RelayCommand(AssociateMacAddressToHardware);
-
-        private void AssociateMacAddressToHardware()
-        {
-            _backgroundWorkerFactory.Build(AssociateMacAddressToHardwareBackgroundWorker_DoWork,
-                ModifyHardwareBackgroundWorker_RunWorkerCompleted);
-        }
-
-        private void AssociateMacAddressToHardwareBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
-        {
-            try
-            {
-                if (SelectedHardware == null || string.IsNullOrWhiteSpace(SelectedMacAddress))
-                {
-                    return;
-                }
-
-                if (DatabaseBuilder.sqliteConnection.State == ConnectionState.Closed)
-                {
-                    DatabaseBuilder.sqliteConnection.Open();
-                }
-
-                using (SQLiteCommand sqliteCommand = DatabaseBuilder.sqliteConnection.CreateCommand())
-                {
-                    sqliteCommand.Parameters.Add(new SQLiteParameter("MAC_Address", SelectedMacAddress));
-                    sqliteCommand.Parameters.Add(new SQLiteParameter("DiscoveredHostName", SelectedHardware.DiscoveredHostName));
-                    databaseInterface.InsertAndMapMacAddress(sqliteCommand);
-                }
-            }
-            catch (Exception exception)
-            {
-                string error = $"Unable to associate MAC Address '{SelectedMacAddress}' to hardware with 'Hardware_ID' value '{SelectedHardware.Hardware_ID}'.";
-                LogWriter.LogErrorWithDebug(error, exception);
-            }
-            finally
-            {
-                DatabaseBuilder.sqliteConnection.Close();
-            }
-        }
-
-        public RelayCommand<object> RemoveMacAddressFromHardwareCommand => new RelayCommand<object>(RemoveMacAddressFromHardware);
-
-        private void RemoveMacAddressFromHardware(object parameter)
-        {
-            if (SelectedHardware == null || parameter == null)
-            { return; }
-
-            int macAddressId = int.Parse(parameter.ToString());
-            _backgroundWorkerFactory.Build(RemoveMacAddressFromHardwareBackgroundWorker_DoWork,
-                ModifyHardwareBackgroundWorker_RunWorkerCompleted,
-                macAddressId);
-        }
-
-        private void RemoveMacAddressFromHardwareBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
-        {
-            try
-            {
-                if (DatabaseBuilder.sqliteConnection.State == ConnectionState.Closed)
-                {
-                    DatabaseBuilder.sqliteConnection.Open();
-                }
-
-                using (SQLiteCommand sqliteCommand = DatabaseBuilder.sqliteConnection.CreateCommand())
-                {
-                    sqliteCommand.Parameters.Add(new SQLiteParameter("MAC_Address_ID", e.Argument));
-                    sqliteCommand.Parameters.Add(new SQLiteParameter("Hardware_ID", SelectedHardware.Hardware_ID));
-                    databaseInterface.DeleteHardwareMacAddressMapping(sqliteCommand);
-                }
-            }
-            catch (Exception exception)
-            {
-                string error =
-                    $"Unable to remove MAC Address with 'MAC_Address_ID' value '{e.Argument}' from hardware with 'Hardware_ID' value '{SelectedHardware.Hardware_ID}'.";
-                LogWriter.LogErrorWithDebug(error, exception);
-            }
-            finally
-            {
-                DatabaseBuilder.sqliteConnection.Close();
-            }
-        }
-
-        public RelayCommand AssociateSoftwareToHardwareCommand => new RelayCommand(AssociateSoftwareToHardware);
-
-        private void AssociateSoftwareToHardware()
-        {
-            _backgroundWorkerFactory.Build(AssociateSoftwareToHardwareBackgroundWorker_DoWork);
-        }
-
-        private void AssociateSoftwareToHardwareBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
-        {
-            try
-            {
-                if (SelectedHardware == null || SelectedSoftware == null)
-                {
-                    return;
-                }
-
-                if (DatabaseBuilder.sqliteConnection.State == ConnectionState.Closed)
-                {
-                    DatabaseBuilder.sqliteConnection.Open();
-                }
-
-                using (SQLiteCommand sqliteCommand = DatabaseBuilder.sqliteConnection.CreateCommand())
-                {
-                    sqliteCommand.Parameters.Add(new SQLiteParameter("Hardware_ID", SelectedHardware.Hardware_ID));
-                    sqliteCommand.Parameters.Add(new SQLiteParameter("Software_ID", SelectedSoftware.Software_ID));
-                    databaseInterface.MapHardwareToSoftwareById(sqliteCommand);
-                }
-            }
-            catch (Exception exception)
-            {
-                string error = $"Unable to associate Software with 'Software_ID' value '{SelectedSoftware.Software_ID}' to hardware with 'Hardware_ID' value '{SelectedHardware.Hardware_ID}'.";
-                LogWriter.LogErrorWithDebug(error, exception);
-            }
-            finally
-            {
-                DatabaseBuilder.sqliteConnection.Close();
-            }
-        }
-
-        public RelayCommand<object> RemoveSoftwareFromHardwareCommand => new RelayCommand<object>(RemoveSoftwareFromHardware);
-
-        private void RemoveSoftwareFromHardware(object parameter)
-        {
-            if (SelectedHardware == null || parameter == null)
-            { return; }
-
-            int softwareId = int.Parse(parameter.ToString());
-            _backgroundWorkerFactory.Build(RemoveSoftwareFromHardwareBackgroundWorker_DoWork,
-                ModifyHardwareBackgroundWorker_RunWorkerCompleted,
-                softwareId);
-        }
-
-        private void RemoveSoftwareFromHardwareBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
-        {
-            try
-            {
-                if (DatabaseBuilder.sqliteConnection.State == ConnectionState.Closed)
-                {
-                    DatabaseBuilder.sqliteConnection.Open();
-                }
-
-                using (SQLiteCommand sqliteCommand = DatabaseBuilder.sqliteConnection.CreateCommand())
-                {
-                    sqliteCommand.Parameters.Add(new SQLiteParameter("Software_ID", e.Argument));
-                    sqliteCommand.Parameters.Add(new SQLiteParameter("Hardware_ID", SelectedHardware.Hardware_ID));
-                    databaseInterface.DeleteSoftwareHardwareMapping(sqliteCommand);
-                }
-            }
-            catch (Exception exception)
-            {
-                string error =
-                    $"Unable to remove Software with 'Software_ID' value '{e.Argument}' from hardware with 'Hardware_ID' value '{SelectedHardware.Hardware_ID}'.";
-                LogWriter.LogErrorWithDebug(error, exception);
-            }
-            finally
-            {
-                DatabaseBuilder.sqliteConnection.Close();
-            }
-        }
-
-        public RelayCommand AssociatePpsToHardwareCommand => new RelayCommand(AssociatePpsToHardware);
-
-        private void AssociatePpsToHardware()
-        {
-            _backgroundWorkerFactory.Build(AssociatePpsToHardwareBackgroundWorker_DoWork);
-        }
-
-        private void AssociatePpsToHardwareBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
-        {
-            try
-            {
-                if (SelectedHardware == null || SelectedPps == null)
-                {
-                    return;
-                }
-
-                if (DatabaseBuilder.sqliteConnection.State == ConnectionState.Closed)
-                {
-                    DatabaseBuilder.sqliteConnection.Open();
-                }
-
-                using (SQLiteCommand sqliteCommand = DatabaseBuilder.sqliteConnection.CreateCommand())
-                {
-                    sqliteCommand.Parameters.Add(new SQLiteParameter("Hardware_ID", SelectedHardware.Hardware_ID));
-                    sqliteCommand.Parameters.Add(new SQLiteParameter("Port", SelectedPps.Port));
-                    sqliteCommand.Parameters.Add(new SQLiteParameter("Protocol", SelectedPps.Protocol));
-                    sqliteCommand.Parameters.Add(new SQLiteParameter("DiscoveredServiceName", SelectedPps.DiscoveredServiceName));
-                    databaseInterface.InsertAndMapPort(sqliteCommand);
-                }
-            }
-            catch (Exception exception)
-            {
-                string error = $"Unable to associate PPS with 'PortProtocolService_ID' value '{SelectedPps.PortProtocolService_ID}' to hardware with 'Hardware_ID' value '{SelectedHardware.Hardware_ID}'.";
-                LogWriter.LogErrorWithDebug(error, exception);
-            }
-            finally
-            {
-                DatabaseBuilder.sqliteConnection.Close();
-            }
-        }
-
-        public RelayCommand<object> RemovePpsFromHardwareCommand => new RelayCommand<object>(RemovePpsFromHardware);
-
-        private void RemovePpsFromHardware(object parameter)
-        {
-            if (SelectedHardware == null || parameter == null)
-            {
-                return;
-            }
-
-            int ppsId = int.Parse(parameter.ToString());
-            _backgroundWorkerFactory.Build(RemovePpsFromHardwareBackgroundWorker_DoWork,
-                ModifyHardwareBackgroundWorker_RunWorkerCompleted,
-                ppsId);
-        }
-
-        private void RemovePpsFromHardwareBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
-        {
-            try
-            {
-                if (DatabaseBuilder.sqliteConnection.State == ConnectionState.Closed)
-                {
-                    DatabaseBuilder.sqliteConnection.Open();
-                }
-
-                using (SQLiteCommand sqliteCommand = DatabaseBuilder.sqliteConnection.CreateCommand())
-                {
-                    sqliteCommand.Parameters.Add(new SQLiteParameter("PortProtocolService_ID", e.Argument));
-                    sqliteCommand.Parameters.Add(new SQLiteParameter("Hardware_ID", SelectedHardware.Hardware_ID));
-                    databaseInterface.DeleteHardwarePortProtocolServiceMapping(sqliteCommand);
-                }
-            }
-            catch (Exception exception)
-            {
-                string error =
-                    $"Unable to remove PPS with 'PortProtocolService_ID' value '{e.Argument}' from hardware with 'Hardware_ID' value '{SelectedHardware.Hardware_ID}'.";
-                LogWriter.LogErrorWithDebug(error, exception);
-            }
-            finally
-            {
-                DatabaseBuilder.sqliteConnection.Close();
-            }
+                SelectedHardware = select.HasValue ? Hardwares?.FirstOrDefault(h => h.Hardware_ID == select.Value) : null;
+            };
+            worker.RunWorkerAsync();
         }
     }
 }

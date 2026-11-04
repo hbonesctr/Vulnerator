@@ -106,6 +106,18 @@ public static class EntityFrameworkProbe
     Write-Host ('Ports, Protocols, Services tab: ' + $ports + ' (services | with hosts | port 0)')
     $portCounts = $ports.Split('|')
     if ($portCounts.Count -ne 3 -or [int]$portCounts[0] -lt 2 -or [int]$portCounts[1] -ne [int]$portCounts[0] -or [int]$portCounts[2] -ne 0) { Fail ('Ports, Protocols, Services tab did not load the scan''s services (got ' + $ports + ')') }
+    $hardwareTab = New-Object Vulnerator.ViewModel.ConfigurationManagement.Tabs.Hardware
+    $softwareTab = New-Object Vulnerator.ViewModel.ConfigurationManagement.Tabs.Software
+    $hwCount = @($hardwareTab.Hardwares).Count
+    $swHosts = @($softwareTab.Hardwares).Count
+    Write-Host ('Hardware tab: ' + $hwCount + ' host(s); Software tab host list: ' + $swHosts + '; software: ' + @($softwareTab.Softwares).Count)
+    if ($hwCount -lt 1 -or $swHosts -ne $hwCount) { Fail ('Hardware / Software tabs did not load (hosts ' + $hwCount + ', software tab hosts ' + $swHosts + ')') }
+    foreach ($name in 'ClearSelectedHardwareCommand', 'DeleteHardwareCommand', 'ModifyHardwareCommand', 'RemoveGroupFromHardwareCommand', 'RemoveMacAddressFromHardwareCommand', 'AssociatePpsToHardwareCommand') {
+        if ($null -eq $hardwareTab.GetType().GetProperty($name)) { Fail ('Hardware tab has no ' + $name) }
+    }
+    foreach ($name in 'ClearSelectedSoftwareCommand', 'DeleteSoftwareCommand', 'ModifySoftwareCommand', 'AddHardwareToSoftwareCommand', 'RemoveHardwareFromSoftwareCommand') {
+        if ($null -eq $softwareTab.GetType().GetProperty($name)) { Fail ('Software tab has no ' + $name) }
+    }
     Write-Host 'Entity Framework (System.Data.SQLite.EF6) queries passed.'
     exit 0
 }

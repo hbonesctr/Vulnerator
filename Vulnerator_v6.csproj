@@ -376,6 +376,7 @@
     <Compile Include="Model\BusinessLogic\Reports\OpenXmlPortsProtocolsServicesReportCreator.cs" />
     <Compile Include="Model\BusinessLogic\Reports\ReportFindings.cs" />
     <Compile Include="Model\BusinessLogic\Reports\OpenXmlStylesheetCreator.cs" />
+    <Compile Include="Model\DataAccess\AssetEditor.cs" />
     <Compile Include="Model\DataAccess\DatabaseBuilder.cs" />
     <Compile Include="Model\DataAccess\DatabaseContext.cs" />
     <Compile Include="Model\DataAccess\DatabaseInterface.cs" />

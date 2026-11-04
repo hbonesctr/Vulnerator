@@ -250,6 +250,9 @@ namespace Vulnerator.ViewModel.ConfigurationManagement.Tabs
                     Groups = databaseContext.Groups
                         .Include(g => g.Hardwares)
                         .AsNoTracking().ToList();
+                    Hardwares = databaseContext.Hardwares
+                        .OrderBy(h => h.DisplayedHostName)
+                        .AsNoTracking().ToList();
                     NewSoftware = new Model.Entity.Software();
                 }
             }
@@ -298,170 +301,76 @@ namespace Vulnerator.ViewModel.ConfigurationManagement.Tabs
             }
         }
 
+        // ----- Edits (Configuration Management > Software) ---------------------------------------------------
+
+        public RelayCommand ClearSelectedSoftwareCommand => new RelayCommand(() =>
+        {
+            SelectedSoftware = null;
+            NewSoftware = new Model.Entity.Software();
+        });
+
         public RelayCommand ModifySoftwareCommand => new RelayCommand(ModifySoftware);
 
         private void ModifySoftware()
         {
-
-            try
+            if (SelectedSoftware == null)
             {
-                if (SelectedSoftware != null)
-                {
-                    _backgroundWorkerFactory.Build(UpdateSoftwareBackgroundWorker_DoWork, ModifySoftwareBackgroundWorker_RunWorkerCompleted);
-                }
-                else
-                {
-                    _backgroundWorkerFactory.Build(AddSoftwareBackgroundWorker_DoWork, ModifySoftwareBackgroundWorker_RunWorkerCompleted);
-                }
+                Model.Entity.Software software = NewSoftware;
+                RunEdit("Add software", () => AssetEditor.AddSoftware(software), null, true);
             }
-            catch (Exception exception)
+            else
             {
-                string error = "";
-                LogWriter.LogErrorWithDebug(error, exception);
-                throw exception;
+                Model.Entity.Software software = EditableSoftware ?? SelectedSoftware;
+                RunEdit("Update software", () => { AssetEditor.UpdateSoftware(software); return software.Software_ID; }, software.Software_ID);
             }
         }
 
-        private void AddSoftwareBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
+        public RelayCommand DeleteSoftwareCommand => new RelayCommand(() =>
         {
-            try
+            Model.Entity.Software software = SelectedSoftware;
+            if (software == null) return;
+            if (System.Windows.MessageBox.Show(
+                    $"Delete '{software.DisplayedSoftwareName}', its host links and the findings recorded against it?",
+                    "Delete Software", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Warning) != System.Windows.MessageBoxResult.Yes)
+            { return; }
+            RunEdit("Delete software", () => { AssetEditor.DeleteSoftware(software.Software_ID); return 0; }, null);
+        });
+
+        public RelayCommand AddHardwareToSoftwareCommand => new RelayCommand(() =>
+        {
+            long? softwareId = SelectedSoftware?.Software_ID;
+            long? hardwareId = SelectedHardware?.Hardware_ID;
+            if (softwareId == null || hardwareId == null) return;
+            RunEdit("Add hardware", () => { AssetEditor.AddSoftwareToHardware(hardwareId.Value, softwareId.Value); return 0; }, softwareId);
+        });
+
+        public RelayCommand<object> RemoveHardwareFromSoftwareCommand => new RelayCommand<object>(parameter =>
+        {
+            long? softwareId = SelectedSoftware?.Software_ID;
+            long hardwareId;
+            if (softwareId == null || parameter == null || !long.TryParse(parameter.ToString(), out hardwareId)) return;
+            RunEdit("Remove hardware", () => { AssetEditor.RemoveSoftwareFromHardware(hardwareId, softwareId.Value); return 0; }, softwareId);
+        });
+
+        /// <summary>Runs a database edit in the background, then reloads every tab and selects the given software again.</summary>
+        private void RunEdit(string description, Func<long> edit, long? reselectId, bool selectResult = false)
+        {
+            BackgroundWorker worker = new BackgroundWorker();
+            worker.DoWork += (sender, e) => e.Result = edit();
+            worker.RunWorkerCompleted += (sender, e) =>
             {
-                if (NewSoftware == null)
+                if (e.Error != null)
                 {
+                    LogWriter.LogErrorWithDebug($"{description} failed.", e.Error);
+                    System.Windows.MessageBox.Show(e.Error.Message, description, System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                     return;
                 }
-
-                if (DatabaseBuilder.sqliteConnection.State == ConnectionState.Closed)
-                {
-                    DatabaseBuilder.sqliteConnection.Open();
-                }
-
-                using (SQLiteCommand sqliteCommand = DatabaseBuilder.sqliteConnection.CreateCommand())
-                {
-                    databaseInterface.InsertParameterPlaceholders(sqliteCommand);
-                    sqliteCommand.Parameters["DiscoveredSoftwareName"].Value = NewSoftware.DisplayedSoftwareName;
-                    sqliteCommand.Parameters["DisplayedSoftwareName"].Value = NewSoftware.DisplayedSoftwareName;
-                    sqliteCommand.Parameters["SoftwareAcronym"].Value = NewSoftware.SoftwareAcronym;
-                    sqliteCommand.Parameters["SoftwareVersion"].Value = NewSoftware.SoftwareVersion;
-                    sqliteCommand.Parameters["SoftwareFunction"].Value = NewSoftware.SoftwareFunction;
-                    sqliteCommand.Parameters["SoftwareDescription"].Value = NewSoftware.SoftwareDescription;
-                    sqliteCommand.Parameters["DADMS_ID"].Value = NewSoftware.DADMS_ID;
-                    sqliteCommand.Parameters["DADMS_Disposition"].Value = NewSoftware.DADMS_Disposition;
-                    sqliteCommand.Parameters["DADMS_LastDateAuthorized"].Value = NewSoftware.DADMS_LastDateAuthorized;
-                    sqliteCommand.Parameters["HasCustomCode"].Value = NewSoftware.HasCustomCode;
-                    sqliteCommand.Parameters["IA_OrIA_Enabled"].Value = NewSoftware.IA_OrIA_Enabled;
-                    sqliteCommand.Parameters["IsOS_OrFirmware"].Value = NewSoftware.IsOS_OrFirmware;
-                    sqliteCommand.Parameters["FAM_Accepted"].Value = NewSoftware.FAM_Accepted;
-                    sqliteCommand.Parameters["ExternallyAuthorized"].Value = NewSoftware.ExternallyAuthorized;
-                    sqliteCommand.Parameters["ReportInAccreditationGlobal"].Value = NewSoftware.ReportInAccreditationGlobal;
-                    sqliteCommand.Parameters["ApprovedForBaselineGlobal"].Value = NewSoftware.ApprovedForBaselineGlobal;
-                    sqliteCommand.Parameters["BaselineApproverGlobal"].Value = NewSoftware.BaselineApproverGlobal;
-                    databaseInterface.InsertSoftware(sqliteCommand);
-                    sqliteCommand.Parameters["Software_ID"].Value =
-                        databaseInterface.SelectLastInsertRowId(sqliteCommand);
-
-                    foreach (SoftwareHardware sh in NewSoftware.SoftwareHardwares)
-                    {
-                        sqliteCommand.Parameters["Hardware_ID"].Value = sh.Hardware_ID;
-                        databaseInterface.MapHardwareToSoftwareById(sqliteCommand);
-                    }
-
-                    foreach (HardwareSoftwarePortProtocolService hspps in NewSoftware
-                        .HardwareSoftwarePortsProtocolsServices)
-                    {
-                        sqliteCommand.Parameters["HardwarePortProtocolService_ID"].Value = hspps.HardwarePortProtocolService_ID;
-                        sqliteCommand.Parameters["ReportInAccreditation"].Value = hspps.ReportInAccreditation;
-                        databaseInterface.MapSoftwareToHardwarePortProtocolService(sqliteCommand);
-                        sqliteCommand.Parameters["HardwareSoftwarePortProtocolService_ID"].Value =
-                            databaseInterface.SelectLastInsertRowId(sqliteCommand);
-
-                        foreach (HardwareSoftwarePortProtocolServiceBoundary hsppsb in hspps
-                            .HardwareSoftwarePortsProtocolsServicesBoundaries)
-                        {
-                            sqliteCommand.Parameters["Boundary_ID"].Value = hsppsb.Boundary_ID;
-                            sqliteCommand.Parameters["CAL_Compliant"].Value = hsppsb.CAL_Compliant;
-                            sqliteCommand.Parameters["PPSM_Approved"].Value = hsppsb.PPSM_Approved;
-                            sqliteCommand.Parameters["Direction"].Value = hsppsb.Direction;
-                            sqliteCommand.Parameters["Classification"].Value = hsppsb.Classification;
-                            databaseInterface.MapBoundaryToHardwareSoftwarePortProtocolService(sqliteCommand);
-                        }
-                    }
-                }
-            }
-            catch (Exception exception)
-            {
-                string error = "Unable to add the new Software to the database.";
-                LogWriter.LogErrorWithDebug(error, exception);
-                throw exception;
-            }
-            finally
-            {
-                DatabaseBuilder.sqliteConnection.Close();
-            }
-        }
-
-        private void UpdateSoftwareBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
-        {
-
-            try
-            {
-                if (EditableSoftware == null)
-                {
-                    return;
-                }
-
-                if (DatabaseBuilder.sqliteConnection.State == ConnectionState.Closed)
-                {
-                    DatabaseBuilder.sqliteConnection.Open();
-                }
-
-                using (SQLiteCommand sqliteCommand = DatabaseBuilder.sqliteConnection.CreateCommand())
-                {
-                    databaseInterface.InsertParameterPlaceholders(sqliteCommand);
-                    sqliteCommand.Parameters["Software_ID"].Value = EditableSoftware.Software_ID;
-                    sqliteCommand.Parameters["DisplayedSoftwareName"].Value = EditableSoftware.DisplayedSoftwareName;
-                    sqliteCommand.Parameters["SoftwareAcronym"].Value = EditableSoftware.SoftwareAcronym;
-                    sqliteCommand.Parameters["SoftwareVersion"].Value = EditableSoftware.SoftwareVersion;
-                    sqliteCommand.Parameters["SoftwareFunction"].Value = EditableSoftware.SoftwareFunction;
-                    sqliteCommand.Parameters["SoftwareDescription"].Value = EditableSoftware.SoftwareDescription;
-                    sqliteCommand.Parameters["DADMS_ID"].Value = EditableSoftware.DADMS_ID;
-                    sqliteCommand.Parameters["DADMS_Disposition"].Value = EditableSoftware.DADMS_Disposition;
-                    sqliteCommand.Parameters["DADMS_LastDateAuthorized"].Value = EditableSoftware.DADMS_LastDateAuthorized;
-                    sqliteCommand.Parameters["HasCustomCode"].Value = EditableSoftware.HasCustomCode;
-                    sqliteCommand.Parameters["IA_OrIA_Enabled"].Value = EditableSoftware.IA_OrIA_Enabled;
-                    sqliteCommand.Parameters["IsOS_OrFirmware"].Value = EditableSoftware.IsOS_OrFirmware;
-                    sqliteCommand.Parameters["FAM_Accepted"].Value = EditableSoftware.FAM_Accepted;
-                    sqliteCommand.Parameters["ExternallyAuthorized"].Value = EditableSoftware.ExternallyAuthorized;
-                    sqliteCommand.Parameters["ReportInAccreditationGlobal"].Value = EditableSoftware.ReportInAccreditationGlobal;
-                    sqliteCommand.Parameters["ApprovedForBaselineGlobal"].Value = EditableSoftware.ApprovedForBaselineGlobal;
-                    sqliteCommand.Parameters["BaselineApproverGlobal"].Value = EditableSoftware.BaselineApproverGlobal;
-                    databaseInterface.UpdateSoftware(sqliteCommand);
-                }
-            }
-            catch (Exception exception)
-            {
-                string error = $"Unable to update Software with ID '{EditableSoftware.Software_ID}'.";
-                LogWriter.LogErrorWithDebug(error, exception);
-                throw exception;
-            }
-            finally
-            {
-                DatabaseBuilder.sqliteConnection.Close();
-            }
-        }
-
-        private void ModifySoftwareBackgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
-        {
-
-            try
-            {
-
-            }
-            catch (Exception exception)
-            {
-                LogWriter.LogError("");
-                throw exception;
-            }
+                long? select = selectResult && e.Result is long ? (long)e.Result : reselectId;
+                Messenger.Default.Send(new NotificationMessage<string>("ModelUpdate", "AllModels"), MessengerToken.ModelUpdated);
+                NewSoftware = new Model.Entity.Software();
+                SelectedSoftware = select.HasValue ? Softwares?.FirstOrDefault(x => x.Software_ID == select.Value) : null;
+            };
+            worker.RunWorkerAsync();
         }
     }
 }

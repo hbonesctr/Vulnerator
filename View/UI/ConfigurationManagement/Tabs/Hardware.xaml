@@ -113,7 +113,7 @@
                     </Label>
                     <Button Grid.Column="3"
                                         HorizontalAlignment="Right"
-                                        Command="{Binding}"
+                                        Command="{Binding ClearSelectedHardwareCommand}"
                                         Content="Clear Selected Hardware" />
                     <Button Grid.Column="4"
                                         Margin="{StaticResource MarginLeft5}"
@@ -228,7 +228,9 @@
                             <DataGridTemplateColumn>
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Button Margin="{StaticResource MarginAll5}">
+                                        <Button Margin="{StaticResource MarginAll5}"
+                                                Command="{Binding DataContext.RemoveMacAddressFromHardwareCommand, RelativeSource={RelativeSource FindAncestor, AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding MAC_Address_ID}">
                                             <iconPacks:PackIconMaterial Width="14"
                                                                                             Height="14"
                                                                                             Kind="TrashCanOutline" />
@@ -265,8 +267,8 @@
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <Button Margin="{StaticResource MarginAll5}"
-                                                            Command="{Binding DataContext.RemoveMacAddressFromHardwareCommand, RelativeSource={RelativeSource FindAncestor, AncestorType=DataGrid}}"
-                                                            CommandParameter="{Binding MAC_Address_ID}">
+                                                            Command="{Binding DataContext.RemoveGroupFromHardwareCommand, RelativeSource={RelativeSource FindAncestor, AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding Group_ID}">
                                             <iconPacks:PackIconMaterial Width="14"
                                                                                             Height="14"
                                                                                             Kind="TrashCanOutline" />
@@ -430,7 +432,7 @@
                     <ComboBox controls:TextBoxHelper.Watermark="Lifecycle Status"
                                           DisplayMemberPath="Lifecycle_Status"
                                           ItemsSource="{Binding LifecycleStatuses}"
-                                          SelectedItem="{Binding LifecycleStatus, Mode=TwoWay}"
+                                          SelectedItem="{Binding SelectedLifecycleStatus, Mode=TwoWay}"
                                           Style="{StaticResource HeaderedComboBoxStyle}" />
                     <Button Margin="{StaticResource MarginTop5}"
                                         HorizontalAlignment="Center"

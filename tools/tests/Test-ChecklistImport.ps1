@@ -302,6 +302,63 @@ try {
     $hosts01 = [int](Get-Scalar "SELECT COUNT(*) FROM Hardware WHERE DiscoveredHostName = 'nessushost01'")
     Assert-That ($hosts01 -eq 1) ('the host is not duplicated (got ' + $hosts01 + ')')
 
+    # --- Configuration Management edits (Hardware and Software tabs) ----------------------------------
+    $editor = [Vulnerator.Model.DataAccess.AssetEditor]
+    $manual = New-Object Vulnerator.Model.Entity.Hardware
+    $manual.DisplayedHostName = 'manual-host01'
+    $manual.ScanIP = '10.5.5.5'
+    $manual.Manufacturer = 'Acme'
+    $hwId = $editor::AddHardware($manual, $null)
+    Assert-That ($hwId -gt 0) ('Add hardware returns an ID (got ' + $hwId + ')')
+    Assert-That ([int](Get-Scalar "SELECT COUNT(*) FROM HardwareGroups HG JOIN Groups G ON HG.Group_ID = G.Group_ID WHERE HG.Hardware_ID = $hwId AND G.GroupName = 'All'") -eq 1) 'new hardware is filed in the All group'
+    Assert-That ([int](Get-Scalar "SELECT COUNT(*) FROM Hardware_IP_Addresses HIA JOIN IP_Addresses I ON HIA.IP_Address_ID = I.IP_Address_ID WHERE HIA.Hardware_ID = $hwId AND I.IP_Address = '10.5.5.5'") -eq 1) 'new hardware gets its IP address'
+    $duplicate = $false
+    try { [void]$editor::AddHardware($manual, $null) } catch { $duplicate = $_.Exception.InnerException -is [System.InvalidOperationException] -or $_.Exception -is [System.InvalidOperationException] }
+    Assert-That $duplicate 'adding a host name that exists is refused'
+    $manual.Hardware_ID = $hwId
+    $manual.DisplayedHostName = 'Manual Host 01'
+    $manual.Manufacturer = 'Acme Corp'
+    $editor::UpdateHardware($manual, $null)
+    $row = (Invoke-Sql "SELECT DisplayedHostName, DiscoveredHostName, Manufacturer FROM Hardware WHERE Hardware_ID = $hwId").Rows[0]
+    Assert-That ($row.DisplayedHostName -eq 'Manual Host 01' -and $row.DiscoveredHostName -eq 'manual-host01' -and $row.Manufacturer -eq 'Acme Corp') ('update changes the shown name and fields, not the discovered name (got ' + $row.DisplayedHostName + ' / ' + $row.DiscoveredHostName + ' / ' + $row.Manufacturer + ')')
+    $editor::AddMacAddress($hwId, '00:11:22:33:44:55')
+    $macId = [long](Get-Scalar "SELECT MAC_Address_ID FROM MAC_Addresses WHERE MAC_Address = '00:11:22:33:44:55'")
+    Assert-That ([int](Get-Scalar "SELECT COUNT(*) FROM Hardware_MAC_Addresses WHERE Hardware_ID = $hwId") -eq 1) 'add MAC address'
+    $editor::RemoveMacAddress($hwId, $macId)
+    Assert-That ([int](Get-Scalar "SELECT COUNT(*) FROM Hardware_MAC_Addresses WHERE Hardware_ID = $hwId") -eq 0) 'remove MAC address'
+    $editor::AddIpAddress($hwId, '10.5.5.6')
+    $ipId = [long](Get-Scalar "SELECT IP_Address_ID FROM IP_Addresses WHERE IP_Address = '10.5.5.6'")
+    $editor::RemoveIpAddress($hwId, $ipId)
+    Assert-That ([int](Get-Scalar "SELECT COUNT(*) FROM Hardware_IP_Addresses WHERE Hardware_ID = $hwId") -eq 1) 'add and remove an IP address (the scan IP stays)'
+    $testGroupId = [long](Get-Scalar "SELECT Group_ID FROM Groups WHERE GroupName = 'TestGroup'")
+    $editor::AddGroup($hwId, $testGroupId)
+    Assert-That ([int](Get-Scalar "SELECT COUNT(*) FROM HardwareGroups WHERE Hardware_ID = $hwId") -eq 2) 'add group'
+    $editor::RemoveGroup($hwId, $testGroupId)
+    Assert-That ([int](Get-Scalar "SELECT COUNT(*) FROM HardwareGroups WHERE Hardware_ID = $hwId AND Group_ID = $testGroupId") -eq 0) 'remove group'
+    $tool = New-Object Vulnerator.Model.Entity.Software
+    $tool.DisplayedSoftwareName = 'Manual Tool'
+    $tool.SoftwareVersion = '1.0'
+    $swId = $editor::AddSoftware($tool)
+    $editor::AddSoftwareToHardware($hwId, $swId)
+    Assert-That ([int](Get-Scalar "SELECT COUNT(*) FROM SoftwareHardware WHERE Hardware_ID = $hwId AND Software_ID = $swId") -eq 1) 'add software to hardware'
+    $tool.Software_ID = $swId
+    $tool.DisplayedSoftwareName = 'Manual Tool (renamed)'
+    $tool.SoftwareAcronym = 'MT'
+    $editor::UpdateSoftware($tool)
+    $swRow = (Invoke-Sql "SELECT DisplayedSoftwareName, DiscoveredSoftwareName, SoftwareAcronym FROM Software WHERE Software_ID = $swId").Rows[0]
+    Assert-That ($swRow.DisplayedSoftwareName -eq 'Manual Tool (renamed)' -and $swRow.DiscoveredSoftwareName -eq 'Manual Tool' -and $swRow.SoftwareAcronym -eq 'MT') 'update software keeps the discovered name'
+    $editor::RemoveSoftwareFromHardware($hwId, $swId)
+    Assert-That ([int](Get-Scalar "SELECT COUNT(*) FROM SoftwareHardware WHERE Hardware_ID = $hwId") -eq 0) 'remove software from hardware'
+    $editor::DeleteSoftware($swId)
+    Assert-That ([int](Get-Scalar "SELECT COUNT(*) FROM Software WHERE Software_ID = $swId") -eq 0) 'delete software'
+    $sshId = [long](Get-Scalar "SELECT PortProtocolService_ID FROM PortsProtocolsServices WHERE Port = 22 AND Protocol = 'tcp'")
+    $editor::AddPortProtocolService($hwId, $sshId)
+    Assert-That ([int](Get-Scalar "SELECT COUNT(*) FROM HardwarePortsProtocolsServices WHERE Hardware_ID = $hwId") -eq 1) 'add port / protocol / service to hardware'
+    $editor::RemovePortProtocolService($hwId, $sshId)
+    Assert-That ([int](Get-Scalar "SELECT COUNT(*) FROM HardwarePortsProtocolsServices WHERE Hardware_ID = $hwId") -eq 0) 'remove port / protocol / service from hardware'
+    $editor::DeleteHardware($hwId)
+    Assert-That ([int](Get-Scalar "SELECT (SELECT COUNT(*) FROM Hardware WHERE Hardware_ID = $hwId) + (SELECT COUNT(*) FROM HardwareGroups WHERE Hardware_ID = $hwId) + (SELECT COUNT(*) FROM Hardware_IP_Addresses WHERE Hardware_ID = $hwId)") -eq 0) 'delete hardware removes the host and its links'
+
     # --- Ports, protocols and services from the Nessus files ------------------------------------------
     $port0 = [int](Get-Scalar 'SELECT COUNT(*) FROM PortsProtocolsServices WHERE Port = 0')
     Assert-That ($port0 -eq 0) ('Nessus port 0 (host-level "general" results) is not stored as a service (got ' + $port0 + ')')

@@ -1,4 +1,15 @@
-﻿# Vulnerator 2.0 (7.2.0)
+﻿# Vulnerator 2.0 (7.3.0)
+###### Version 7.3.0, November 2026
+
+| Change Description |
+| :----------------- |
+| Configuration Management > Hardware: every button works (clear, add / update, delete, IP / MAC / group / software / port links) |
+| Configuration Management > Software: clear, add / update, delete, add / remove hardware |
+
+
+----------
+
+# Vulnerator 2.0 (7.2.0)
 ###### Version 7.2.0, November 2026
 
 | Change Description |
