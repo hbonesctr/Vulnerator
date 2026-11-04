@@ -1,5 +1,5 @@
 ﻿# Vulnerator 2.0 (7.0.0)
-###### Pre-release builds, 2026
+###### Version 7.0.0, November 2026
 
 Application rewrite by Hector L. Bones.
 
