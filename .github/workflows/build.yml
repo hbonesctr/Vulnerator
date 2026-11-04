@@ -45,6 +45,10 @@ jobs:
         shell: powershell
         run: tools/ci/Use-WindowsSqlite.ps1 -BinDir bin/Release
 
+      - name: License and third-party notices
+        shell: powershell
+        run: tools/ci/Write-ThirdPartyNotices.ps1 -BinDir bin/Release
+
       - name: Launch test (window appears)
         shell: cmd
         timeout-minutes: 5

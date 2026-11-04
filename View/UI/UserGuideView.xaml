@@ -59,15 +59,15 @@
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <IconPacks:PackIconFontAwesomeLight Grid.Column="0"
+                            <IconPacks:PackIconMaterial Grid.Column="0"
                                                                 Margin="5"
                                                                 HorizontalAlignment="Center"
                                                                 VerticalAlignment="Center"
-                                                                Kind="Bookmark">
-                                <IconPacks:PackIconFontAwesomeLight.LayoutTransform>
+                                                                Kind="BookmarkOutline">
+                                <IconPacks:PackIconMaterial.LayoutTransform>
                                     <RotateTransform Angle="-90" />
-                                </IconPacks:PackIconFontAwesomeLight.LayoutTransform>
-                            </IconPacks:PackIconFontAwesomeLight>
+                                </IconPacks:PackIconMaterial.LayoutTransform>
+                            </IconPacks:PackIconMaterial>
                             <TextBlock Grid.Column="1"
                                        Margin="5,0"
                                        HorizontalAlignment="Center"

@@ -13,7 +13,7 @@
                     Width="48"
                     Height="48"
                     MaxHeight="48"
-                    Content="{IconPacks:FontAwesomeLight Kind=WindowMinimize,
+                    Content="{IconPacks:Material Kind=WindowMinimize,
                                                          Height=16,
                                                          Width=16}"
                     Focusable="False"
@@ -42,7 +42,7 @@
                     Width="48"
                     Height="48"
                     MaxHeight="48"
-                    Content="{IconPacks:FontAwesomeLight Kind=WindowMaximize,
+                    Content="{IconPacks:Material Kind=WindowMaximize,
                                                          Height=16,
                                                          Width=16}"
                     Focusable="False"
@@ -71,7 +71,7 @@
                     Width="48"
                     Height="48"
                     MaxHeight="48"
-                    Content="{IconPacks:FontAwesomeLight Kind=WindowClose,
+                    Content="{IconPacks:Material Kind=WindowClose,
                                                          Height=16,
                                                          Width=16}"
                     Focusable="False"
@@ -107,7 +107,7 @@
                          Value="Maximized">
                 <Setter TargetName="PART_Max" Property="Command" Value="{x:Static SystemCommands.RestoreWindowCommand}" />
                 <Setter TargetName="PART_Max" Property="AutomationProperties.Name" Value="Restore" />
-                <Setter TargetName="PART_Max" Property="Content" Value="{IconPacks:FontAwesomeLight Kind=WindowRestore, Height=16, Width=16}" />
+                <Setter TargetName="PART_Max" Property="Content" Value="{IconPacks:Material Kind=WindowRestore, Height=16, Width=16}" />
                 <Setter TargetName="PART_Max" Property="ToolTip" Value="{Binding Restore, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}" />
             </DataTrigger>
             <Trigger Property="Theme" Value="Light">

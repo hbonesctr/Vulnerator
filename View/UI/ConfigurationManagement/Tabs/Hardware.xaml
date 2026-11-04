@@ -138,11 +138,11 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <iconPacks:PackIconFontAwesomeLight Grid.Column="0"
+                        <iconPacks:PackIconMaterial Grid.Column="0"
                                                                         Margin="{StaticResource MarginAll5}"
                                                                         HorizontalAlignment="Center"
                                                                         VerticalAlignment="Center"
-                                                                        Kind="PlusSquare"
+                                                                        Kind="PlusBoxOutline"
                                                                         RotationAngle="270" />
                         <TextBlock Grid.Column="1"
                                                Style="{StaticResource ExpanderHeaderTextBlockStyle}"
@@ -195,9 +195,9 @@
                                         <Button Margin="{StaticResource MarginAll5}"
                                                             Command="{Binding DataContext.RemoveIpAddressFromHardwareCommand, RelativeSource={RelativeSource FindAncestor, AncestorType=DataGrid}}"
                                                             CommandParameter="{Binding IP_Address_ID}">
-                                            <iconPacks:PackIconFontAwesomeLight Width="14"
+                                            <iconPacks:PackIconMaterial Width="14"
                                                                                             Height="14"
-                                                                                            Kind="TrashAlt" />
+                                                                                            Kind="TrashCanOutline" />
                                         </Button>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
@@ -205,7 +205,7 @@
                         </DataGrid.Columns>
                     </DataGrid>
                     <ComboBox controls:TextBoxHelper.ButtonCommand="{Binding AssociateIpAddressToHardwareCommand}"
-                                          controls:TextBoxHelper.ButtonContent="{iconPacks:FontAwesomeLight Kind=PlusSquare}"
+                                          controls:TextBoxHelper.ButtonContent="{iconPacks:Material Kind=PlusBoxOutline}"
                                           controls:TextBoxHelper.ClearTextButton="True"
                                           controls:TextBoxHelper.Watermark="Add IP"
                                           DisplayMemberPath="IpAddress"
@@ -229,9 +229,9 @@
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <Button Margin="{StaticResource MarginAll5}">
-                                            <iconPacks:PackIconFontAwesomeLight Width="14"
+                                            <iconPacks:PackIconMaterial Width="14"
                                                                                             Height="14"
-                                                                                            Kind="TrashAlt" />
+                                                                                            Kind="TrashCanOutline" />
                                         </Button>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
@@ -239,7 +239,7 @@
                         </DataGrid.Columns>
                     </DataGrid>
                     <ComboBox controls:TextBoxHelper.ButtonCommand="{Binding AssociateMacAddressToHardwareCommand}"
-                                          controls:TextBoxHelper.ButtonContent="{iconPacks:FontAwesomeLight Kind=PlusSquare}"
+                                          controls:TextBoxHelper.ButtonContent="{iconPacks:Material Kind=PlusBoxOutline}"
                                           controls:TextBoxHelper.ClearTextButton="True"
                                           controls:TextBoxHelper.Watermark="Add MAC"
                                           DisplayMemberPath="MacAddress"
@@ -267,9 +267,9 @@
                                         <Button Margin="{StaticResource MarginAll5}"
                                                             Command="{Binding DataContext.RemoveMacAddressFromHardwareCommand, RelativeSource={RelativeSource FindAncestor, AncestorType=DataGrid}}"
                                                             CommandParameter="{Binding MAC_Address_ID}">
-                                            <iconPacks:PackIconFontAwesomeLight Width="14"
+                                            <iconPacks:PackIconMaterial Width="14"
                                                                                             Height="14"
-                                                                                            Kind="TrashAlt" />
+                                                                                            Kind="TrashCanOutline" />
                                         </Button>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
@@ -277,7 +277,7 @@
                         </DataGrid.Columns>
                     </DataGrid>
                     <ComboBox controls:TextBoxHelper.ButtonCommand="{Binding AddGroupToHardwareCommand}"
-                                          controls:TextBoxHelper.ButtonContent="{iconPacks:FontAwesomeLight Kind=PlusSquare}"
+                                          controls:TextBoxHelper.ButtonContent="{iconPacks:Material Kind=PlusBoxOutline}"
                                           controls:TextBoxHelper.ClearTextButton="True"
                                           controls:TextBoxHelper.Watermark="Add Group"
                                           DisplayMemberPath="GroupName"
@@ -301,9 +301,9 @@
                                         <Button Margin="{StaticResource MarginAll5}"
                                                             Command="{Binding DataContext.RemoveSoftwareFromHardwareCommand, RelativeSource={RelativeSource FindAncestor, AncestorType=DataGrid}}"
                                                             CommandParameter="{Binding Software_ID}">
-                                            <iconPacks:PackIconFontAwesomeLight Width="14"
+                                            <iconPacks:PackIconMaterial Width="14"
                                                                                             Height="14"
-                                                                                            Kind="TrashAlt" />
+                                                                                            Kind="TrashCanOutline" />
                                         </Button>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
@@ -311,7 +311,7 @@
                         </DataGrid.Columns>
                     </DataGrid>
                     <ComboBox controls:TextBoxHelper.ButtonCommand="{Binding AssociateSoftwareToHardwareCommand}"
-                                          controls:TextBoxHelper.ButtonContent="{iconPacks:FontAwesomeLight Kind=PlusSquare}"
+                                          controls:TextBoxHelper.ButtonContent="{iconPacks:Material Kind=PlusBoxOutline}"
                                           controls:TextBoxHelper.ClearTextButton="True"
                                           controls:TextBoxHelper.Watermark="Add Software"
                                           ItemsSource="{Binding Softwares}"
@@ -343,9 +343,9 @@
                                         <Button Margin="{StaticResource MarginAll5}"
                                                             Command="{Binding DataContext.RemovePpsFromHardwareCommand, RelativeSource={RelativeSource FindAncestor, AncestorType=DataGrid}}"
                                                             CommandParameter="{Binding PortProtocolService_ID}">
-                                            <iconPacks:PackIconFontAwesomeLight Width="14"
+                                            <iconPacks:PackIconMaterial Width="14"
                                                                                             Height="14"
-                                                                                            Kind="TrashAlt" />
+                                                                                            Kind="TrashCanOutline" />
                                         </Button>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
@@ -353,7 +353,7 @@
                         </DataGrid.Columns>
                     </DataGrid>
                     <ComboBox controls:TextBoxHelper.ButtonCommand="{Binding AssociatePpsToHardwareCommand}"
-                                          controls:TextBoxHelper.ButtonContent="{iconPacks:FontAwesomeLight Kind=PlusSquare}"
+                                          controls:TextBoxHelper.ButtonContent="{iconPacks:Material Kind=PlusBoxOutline}"
                                           controls:TextBoxHelper.ClearTextButton="True"
                                           controls:TextBoxHelper.Watermark="Add PPS"
                                           ItemTemplate="{StaticResource PpsTemplate}"

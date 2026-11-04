@@ -56,13 +56,13 @@
                     <Button x:Name="githubButton"
                             Command="{Binding AboutLinksCommand}"
                             CommandParameter="{Binding Path=Name, RelativeSource={RelativeSource Self}}"
-                            Content="{iconPacks:FontAwesomeBrand GithubAlt}"
+                            Content="{iconPacks:Material Github}"
                             Foreground="{DynamicResource MahApps.Brushes.ThemeForeground}"
                             ToolTip="Vulnerator 2.0 on GitHub" />
                     <Button x:Name="issueButton"
                             Command="{Binding AboutLinksCommand}"
                             CommandParameter="{Binding Path=Name, RelativeSource={RelativeSource Self}}"
-                            Content="{iconPacks:FontAwesomeSolid Bug}"
+                            Content="{iconPacks:Material Bug}"
                             Foreground="{DynamicResource MahApps.Brushes.ThemeForeground}"
                             ToolTip="Report a problem (GitHub issues)" />
                 </controls:WindowCommands>
@@ -132,7 +132,7 @@
                                                         Tag="{StaticResource vulnerabilityManagementView}"
                                                         ToolTip="Vulnerability Management">
                             <controls:HamburgerMenuIconItem.Icon>
-                                <iconPacks:PackIconFontAwesomeLight HorizontalAlignment="Center"
+                                <iconPacks:PackIconMaterial HorizontalAlignment="Center"
                                                                     VerticalAlignment="Center"
                                                                     Kind="ChartLine" />
                             </controls:HamburgerMenuIconItem.Icon>
@@ -141,25 +141,25 @@
                                                         Tag="{StaticResource configurationManagementView}"
                                                         ToolTip="Configuration Management">
                             <controls:HamburgerMenuIconItem.Icon>
-                                <iconPacks:PackIconFontAwesomeLight HorizontalAlignment="Center"
+                                <iconPacks:PackIconMaterial HorizontalAlignment="Center"
                                                                     VerticalAlignment="Center"
-                                                                    Kind="DesktopAlt" />
+                                                                    Kind="Monitor" />
                             </controls:HamburgerMenuIconItem.Icon>
                         </controls:HamburgerMenuIconItem>
                         <controls:HamburgerMenuIconItem Label="Reporting"
                                                         Tag="{StaticResource ReportingView}"
                                                         ToolTip="Reporting">
                             <controls:HamburgerMenuIconItem.Icon>
-                                <iconPacks:PackIconFontAwesomeLight HorizontalAlignment="Center"
+                                <iconPacks:PackIconMaterial HorizontalAlignment="Center"
                                                                     VerticalAlignment="Center"
-                                                                    Kind="FileDownload" />
+                                                                    Kind="FileDownloadOutline" />
                             </controls:HamburgerMenuIconItem.Icon>
                         </controls:HamburgerMenuIconItem>
                         <!--<controls:HamburgerMenuIconItem Label="RMF"
                                                         Tag="{StaticResource rmfView}"
                                                         ToolTip="RMF">
                             <controls:HamburgerMenuIconItem.Icon>
-                                <iconPacks:PackIconFontAwesomeLight HorizontalAlignment="Center"
+                                <iconPacks:PackIconMaterial HorizontalAlignment="Center"
                                                             VerticalAlignment="Center"
                                                             Kind="FileCertificate" />
                             </controls:HamburgerMenuIconItem.Icon>
@@ -168,9 +168,9 @@
                                                         Tag="{StaticResource newsView}"
                                                         ToolTip="News">
                             <controls:HamburgerMenuIconItem.Icon>
-                                <iconPacks:PackIconFontAwesomeLight HorizontalAlignment="Center"
+                                <iconPacks:PackIconMaterial HorizontalAlignment="Center"
                                                                     VerticalAlignment="Center"
-                                                                    Kind="Newspaper" />
+                                                                    Kind="NewspaperVariantOutline" />
                             </controls:HamburgerMenuIconItem.Icon>
                         </controls:HamburgerMenuIconItem>
                     </controls:HamburgerMenuItemCollection>
@@ -181,16 +181,16 @@
                                                         Tag="{StaticResource userGuideView}"
                                                         ToolTip="Help (user guide)">
                             <controls:HamburgerMenuIconItem.Icon>
-                                <iconPacks:PackIconFontAwesomeLight HorizontalAlignment="Center"
+                                <iconPacks:PackIconMaterial HorizontalAlignment="Center"
                                                                     VerticalAlignment="Center"
-                                                                    Kind="Bookmark" />
+                                                                    Kind="BookmarkOutline" />
                             </controls:HamburgerMenuIconItem.Icon>
                         </controls:HamburgerMenuIconItem>
                         <controls:HamburgerMenuIconItem Label="Settings"
                                                         Tag="{StaticResource settingsView}"
                                                         ToolTip="Settings">
                             <controls:HamburgerMenuIconItem.Icon>
-                                <iconPacks:PackIconFontAwesomeLight HorizontalAlignment="Center"
+                                <iconPacks:PackIconMaterial HorizontalAlignment="Center"
                                                                     VerticalAlignment="Center"
                                                                     Kind="Cog" />
                             </controls:HamburgerMenuIconItem.Icon>
@@ -199,7 +199,7 @@
                                                         Tag="{StaticResource themeView}"
                                                         ToolTip="Theme">
                             <controls:HamburgerMenuIconItem.Icon>
-                                <iconPacks:PackIconFontAwesomeLight HorizontalAlignment="Center"
+                                <iconPacks:PackIconMaterial HorizontalAlignment="Center"
                                                                     VerticalAlignment="Center"
                                                                     Kind="Palette" />
                             </controls:HamburgerMenuIconItem.Icon>
@@ -208,9 +208,9 @@
                                                         Tag="{StaticResource aboutView}"
                                                         ToolTip="About">
                             <controls:HamburgerMenuIconItem.Icon>
-                                <iconPacks:PackIconFontAwesomeLight HorizontalAlignment="Center"
+                                <iconPacks:PackIconMaterial HorizontalAlignment="Center"
                                                                     VerticalAlignment="Center"
-                                                                    Kind="QuestionCircle" />
+                                                                    Kind="HelpCircleOutline" />
                             </controls:HamburgerMenuIconItem.Icon>
                         </controls:HamburgerMenuIconItem>
                     </controls:HamburgerMenuItemCollection>
@@ -295,7 +295,7 @@
                         <Button Margin="0,0,3,0"
                             Command="{Binding GetLatestVersionCommand}"
                             CommandParameter="{Binding Release.HtmlUrl}"
-                            Content="{iconPacks:FontAwesomeLight Download}"
+                            Content="{iconPacks:Material Download}"
                             ToolTip="Download Now"
                             Visibility="{Binding NewVersionVisibility}"
                             VerticalAlignment="Center"/>

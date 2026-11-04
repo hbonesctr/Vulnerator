@@ -86,7 +86,7 @@
                            Fill="{DynamicResource MahApps.Colors.AccentBrush}"
                            ToolTip="All support files will be installed into the Vulnerator folder (minimal footprint)">
                     <Rectangle.OpacityMask>
-                        <VisualBrush Visual="{IconPacks:FontAwesomeLight Kind=InfoCircle}" />
+                        <VisualBrush Visual="{IconPacks:Material Kind=InformationOutline}" />
                     </Rectangle.OpacityMask>
                 </Rectangle>
             </StackPanel>
@@ -105,7 +105,7 @@
                            Fill="{DynamicResource MahApps.Colors.AccentBrush}"
                            ToolTip="Log files will be generated in the LocalData folder, and the user (you) gets to decide where the application database goes (perfect for sharing)">
                     <Rectangle.OpacityMask>
-                        <VisualBrush Visual="{IconPacks:FontAwesomeLight Kind=InfoCircle}" />
+                        <VisualBrush Visual="{IconPacks:Material Kind=InformationOutline}" />
                     </Rectangle.OpacityMask>
                 </Rectangle>
             </StackPanel>
@@ -135,12 +135,12 @@
             <Button Grid.Column="1"
                     Margin="5,0,5,5"
                     Command="{Binding BrowseForDatabaseCommand}"
-                    Content="{IconPacks:FontAwesomeLight Kind=FileSearch}"
+                    Content="{IconPacks:Material Kind=FileSearchOutline}"
                     ToolTip="Select" />
             <Button Grid.Column="2"
                     Margin="0,0,5,5"
                     Command="{Binding CreateDatabaseCommand}"
-                    Content="{IconPacks:FontAwesomeLight Kind=FilePlus}"
+                    Content="{IconPacks:Material Kind=FilePlusOutline}"
                     ToolTip="Create" />
         </Grid>
         <Button Margin="5,0,5,5"
@@ -149,10 +149,10 @@
                 CommandParameter="{Binding ElementName=splashWindow}">
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="Launch" />
-                <IconPacks:PackIconFontAwesomeLight Height="12"
+                <IconPacks:PackIconMaterial Height="12"
                                                     Margin="2,0,0,0"
                                                     VerticalAlignment="Center"
-                                                    Kind="SignInAlt" />
+                                                    Kind="Login" />
             </StackPanel>
         </Button>
         <TextBox MaxWidth="300"

@@ -112,11 +112,11 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <iconPacks:PackIconFontAwesomeLight Grid.Column="0"
+                        <iconPacks:PackIconMaterial Grid.Column="0"
                                                                         Margin="{StaticResource MarginAll5}"
                                                                         HorizontalAlignment="Center"
                                                                         VerticalAlignment="Center"
-                                                                        Kind="PlusSquare"
+                                                                        Kind="PlusBoxOutline"
                                                                         RotationAngle="270" />
                         <TextBlock Grid.Column="1"
                                                Style="{StaticResource ExpanderHeaderTextBlockStyle}"
@@ -161,16 +161,16 @@
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <Button Margin="{StaticResource MarginAll5}">
-                                            <iconPacks:PackIconFontAwesomeLight Width="14"
+                                            <iconPacks:PackIconMaterial Width="14"
                                                                                             Height="14"
-                                                                                            Kind="TrashAlt" />
+                                                                                            Kind="TrashCanOutline" />
                                         </Button>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
-                    <vh:CommandEnabledComboBox controls:TextBoxHelper.ButtonContent="{iconPacks:FontAwesomeLight Kind=PlusSquare}"
+                    <vh:CommandEnabledComboBox controls:TextBoxHelper.ButtonContent="{iconPacks:Material Kind=PlusBoxOutline}"
                                                            controls:TextBoxHelper.ClearTextButton="True"
                                                            controls:TextBoxHelper.Watermark="Add Hardware"
                                                            IsEditable="True"

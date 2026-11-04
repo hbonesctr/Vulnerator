@@ -45,7 +45,7 @@
                 <DataTemplate>
                     <ContentControl Width="22"
                                     Height="22"
-                                    Content="{IconPacks:FontAwesomeLight Kind=Bars}" />
+                                    Content="{IconPacks:Material Kind=Menu}" />
                 </DataTemplate>
             </Setter.Value>
         </Setter>

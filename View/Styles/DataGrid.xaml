@@ -147,7 +147,7 @@
 
 
 
-                        <IconPacks:PackIconFontAwesomeLight x:Name="SortArrow"
+                        <IconPacks:PackIconMaterial x:Name="SortArrow"
                                                             Grid.Column="1"
                                                             Width="8"
                                                             Height="10"
@@ -163,11 +163,11 @@
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="SortDirection" Value="Ascending">
-                            <Setter TargetName="SortArrow" Property="Kind" Value="LongArrowAltUp" />
+                            <Setter TargetName="SortArrow" Property="Kind" Value="ArrowUp" />
                             <Setter TargetName="SortArrow" Property="Visibility" Value="Visible" />
                         </Trigger>
                         <Trigger Property="SortDirection" Value="Descending">
-                            <Setter TargetName="SortArrow" Property="Kind" Value="LongArrowAltDown" />
+                            <Setter TargetName="SortArrow" Property="Kind" Value="ArrowDown" />
                             <Setter TargetName="SortArrow" Property="Margin" Value="0,0,8,0" />
                             <Setter TargetName="SortArrow" Property="Visibility" Value="Visible" />
                         </Trigger>

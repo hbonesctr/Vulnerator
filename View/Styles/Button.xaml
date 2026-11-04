@@ -128,9 +128,9 @@
                                 SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
                                 Style="{TemplateBinding ButtonArrowStyle}">
                             <!--  Material - ChevronDown  -->
-                            <IconPacks:PackIconFontAwesomeLight Width="8"
+                            <IconPacks:PackIconMaterial Width="8"
                                                                 Height="8"
-                                                                Kind="CaretDown" />
+                                                                Kind="MenuDown" />
                         </Button>
                     </Grid>
                 </Controls:ClipBorder>
@@ -249,9 +249,9 @@
                                 SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
                                 Style="{TemplateBinding ButtonArrowStyle}">
                             <!--  Material - ChevronDown  -->
-                            <IconPacks:PackIconFontAwesomeLight Width="8"
+                            <IconPacks:PackIconMaterial Width="8"
                                                                 Height="8"
-                                                                Kind="CaretDown" />
+                                                                Kind="MenuDown" />
                         </Button>
                     </Grid>
                 </Controls:ClipBorder>

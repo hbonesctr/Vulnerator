@@ -47,14 +47,14 @@
                                  Style="{StaticResource HeaderedTextBoxStyle}"
                                  Text="{Binding Source={StaticResource Settings}, Path=Default.ActiveUser}" />
                         <TextBox Margin="5,0,5,5"
-                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:FontAwesomeLight Kind=TimesSquare}"
+                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:Material Kind=CloseBoxOutline}"
                                  Controls:TextBoxHelper.ClearTextButton="True"
                                  Controls:TextBoxHelper.Watermark="Name (First &amp; Last)"
                                  vh:DependencyProperties.FloatingWatermark="Name"
                                  Style="{StaticResource HeaderedTextBoxStyle}"
                                  Text="{Binding Source={StaticResource Settings}, Path=Default.Name}" />
                         <TextBox Margin="5,0,5,5"
-                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:FontAwesomeLight Kind=TimesSquare}"
+                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:Material Kind=CloseBoxOutline}"
                                  Controls:TextBoxHelper.ClearTextButton="True"
                                  Controls:TextBoxHelper.Watermark="Phone Number (Digits Only - e.g. 0123456789)"
                                  vh:DependencyProperties.FloatingWatermark="Phone Number"
@@ -70,7 +70,7 @@
                         </TextBox>
 
                         <TextBox Margin="5,0,5,5"
-                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:FontAwesomeLight Kind=TimesSquare}"
+                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:Material Kind=CloseBoxOutline}"
                                  Controls:TextBoxHelper.ClearTextButton="True"
                                  Controls:TextBoxHelper.Watermark="eMASS Email (you@example.com)"
                                  vh:DependencyProperties.FloatingWatermark="eMASS Email"
@@ -85,7 +85,7 @@
                             </Binding>
                         </TextBox>
                         <TextBox Margin="5,0,5,5"
-                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:FontAwesomeLight Kind=TimesSquare}"
+                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:Material Kind=CloseBoxOutline}"
                                  Controls:TextBoxHelper.ClearTextButton="True"
                                  Controls:TextBoxHelper.Watermark="Organization (e.g. Program Office)"
                                  vh:DependencyProperties.FloatingWatermark="Organization"
@@ -96,98 +96,98 @@
                                        TextTrimming="CharacterEllipsis" />
                         </Label>
                         <TextBox Margin="5,0,5,5"
-                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:FontAwesomeLight Kind=TimesSquare}"
+                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:Material Kind=CloseBoxOutline}"
                                  Controls:TextBoxHelper.ClearTextButton="True"
                                  Controls:TextBoxHelper.Watermark="System / Project Name"
                                  vh:DependencyProperties.FloatingWatermark="System / Project Name"
                                  Style="{StaticResource HeaderedTextBoxStyle}"
                                  Text="{Binding Source={StaticResource Settings}, Path=Default.EmassSystemName, UpdateSourceTrigger=PropertyChanged}" />
                         <TextBox Margin="5,0,5,5"
-                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:FontAwesomeLight Kind=TimesSquare}"
+                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:Material Kind=CloseBoxOutline}"
                                  Controls:TextBoxHelper.ClearTextButton="True"
                                  Controls:TextBoxHelper.Watermark="CC/S/A/FA (e.g. Army)"
                                  vh:DependencyProperties.FloatingWatermark="CC/S/A/FA (e.g. Army)"
                                  Style="{StaticResource HeaderedTextBoxStyle}"
                                  Text="{Binding Source={StaticResource Settings}, Path=Default.EmassCcsafa, UpdateSourceTrigger=PropertyChanged}" />
                         <TextBox Margin="5,0,5,5"
-                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:FontAwesomeLight Kind=TimesSquare}"
+                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:Material Kind=CloseBoxOutline}"
                                  Controls:TextBoxHelper.ClearTextButton="True"
                                  Controls:TextBoxHelper.Watermark="DoW IT Registration No / DITPR ID"
                                  vh:DependencyProperties.FloatingWatermark="DoW IT Registration No / DITPR ID"
                                  Style="{StaticResource HeaderedTextBoxStyle}"
                                  Text="{Binding Source={StaticResource Settings}, Path=Default.EmassItRegistrationNumber, UpdateSourceTrigger=PropertyChanged}" />
                         <TextBox Margin="5,0,5,5"
-                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:FontAwesomeLight Kind=TimesSquare}"
+                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:Material Kind=CloseBoxOutline}"
                                  Controls:TextBoxHelper.ClearTextButton="True"
                                  Controls:TextBoxHelper.Watermark="System Type"
                                  vh:DependencyProperties.FloatingWatermark="System Type"
                                  Style="{StaticResource HeaderedTextBoxStyle}"
                                  Text="{Binding Source={StaticResource Settings}, Path=Default.EmassSystemType, UpdateSourceTrigger=PropertyChanged}" />
                         <TextBox Margin="5,0,5,5"
-                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:FontAwesomeLight Kind=TimesSquare}"
+                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:Material Kind=CloseBoxOutline}"
                                  Controls:TextBoxHelper.ClearTextButton="True"
                                  Controls:TextBoxHelper.Watermark="OMB Project ID"
                                  vh:DependencyProperties.FloatingWatermark="OMB Project ID"
                                  Style="{StaticResource HeaderedTextBoxStyle}"
                                  Text="{Binding Source={StaticResource Settings}, Path=Default.EmassOmbProjectId, UpdateSourceTrigger=PropertyChanged}" />
                         <TextBox Margin="5,0,5,5"
-                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:FontAwesomeLight Kind=TimesSquare}"
+                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:Material Kind=CloseBoxOutline}"
                                  Controls:TextBoxHelper.ClearTextButton="True"
                                  Controls:TextBoxHelper.Watermark="Security Costs"
                                  vh:DependencyProperties.FloatingWatermark="Security Costs"
                                  Style="{StaticResource HeaderedTextBoxStyle}"
                                  Text="{Binding Source={StaticResource Settings}, Path=Default.EmassSecurityCosts, UpdateSourceTrigger=PropertyChanged}" />
                         <TextBox Margin="5,0,5,5"
-                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:FontAwesomeLight Kind=TimesSquare}"
+                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:Material Kind=CloseBoxOutline}"
                                  Controls:TextBoxHelper.ClearTextButton="True"
                                  Controls:TextBoxHelper.Watermark="Information System Owner"
                                  vh:DependencyProperties.FloatingWatermark="Information System Owner"
                                  Style="{StaticResource HeaderedTextBoxStyle}"
                                  Text="{Binding Source={StaticResource Settings}, Path=Default.EmassInformationSystemOwner, UpdateSourceTrigger=PropertyChanged}" />
                         <TextBox Margin="5,0,5,5"
-                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:FontAwesomeLight Kind=TimesSquare}"
+                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:Material Kind=CloseBoxOutline}"
                                  Controls:TextBoxHelper.ClearTextButton="True"
                                  Controls:TextBoxHelper.Watermark="POA&amp;M Office/Org (blank = Organization, Name, Phone, Email)"
                                  vh:DependencyProperties.FloatingWatermark="POA&amp;M Office/Org (blank = Organization, Name, Phone, Email)"
                                  Style="{StaticResource HeaderedTextBoxStyle}"
                                  Text="{Binding Source={StaticResource Settings}, Path=Default.EmassOfficeOrg, UpdateSourceTrigger=PropertyChanged}" />
                         <TextBox Margin="5,0,5,5"
-                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:FontAwesomeLight Kind=TimesSquare}"
+                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:Material Kind=CloseBoxOutline}"
                                  Controls:TextBoxHelper.ClearTextButton="True"
                                  Controls:TextBoxHelper.Watermark="POA&amp;M Resources Required"
                                  vh:DependencyProperties.FloatingWatermark="POA&amp;M Resources Required"
                                  Style="{StaticResource HeaderedTextBoxStyle}"
                                  Text="{Binding Source={StaticResource Settings}, Path=Default.EmassResourcesRequired, UpdateSourceTrigger=PropertyChanged}" />
                         <TextBox Margin="5,0,5,5"
-                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:FontAwesomeLight Kind=TimesSquare}"
+                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:Material Kind=CloseBoxOutline}"
                                  Controls:TextBoxHelper.ClearTextButton="True"
                                  Controls:TextBoxHelper.Watermark="POA&amp;M Mitigations when none is recorded"
                                  vh:DependencyProperties.FloatingWatermark="POA&amp;M Mitigations when none is recorded"
                                  Style="{StaticResource HeaderedTextBoxStyle}"
                                  Text="{Binding Source={StaticResource Settings}, Path=Default.EmassMitigationPlaceholder, UpdateSourceTrigger=PropertyChanged}" />
                         <TextBox Margin="5,0,5,5"
-                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:FontAwesomeLight Kind=TimesSquare}"
+                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:Material Kind=CloseBoxOutline}"
                                  Controls:TextBoxHelper.ClearTextButton="True"
                                  Controls:TextBoxHelper.Watermark="POA&amp;M Identification Source"
                                  vh:DependencyProperties.FloatingWatermark="POA&amp;M Identification Source"
                                  Style="{StaticResource HeaderedTextBoxStyle}"
                                  Text="{Binding Source={StaticResource Settings}, Path=Default.EmassIdentificationSource, UpdateSourceTrigger=PropertyChanged}" />
                         <TextBox Margin="5,0,5,5"
-                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:FontAwesomeLight Kind=TimesSquare}"
+                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:Material Kind=CloseBoxOutline}"
                                  Controls:TextBoxHelper.ClearTextButton="True"
                                  Controls:TextBoxHelper.Watermark="Days to completion from Date Identified, High;Moderate;Low (e.g. 30;60;180)"
                                  vh:DependencyProperties.FloatingWatermark="Days to completion from Date Identified, High;Moderate;Low (e.g. 30;60;180)"
                                  Style="{StaticResource HeaderedTextBoxStyle}"
                                  Text="{Binding Source={StaticResource Settings}, Path=Default.EmassScheduledCompletionDays, UpdateSourceTrigger=PropertyChanged}" />
                         <TextBox Margin="5,0,5,5"
-                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:FontAwesomeLight Kind=TimesSquare}"
+                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:Material Kind=CloseBoxOutline}"
                                  Controls:TextBoxHelper.ClearTextButton="True"
                                  Controls:TextBoxHelper.Watermark="Default milestone description (blank: analyst writes it)"
                                  vh:DependencyProperties.FloatingWatermark="Default milestone description (blank: analyst writes it)"
                                  Style="{StaticResource HeaderedTextBoxStyle}"
                                  Text="{Binding Source={StaticResource Settings}, Path=Default.EmassDefaultMilestone, UpdateSourceTrigger=PropertyChanged}" />
                         <TextBox Margin="5,0,5,5"
-                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:FontAwesomeLight Kind=TimesSquare}"
+                                 Controls:TextBoxHelper.ButtonContent="{IconPacks:Material Kind=CloseBoxOutline}"
                                  Controls:TextBoxHelper.ClearTextButton="True"
                                  Controls:TextBoxHelper.Watermark="Classification / handling marking for exports"
                                  vh:DependencyProperties.FloatingWatermark="Classification / handling marking for exports"
@@ -218,12 +218,12 @@
                             <Button Grid.Column="1"
                                     Margin="5,0,5,5"
                                     Command="{Binding BrowseForDatabaseCommand}"
-                                    Content="{IconPacks:FontAwesomeLight Kind=FileSearch}"
+                                    Content="{IconPacks:Material Kind=FileSearchOutline}"
                                     ToolTip="Search" />
                             <Button Grid.Column="2"
                                     Margin="5,0,5,5"
                                     Command="{Binding CreateDatabaseCommand}"
-                                    Content="{IconPacks:FontAwesomeLight Kind=FilePlus}"
+                                    Content="{IconPacks:Material Kind=FilePlusOutline}"
                                     ToolTip="Create" />
                         </Grid>
                         <Grid Grid.Column="0">
@@ -254,7 +254,7 @@
                                      Margin="5,0,5,5"
                                      HorizontalAlignment="Stretch"
                                      VerticalAlignment="Center"
-                                     Controls:TextBoxHelper.ButtonContent="{IconPacks:FontAwesomeLight Kind=TimesSquare}"
+                                     Controls:TextBoxHelper.ButtonContent="{IconPacks:Material Kind=CloseBoxOutline}"
                                      Controls:TextBoxHelper.ClearTextButton="True"
                                      Controls:TextBoxHelper.Watermark="DISA library zip, STIG zips or benchmark .xml files (search, then load)"
                                      Style="{StaticResource NonHeaderedTextBoxStyle}"
@@ -262,12 +262,12 @@
                             <Button Grid.Column="1"
                                     Margin="5,0,5,5"
                                     Command="{Binding SelectStigLibraryCommand}"
-                                    Content="{IconPacks:FontAwesomeLight Kind=FileSearch}"
+                                    Content="{IconPacks:Material Kind=FileSearchOutline}"
                                     ToolTip="Select the library zip or STIG files" />
                             <Button Grid.Column="2"
                                     Margin="5,0,5,5"
                                     Command="{Binding IngestStigLibraryCommand}"
-                                    Content="{IconPacks:FontAwesomeLight Kind=FileImport}"
+                                    Content="{IconPacks:Material Kind=FileImportOutline}"
                                     ToolTip="Load the selected files into the database" />
                         </Grid>
                         <Button Margin="5,0,5,5"
@@ -362,11 +362,11 @@
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition />
                                         </Grid.ColumnDefinitions>
-                                        <IconPacks:PackIconFontAwesomeLight Grid.Column="0"
+                                        <IconPacks:PackIconMaterial Grid.Column="0"
                                                                             Margin="5,0"
                                                                             HorizontalAlignment="Center"
                                                                             VerticalAlignment="Center"
-                                                                            Kind="ExclamationTriangle" />
+                                                                            Kind="AlertOutline" />
                                         <TextBlock Grid.Column="1"
                                                    Text="Danger Zone"
                                                    TextTrimming="CharacterEllipsis" />
@@ -507,11 +507,11 @@
                             </Label>
                             <Button Grid.Column="2"
                                     Margin="5,0,5,5"
-                                    Content="{IconPacks:FontAwesomeLight Kind=PlusSquare}"
+                                    Content="{IconPacks:Material Kind=PlusBoxOutline}"
                                     ToolTip="Add Overlay" />
                             <Button Grid.Column="3"
                                     Margin="5,0,5,5"
-                                    Content="{IconPacks:FontAwesomeLight Kind=MinusSquare}"
+                                    Content="{IconPacks:Material Kind=MinusBoxOutline}"
                                     ToolTip="Remove Overlay(s)" />
                         </Grid>
                         <DataGrid MinHeight="100"
@@ -538,17 +538,17 @@
                             <TextBox Grid.Column="0"
                                      Margin="5,0,5,5"
                                      VerticalAlignment="Center"
-                                     Controls:TextBoxHelper.ButtonContent="{IconPacks:FontAwesomeLight Kind=TimesSquare}"
+                                     Controls:TextBoxHelper.ButtonContent="{IconPacks:Material Kind=CloseBoxOutline}"
                                      Controls:TextBoxHelper.ClearTextButton="True"
                                      Controls:TextBoxHelper.Watermark="Enter a new organization name"
                                      Style="{StaticResource NonHeaderedTextBoxStyle}" />
                             <Button Grid.Column="1"
                                     Margin="5,0,5,5"
-                                    Content="{IconPacks:FontAwesomeLight Kind=PlusSquare}"
+                                    Content="{IconPacks:Material Kind=PlusBoxOutline}"
                                     ToolTip="Add Organization" />
                             <Button Grid.Column="2"
                                     Margin="5,0,5,5"
-                                    Content="{IconPacks:FontAwesomeLight Kind=MinusSquare}"
+                                    Content="{IconPacks:Material Kind=MinusBoxOutline}"
                                     ToolTip="Remove Organization(s)" />
                         </Grid>
                         <DataGrid MinHeight="100"

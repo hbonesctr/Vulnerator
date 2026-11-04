@@ -103,7 +103,7 @@
                                             SortMemberPath="IsAccreditation">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <iconPacks:PackIconFontAwesomeLight HorizontalAlignment="Center"
+                                <iconPacks:PackIconMaterial HorizontalAlignment="Center"
                                                                     Kind="{Binding IsAccreditation, Converter={StaticResource CheckboxConverter}}"
                                                                     ToolTip="{Binding IsAccreditation}" />
                             </DataTemplate>
@@ -162,11 +162,11 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <iconPacks:PackIconFontAwesomeLight Grid.Column="0"
+                        <iconPacks:PackIconMaterial Grid.Column="0"
                                                             Margin="{StaticResource MarginAll5}"
                                                             HorizontalAlignment="Center"
                                                             VerticalAlignment="Center"
-                                                            Kind="PlusSquare" />
+                                                            Kind="PlusBoxOutline" />
                         <TextBlock Grid.Column="1"
                                    Style="{StaticResource ExpanderHeaderTextBlockStyle}"
                                    Text="Add / Update" />
@@ -210,9 +210,9 @@
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <Button Margin="{StaticResource MarginAll5}">
-                                            <iconPacks:PackIconFontAwesomeLight Width="14"
+                                            <iconPacks:PackIconMaterial Width="14"
                                                                                 Height="14"
-                                                                                Kind="TrashAlt" />
+                                                                                Kind="TrashCanOutline" />
                                         </Button>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
@@ -220,7 +220,7 @@
                         </DataGrid.Columns>
                     </DataGrid>
                     <ComboBox controls:TextBoxHelper.ButtonCommand="{Binding AddHardwareToGroupCommand}"
-                              controls:TextBoxHelper.ButtonContent="{iconPacks:FontAwesomeLight Kind=PlusSquare}"
+                              controls:TextBoxHelper.ButtonContent="{iconPacks:Material Kind=PlusBoxOutline}"
                               controls:TextBoxHelper.ClearTextButton="True"
                               controls:TextBoxHelper.Watermark="Add Hardware"
                               DisplayMemberPath="DisplayedHostName"

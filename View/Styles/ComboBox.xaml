@@ -197,12 +197,12 @@
                             <ContentControl HorizontalContentAlignment="Center"
                                             VerticalContentAlignment="Center"
                                             Foreground="{DynamicResource MahApps.Brushes.Gray1}">
-                                <IconPacks:PackIconFontAwesomeLight Width="8"
+                                <IconPacks:PackIconMaterial Width="8"
                                                                     Height="8"
                                                                     HorizontalAlignment="Center"
                                                                     VerticalAlignment="Center"
                                                                     Foreground="{DynamicResource MahApps.Brushes.Gray1}"
-                                                                    Kind="CaretDown" />
+                                                                    Kind="MenuDown" />
                             </ContentControl>
                         </Grid>
                     </Grid>

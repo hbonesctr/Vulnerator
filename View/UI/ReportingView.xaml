@@ -86,7 +86,7 @@
                                         <Button Margin="{StaticResource MarginAll5}"
                                                 Command="{Binding Path=DataContext.GenerateSingleVulnerabilityReportCommand, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type DataGrid}}}"
                                                 CommandParameter="{Binding RequiredReport_ID}">
-                                            <IconPacks:FontAwesomeLight Kind="FileDownload" />
+                                            <IconPacks:Material Kind="FileDownloadOutline" />
                                         </Button>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
