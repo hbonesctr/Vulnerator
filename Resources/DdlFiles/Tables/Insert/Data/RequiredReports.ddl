@@ -40,14 +40,14 @@ VALUES (NULL,
 
 -- Vulnerator 2.0: successors of the Vulnerator 6 "STIG Details" tab and PDF summary. Fixed IDs: the Reporting page
 -- dispatches on RequiredReport_ID.
-INSERT INTO RequiredReports
+INSERT OR IGNORE INTO RequiredReports
 VALUES (6,
         'STIG Details',
         'Excel',
         'True',
         'Vulnerability Management');
 
-INSERT INTO RequiredReports
+INSERT OR IGNORE INTO RequiredReports
 VALUES (7,
         'PDF Summary',
         'PDF',
