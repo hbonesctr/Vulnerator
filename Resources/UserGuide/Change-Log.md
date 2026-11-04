@@ -5,6 +5,7 @@
 | :----------------- |
 | New report: Ports, Protocols & Services (from ACAS / Nessus scans, with the detecting plugins) |
 | Nessus port 0 ("general") results are no longer stored as services; existing entries are removed |
+| Configuration Management > Ports, Protocols, Services tab lists the services; save name / acronym, delete |
 
 
 ----------
