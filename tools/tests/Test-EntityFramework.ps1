@@ -66,12 +66,24 @@ public static class EntityFrameworkProbe
             return vulnerabilities + "|" + mappings + "|" + groups + "|" + hardware + "|" + withCcis;
         }
     }
+
+    // The Configuration Management > Ports, Protocols, Services tab, as the screen loads it.
+    public static string PortsTab()
+    {
+        var tab = new Vulnerator.ViewModel.ConfigurationManagement.Tabs.PortsProtocolsServices();
+        var list = tab.PortsProtocolsServicesList;
+        if (list == null) return "null";
+        int withHosts = list.Count(p => p.HardwarePortsProtocolsServices.Count > 0 && p.HardwarePortsProtocolsServices.All(h => h.Hardware != null));
+        return list.Count + "|" + withHosts + "|" + list.Count(p => p.Port == 0);
+    }
 }
 '@
     # Add-Type only takes .dll references: compile against a copy; at run time the loaded Vulnerator.exe is used.
     $reference = Join-Path $workDir 'Vulnerator.dll'
     Copy-Item (Join-Path $binPath 'Vulnerator.exe') $reference
-    $references = @($reference, (Join-Path $binPath 'EntityFramework.dll'), 'System.Data.dll', 'System.Core.dll', 'System.ComponentModel.DataAnnotations.dll')
+    $mvvm = @(Get-ChildItem $binPath -Filter 'GalaSoft.MvvmLight*.dll' | ForEach-Object { $_.FullName })
+    foreach ($dll in $mvvm) { [void][System.Reflection.Assembly]::LoadFrom($dll) }
+    $references = @($reference, (Join-Path $binPath 'EntityFramework.dll'), 'System.Data.dll', 'System.Core.dll', 'System.ComponentModel.DataAnnotations.dll', 'System.ObjectModel.dll') + $mvvm
     Add-Type -TypeDefinition $probe -ReferencedAssemblies $references
     [EntityFrameworkProbe]::RedirectToLoadedAssemblies()
 
@@ -88,9 +100,17 @@ public static class EntityFrameworkProbe
     $status = (New-Object Vulnerator.Model.BusinessLogic.CklReader).ReadCklFile($file, 'All')
     if ($status -ne 'Processed') { Fail ('fixture checklist did not import (got "' + $status + '")') }
 
+    $scan = New-Object Vulnerator.Model.Object.File ('scan', 'ACAS - Nessus', 'Ready', (Join-Path $fixtures 'scan.nessus'), 'True')
+    $scanStatus = (New-Object Vulnerator.Model.BusinessLogic.AcasNessusReader).ReadAcasNessusFile($scan, 'All')
+    if ($scanStatus -ne 'Processed') { Fail ('fixture scan did not import (got "' + $scanStatus + '")') }
+
     $counts = [EntityFrameworkProbe]::Run().Split('|') | ForEach-Object { [int]$_ }
     Write-Host ('EF counts: vulnerabilities ' + $counts[0] + ', CCI mappings ' + $counts[1] + ', groups ' + $counts[2] + ', hardware ' + $counts[3] + ', vulnerabilities with CCIs ' + $counts[4])
     if ($counts[0] -lt 3 -or $counts[1] -lt 3000 -or $counts[2] -lt 1 -or $counts[3] -lt 1 -or $counts[4] -lt 1) { Fail ('unexpected EF counts ' + ($counts -join '|')) }
+    $ports = [EntityFrameworkProbe]::PortsTab()
+    Write-Host ('Ports, Protocols, Services tab: ' + $ports + ' (services | with hosts | port 0)')
+    $portCounts = $ports.Split('|')
+    if ($portCounts.Count -ne 3 -or [int]$portCounts[0] -lt 2 -or [int]$portCounts[1] -ne [int]$portCounts[0] -or [int]$portCounts[2] -ne 0) { Fail ('Ports, Protocols, Services tab did not load the scan''s services (got ' + $ports + ')') }
     Write-Host 'Entity Framework (System.Data.SQLite.EF6) queries passed.'
     exit 0
 }
