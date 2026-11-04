@@ -67,15 +67,6 @@ public static class EntityFrameworkProbe
         }
     }
 
-    // The Configuration Management > Ports, Protocols, Services tab, as the screen loads it.
-    public static string PortsTab()
-    {
-        var tab = new Vulnerator.ViewModel.ConfigurationManagement.Tabs.PortsProtocolsServices();
-        var list = tab.PortsProtocolsServicesList;
-        if (list == null) return "null";
-        int withHosts = list.Count(p => p.HardwarePortsProtocolsServices.Count > 0 && p.HardwarePortsProtocolsServices.All(h => h.Hardware != null));
-        return list.Count + "|" + withHosts + "|" + list.Count(p => p.Port == 0);
-    }
 }
 '@
     # Add-Type only takes .dll references: compile against a copy; at run time the loaded Vulnerator.exe is used.
@@ -83,7 +74,7 @@ public static class EntityFrameworkProbe
     Copy-Item (Join-Path $binPath 'Vulnerator.exe') $reference
     $mvvm = @(Get-ChildItem $binPath -Filter 'GalaSoft.MvvmLight*.dll' | ForEach-Object { $_.FullName })
     foreach ($dll in $mvvm) { [void][System.Reflection.Assembly]::LoadFrom($dll) }
-    $references = @($reference, (Join-Path $binPath 'EntityFramework.dll'), 'System.Data.dll', 'System.Core.dll', 'System.ComponentModel.DataAnnotations.dll', 'System.ObjectModel.dll') + $mvvm
+    $references = @($reference, (Join-Path $binPath 'EntityFramework.dll'), 'System.Data.dll', 'System.Core.dll', 'System.ComponentModel.DataAnnotations.dll', 'System.ObjectModel.dll')
     Add-Type -TypeDefinition $probe -ReferencedAssemblies $references
     [EntityFrameworkProbe]::RedirectToLoadedAssemblies()
 
@@ -107,7 +98,11 @@ public static class EntityFrameworkProbe
     $counts = [EntityFrameworkProbe]::Run().Split('|') | ForEach-Object { [int]$_ }
     Write-Host ('EF counts: vulnerabilities ' + $counts[0] + ', CCI mappings ' + $counts[1] + ', groups ' + $counts[2] + ', hardware ' + $counts[3] + ', vulnerabilities with CCIs ' + $counts[4])
     if ($counts[0] -lt 3 -or $counts[1] -lt 3000 -or $counts[2] -lt 1 -or $counts[3] -lt 1 -or $counts[4] -lt 1) { Fail ('unexpected EF counts ' + ($counts -join '|')) }
-    $ports = [EntityFrameworkProbe]::PortsTab()
+    # The Configuration Management > Ports, Protocols, Services tab, built as the screen builds it.
+    $tab = New-Object Vulnerator.ViewModel.ConfigurationManagement.Tabs.PortsProtocolsServices
+    $list = @($tab.PortsProtocolsServicesList)
+    $withHosts = @($list | Where-Object { $_.HardwarePortsProtocolsServices.Count -gt 0 -and @($_.HardwarePortsProtocolsServices | Where-Object { $null -eq $_.Hardware }).Count -eq 0 }).Count
+    $ports = '' + $list.Count + '|' + $withHosts + '|' + @($list | Where-Object { $_.Port -eq 0 }).Count
     Write-Host ('Ports, Protocols, Services tab: ' + $ports + ' (services | with hosts | port 0)')
     $portCounts = $ports.Split('|')
     if ($portCounts.Count -ne 3 -or [int]$portCounts[0] -lt 2 -or [int]$portCounts[1] -ne [int]$portCounts[0] -or [int]$portCounts[2] -ne 0) { Fail ('Ports, Protocols, Services tab did not load the scan''s services (got ' + $ports + ')') }
