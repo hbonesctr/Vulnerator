@@ -54,6 +54,13 @@ VALUES (7,
         'True',
         'Vulnerability Management');
 
+INSERT OR IGNORE INTO RequiredReports
+VALUES (8,
+        'Ports, Protocols & Services',
+        'Excel',
+        'True',
+        'Vulnerability Management');
+
 -- INSERT INTO RequiredReports
 -- VALUES (NULL,
 --         'Excel Summary',

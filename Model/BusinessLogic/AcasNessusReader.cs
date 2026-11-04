@@ -274,6 +274,13 @@ namespace Vulnerator.Model.BusinessLogic
             }
         }
 
+        /// <summary>True for a real port (1-65535); Nessus uses port 0 for host-level results.</summary>
+        public static bool IsServicePort(object port)
+        {
+            int number;
+            return port != null && int.TryParse(port.ToString(), out number) && number > 0 && number <= 65535;
+        }
+
         private void ParseVulnerability(SQLiteCommand sqliteCommand, XmlReader xmlReader)
         {
             string pluginId = xmlReader.GetAttribute("pluginID");
@@ -434,7 +441,8 @@ namespace Vulnerator.Model.BusinessLogic
                         }
                         databaseInterface.InsertVulnerability(sqliteCommand);
                         databaseInterface.MapVulnerabilityToSource(sqliteCommand);
-                        if (Properties.Settings.Default.CaptureAcasPortInformation)
+                        // Port 0 holds host-level results ("general/tcp", "general/icmp"), not a port, protocol or service.
+                        if (Properties.Settings.Default.CaptureAcasPortInformation && IsServicePort(sqliteCommand.Parameters["Port"].Value))
                         { databaseInterface.InsertAndMapPort(sqliteCommand); }
                         PrepareUniqueFinding(sqliteCommand);
                         if (Properties.Settings.Default.CaptureAcasReferenceInformation)

@@ -1204,6 +1204,29 @@ namespace Vulnerator.ViewModel
                         }
                         return;
                     }
+                    case "8":
+                    {
+                        if ((bool) GetExcelReportName())
+                        {
+                            string exportMarking = ExportMarking.Confirm("Ports, Protocols & Services");
+                            if (exportMarking == null)
+                            { e.Result = "Cancelled"; return; }
+                            guiFeedback.SetFields("Creating Ports, Protocols & Services report...", "Visible", false);
+                            Messenger.Default.Send(guiFeedback);
+                            string result = new OpenXmlPortsProtocolsServicesReportCreator().CreatePortsProtocolsServicesReport(saveExcelFile.FileName);
+                            if (!result.Contains("successful"))
+                            { throw new InvalidOperationException(result); }
+                            ExportMarking.ApplyToWorkbook(saveExcelFile.FileName, exportMarking);
+                            e.Result = "Success";
+                            guiFeedback.SetFields("Ports, Protocols & Services report creation completed...", "Collapsed", false);
+                            Messenger.Default.Send(guiFeedback);
+                        }
+                        else
+                        {
+                            e.Result = "Cancelled";
+                        }
+                        return;
+                    }
                     case "7":
                     {
                         if ((bool) GetPdfReportName())
@@ -1334,6 +1357,13 @@ namespace Vulnerator.ViewModel
                             string stigDetailsPath = $"{location}\\STIG-Details_{stamp}.xlsx";
                             new OpenXmlStigDetailsReportCreator().CreateStigDetailsReport(stigDetailsPath);
                             ExportMarking.ApplyToWorkbook(stigDetailsPath, exportMarking);
+                            break;
+                        }
+                        case 8:
+                        {
+                            string ppsPath = $"{location}\\Ports-Protocols-Services_{stamp}.xlsx";
+                            new OpenXmlPortsProtocolsServicesReportCreator().CreatePortsProtocolsServicesReport(ppsPath);
+                            ExportMarking.ApplyToWorkbook(ppsPath, exportMarking);
                             break;
                         }
                         case 7:

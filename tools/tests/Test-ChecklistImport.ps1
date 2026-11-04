@@ -302,6 +302,21 @@ try {
     $hosts01 = [int](Get-Scalar "SELECT COUNT(*) FROM Hardware WHERE DiscoveredHostName = 'nessushost01'")
     Assert-That ($hosts01 -eq 1) ('the host is not duplicated (got ' + $hosts01 + ')')
 
+    # --- Ports, protocols and services from the Nessus files ------------------------------------------
+    $port0 = [int](Get-Scalar 'SELECT COUNT(*) FROM PortsProtocolsServices WHERE Port = 0')
+    Assert-That ($port0 -eq 0) ('Nessus port 0 (host-level "general" results) is not stored as a service (got ' + $port0 + ')')
+    $ssh = [int](Get-Scalar "SELECT COUNT(*) FROM HardwarePortsProtocolsServices HPPS JOIN PortsProtocolsServices P ON HPPS.PortProtocolService_ID = P.PortProtocolService_ID JOIN Hardware H ON HPPS.Hardware_ID = H.Hardware_ID WHERE P.Port = 22 AND P.Protocol = 'tcp' AND P.DiscoveredServiceName = 'ssh' AND H.DiscoveredHostName = 'nessushost01'")
+    Assert-That ($ssh -eq 1) ('22/tcp ssh is linked to nessushost01 (got ' + $ssh + ')')
+    $evidence = [int](Get-Scalar "SELECT COUNT(*) FROM PortProtocolServiceEvidence WHERE PluginId = '500001'")
+    Assert-That ($evidence -ge 1) ('the plugin that showed 22/tcp is recorded as evidence (got ' + $evidence + ')')
+    # TestGroup was created with SQL, not on the Groups tab: give it report filter rows as a start-up would.
+    [void][Vulnerator.Model.DataAccess.DatabaseBuilder]::EnsureUserReportSettings()
+    $ppsPath = Join-Path $OutDir 'sample-Ports-Protocols-Services.xlsx'
+    $ppsResult = (New-Object Vulnerator.Model.BusinessLogic.Reports.OpenXmlPortsProtocolsServicesReportCreator).CreatePortsProtocolsServicesReport($ppsPath)
+    Assert-That (($ppsResult -like '*successful*') -and [System.IO.File]::Exists($ppsPath)) ('Ports, Protocols & Services export runs (got "' + $ppsResult + '")')
+    $ppsEntries = @([Vulnerator.Model.BusinessLogic.Reports.OpenXmlPortsProtocolsServicesReportCreator]::Load())
+    Assert-That ($ppsEntries.Count -ge 2 -and @($ppsEntries | Where-Object { $_.Port -eq 0 }).Count -eq 0) ('PPS export rows exclude port 0 (got ' + $ppsEntries.Count + ' rows)')
+
     $finding = New-Object Vulnerator.Model.BusinessLogic.Reports.EmassPoamFinding
     $finding.VulnerabilityIdentifier = '19506'
     $finding.RawRisk = 'IV'

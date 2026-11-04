@@ -1,4 +1,15 @@
-﻿# Vulnerator 2.0 (7.1.0)
+﻿# Vulnerator 2.0 (7.2.0)
+###### Version 7.2.0, November 2026
+
+| Change Description |
+| :----------------- |
+| New report: Ports, Protocols & Services (from ACAS / Nessus scans, with the detecting plugins) |
+| Nessus port 0 ("general") results are no longer stored as services; existing entries are removed |
+
+
+----------
+
+# Vulnerator 2.0 (7.1.0)
 ###### Version 7.1.0, November 2026
 
 | Change Description |

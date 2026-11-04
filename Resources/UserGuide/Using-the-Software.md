@@ -28,6 +28,10 @@ Notes:
 * The same file is only queued once. **Clear List** empties the list.
 * A checklist with no host name, FQDN or IP address is imported as a **STIG baseline**: its rules are loaded but no
   findings are recorded. Fill in the asset in STIG Viewer to import it as an assessment.
+* **Ports, protocols and services** are collected from every ACAS / Nessus import while *Parse ACAS vulnerability port
+  information* is on (the default). Credentialed scans give the fullest list (netstat plugins 14272 / 34220); UDP
+  services appear only when the scan covered UDP. Nessus marks guessed service names with "?". Review and name them
+  under Configuration Management > Ports, Protocols, Services.
 * Without a STIG library you are asked before checklists or SCAP results are imported (see Getting Started).
 
 ## Reviewing findings
@@ -53,6 +57,9 @@ Choose the report, the filters (finding type, severity, status, group) and expor
 * **STIG Details** - every checklist and SCAP rule result, one row per host and rule, with the rule text (discussion,
   check, fix), finding details, comments, Rev 5 controls and CCIs; filter buttons on every column and a
   *Summary by STIG* sheet (hosts, open CAT I / II / III, compliance %)
+* **Ports, Protocols & Services** - the ports, protocols and services ACAS / Nessus scans observed, one row per
+  port / protocol / service with its hosts, IP addresses, groups and the Nessus plugins that showed it, plus a *By Host*
+  sheet; a starting point for the PPSM registration (only the group filter applies)
 * **PDF Summary** - a printable overview: totals, open findings by source and severity, results by status, STIG
   compliance, the assets with the most open findings and the most widespread open findings
 

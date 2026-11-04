@@ -530,6 +530,9 @@ namespace Vulnerator.Model.DataAccess
                 sqliteCommand.ExecuteNonQuery();
                 sqliteCommand.CommandText = _ddlReader.ReadDdl(_storedProcedureBase + "Insert.HardwarePortProtocolServiceMapping.dml", assembly);
                 sqliteCommand.ExecuteNonQuery();
+                // Which plugin(s) showed this port on this host (the evidence column of the PPS export).
+                sqliteCommand.CommandText = _ddlReader.ReadDdl(_storedProcedureBase + "Insert.PortProtocolServiceEvidence.dml", assembly);
+                sqliteCommand.ExecuteNonQuery();
             }
             catch (Exception exception)
             {

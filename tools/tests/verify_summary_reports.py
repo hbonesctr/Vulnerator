@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Checks the STIG Details workbook and the PDF Summary produced by Test-ChecklistImport.ps1 from the synthetic files.
-Usage: python verify_summary_reports.py <sample-STIG-Details.xlsx> <sample-PDF-Summary.pdf>
+Usage: python verify_summary_reports.py <sample-STIG-Details.xlsx> <sample-PDF-Summary.pdf> <sample-Ports-Protocols-Services.xlsx>
 """
 import re
 import sys
@@ -19,6 +19,14 @@ SUMMARY_HEADERS = [
     "STIG Name", "STIG Version", "Hosts", "Rules Evaluated", "Open CAT I", "Open CAT II", "Open CAT III",
     "Not a Finding", "Not Applicable", "Not Reviewed", "Compliance %",
 ]
+PPS_HEADERS = [
+    "Port", "Protocol", "Service (as detected)", "Service Name", "Service Acronym", "Host Count", "Hosts",
+    "IP Addresses", "Groups", "Detected By (Nessus plugins)",
+]
+PPS_HOST_HEADERS = [
+    "Host Name", "IP Address", "Groups", "Port", "Protocol", "Service (as detected)", "Service Name",
+    "Detected By (Nessus plugins)",
+]
 STATUSES = {"Open", "Not a Finding", "Not Applicable", "Not Reviewed", "Error"}
 failures = []
 
@@ -29,7 +37,24 @@ def check(condition, message):
         failures.append(message)
 
 
-def main(xlsx_path, pdf_path):
+def check_pps(path):
+    book = openpyxl.load_workbook(path)
+    check(book.sheetnames == ["Ports Protocols Services", "By Host"], "PPS sheets: %s" % book.sheetnames)
+    services = book["Ports Protocols Services"]
+    check([c.value for c in services[1]] == PPS_HEADERS, "PPS headers")
+    rows = [r for r in services.iter_rows(min_row=2, values_only=True) if r[0] is not None]
+    check(len(rows) >= 2, "PPS has service rows (%d)" % len(rows))
+    check(all(str(r[0]) != "0" for r in rows), "no port 0 rows")
+    ssh = [r for r in rows if str(r[0]) == "22" and r[1] == "TCP" and r[2] == "ssh"]
+    check(len(ssh) == 1 and "nessushost01" in (ssh[0][6] or "").lower(), "22/TCP ssh lists nessushost01")
+    check(len(ssh) == 1 and "500001" in (ssh[0][9] or ""), "22/TCP ssh shows the detecting plugin")
+    by_host = book["By Host"]
+    check([c.value for c in by_host[1]] == PPS_HOST_HEADERS, "PPS By Host headers")
+    host_rows = [r for r in by_host.iter_rows(min_row=2, values_only=True) if r[0] is not None]
+    check(sum(int(r[5]) for r in rows) == len(host_rows), "Host Count adds up to the By Host rows")
+
+
+def main(xlsx_path, pdf_path, pps_path=None):
     book = openpyxl.load_workbook(xlsx_path)
     check(book.sheetnames == ["STIG Details", "Summary by STIG"], "STIG Details sheets: %s" % book.sheetnames)
     details = book["STIG Details"]
@@ -58,6 +83,9 @@ def main(xlsx_path, pdf_path):
                      "STIG compliance", "CUI//TEST MARKING", "Vulnerator 2.0"]:
         check(expected in text, "PDF contains '%s'" % expected)
 
+    if pps_path:
+        check_pps(pps_path)
+
     if failures:
         print("%d check(s) failed" % len(failures))
         sys.exit(1)
@@ -65,4 +93,4 @@ def main(xlsx_path, pdf_path):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2])
+    main(*sys.argv[1:4])

@@ -373,6 +373,7 @@
     <Compile Include="Model\BusinessLogic\Reports\OpenXmlStigDiscrepanciesReportCreator.cs" />
     <Compile Include="Model\BusinessLogic\Reports\OpenXmlStigDetailsReportCreator.cs" />
     <Compile Include="Model\BusinessLogic\Reports\PdfSummaryReportCreator.cs" />
+    <Compile Include="Model\BusinessLogic\Reports\OpenXmlPortsProtocolsServicesReportCreator.cs" />
     <Compile Include="Model\BusinessLogic\Reports\ReportFindings.cs" />
     <Compile Include="Model\BusinessLogic\Reports\OpenXmlStylesheetCreator.cs" />
     <Compile Include="Model\DataAccess\DatabaseBuilder.cs" />
@@ -939,6 +940,7 @@
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Insert\MitigationOrCondition.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Insert\EmptyMitigationOrCondition.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Insert\PortProtocolService.dml" />
+    <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Insert\PortProtocolServiceEvidence.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Insert\ScapScore.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Insert\Software.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Insert\UniqueFinding.dml" />
@@ -1069,6 +1071,7 @@
     <EmbeddedResource Include="Resources\DdlFiles\Tables\Insert\Data\Overlays.ddl" />
     <EmbeddedResource Include="Resources\DdlFiles\Tables\Insert\Data\LifecycleStatuses.ddl" />
     <EmbeddedResource Include="Resources\DdlFiles\Tables\Insert\Data\RequiredReports.ddl" />
+    <EmbeddedResource Include="Resources\DdlFiles\Tables\Insert\Data\PortsProtocolsServicesCleanup.ddl" />
     <EmbeddedResource Include="Resources\DdlFiles\Tables\Create\IA_Controls.ddl" />
     <EmbeddedResource Include="Resources\DdlFiles\Tables\Create\IATA_Standards.ddl" />
     <EmbeddedResource Include="Resources\DdlFiles\Tables\Create\ImpactAdjustments.ddl" />
@@ -1099,6 +1102,7 @@
     <EmbeddedResource Include="Resources\DdlFiles\Tables\Create\Overlays.ddl" />
     <EmbeddedResource Include="Resources\DdlFiles\Tables\Create\PIT_Determination.ddl" />
     <EmbeddedResource Include="Resources\DdlFiles\Tables\Create\PortsProtocolsServices.ddl" />
+    <EmbeddedResource Include="Resources\DdlFiles\Tables\Create\PortProtocolServiceEvidence.ddl" />
     <EmbeddedResource Include="Resources\DdlFiles\Tables\Create\RelatedDocuments.ddl" />
     <EmbeddedResource Include="Resources\DdlFiles\Tables\Create\RelatedTesting.ddl" />
     <EmbeddedResource Include="Resources\DdlFiles\Tables\Create\ResponsibilityRoles.ddl" />
