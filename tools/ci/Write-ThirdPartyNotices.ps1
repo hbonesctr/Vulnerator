@@ -58,4 +58,9 @@ if ($missing.Count -gt 0) {
     exit 1
 }
 [System.IO.File]::WriteAllText((Join-Path $bin 'THIRD-PARTY-NOTICES.txt'), $builder.ToString(), (New-Object System.Text.UTF8Encoding($false)))
+$leftover = @(Get-ChildItem $bin -Recurse -File | Where-Object { $_.Name -eq 'MahApps.Metro.IconPacks.dll' })
+if ($leftover.Count -gt 0) { Write-Host '::error::the old icon library (MahApps.Metro.IconPacks.dll) is still in the release folder'; exit 1 }
+$noticeText = [System.IO.File]::ReadAllText((Join-Path $bin 'THIRD-PARTY-NOTICES.txt'))
+$listed = ([regex]::Matches($noticeText, '(?m)^-{20,}')).Count
+Write-Host ('::notice::THIRD-PARTY-NOTICES.txt: ' + $listed + ' components, ' + $noticeText.Length + ' characters; icon packs shipped: ' + ((Get-ChildItem $bin -Filter 'MahApps.Metro.IconPacks*.dll' | ForEach-Object { $_.Name }) -join ', '))
 Write-Host ('Wrote LICENSE.txt and THIRD-PARTY-NOTICES.txt (' + @($config.packages.package).Count + ' packages listed in packages.config)')
