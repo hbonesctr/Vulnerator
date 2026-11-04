@@ -236,6 +236,17 @@ try {
     $discPath = Join-Path $OutDir 'sample-STIG-Discrepancies.xlsx'
     $discResult = (New-Object Vulnerator.Model.BusinessLogic.Reports.OpenXmlStigDiscrepanciesReportCreator).CreateDiscrepanciesReport($discPath)
     Assert-That (($discResult -like '*successful*') -and [System.IO.File]::Exists($discPath)) ('SCAP & STIG Discrepancies export runs (got "' + $discResult + '")')
+    $stigDetailsPath = Join-Path $OutDir 'sample-STIG-Details.xlsx'
+    $sdResult = (New-Object Vulnerator.Model.BusinessLogic.Reports.OpenXmlStigDetailsReportCreator).CreateStigDetailsReport($stigDetailsPath)
+    Assert-That (($sdResult -like '*successful*') -and [System.IO.File]::Exists($stigDetailsPath)) ('STIG Details export runs (got "' + $sdResult + '")')
+    $stigRows = @([Vulnerator.Model.BusinessLogic.Reports.ReportFindings]::Load('STIG Details', [string[]]@('CKL', 'XCCDF')))
+    Assert-That ($stigRows.Count -ge 3) ('STIG Details has checklist / SCAP rows (got ' + $stigRows.Count + ')')
+    Assert-That (@($stigRows | Where-Object { $_.FindingType -ne 'CKL' -and $_.FindingType -ne 'XCCDF' }).Count -eq 0) 'STIG Details holds only checklist and SCAP results'
+    $pdfPath = Join-Path $OutDir 'sample-PDF-Summary.pdf'
+    $pdfResult = (New-Object Vulnerator.Model.BusinessLogic.Reports.PdfSummaryReportCreator).CreatePdfSummary($pdfPath, 'CUI//TEST MARKING')
+    $pdfOk = ($pdfResult -like '*successful*') -and [System.IO.File]::Exists($pdfPath)
+    if ($pdfOk) { $pdfOk = [System.Text.Encoding]::ASCII.GetString([System.IO.File]::ReadAllBytes($pdfPath), 0, 5) -eq '%PDF-' }
+    Assert-That $pdfOk ('PDF Summary export runs and writes a PDF (got "' + $pdfResult + '")')
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     $markedPath = Join-Path $workDir 'marked-RAR.xlsx'
     Copy-Item $rarPath $markedPath

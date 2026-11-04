@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using DocumentFormat.OpenXml;
@@ -66,6 +66,15 @@ namespace Vulnerator.Model.BusinessLogic.Reports
             WorksheetPart worksheetPart = _workbookPart.AddNewPart<WorksheetPart>();
             Worksheet worksheet = new Worksheet();
 
+            if (sheet.FrozenRows > 0)
+            {
+                string topLeft = "A" + (sheet.FrozenRows + 1).ToString(System.Globalization.CultureInfo.InvariantCulture);
+                worksheet.Append(new SheetViews(new SheetView(
+                    new Pane { VerticalSplit = sheet.FrozenRows, TopLeftCell = topLeft, ActivePane = PaneValues.BottomLeft, State = PaneStateValues.Frozen },
+                    new Selection { Pane = PaneValues.BottomLeft, ActiveCell = topLeft, SequenceOfReferences = new ListValue<StringValue> { InnerText = topLeft } })
+                { WorkbookViewId = 0U }));
+            }
+
             Columns columns = new Columns();
             for (int i = 0; i < sheet.ColumnWidths.Length; i++)
             {
@@ -88,6 +97,9 @@ namespace Vulnerator.Model.BusinessLogic.Reports
                 sheetData.Append(xmlRow);
             }
             worksheet.Append(sheetData);
+
+            if (!string.IsNullOrWhiteSpace(sheet.AutoFilter))
+            { worksheet.Append(new AutoFilter { Reference = sheet.AutoFilter }); }
 
             if (sheet.Merges.Count > 0)
             {
@@ -184,6 +196,12 @@ namespace Vulnerator.Model.BusinessLogic.Reports
         internal readonly HashSet<int> HiddenRows = new HashSet<int>();
         internal readonly SortedDictionary<int, SortedDictionary<int, Cell>> Rows = new SortedDictionary<int, SortedDictionary<int, Cell>>();
         internal readonly List<string> Merges = new List<string>();
+
+        /// <summary>Rows kept visible at the top while scrolling (0 for none).</summary>
+        public int FrozenRows { get; set; }
+
+        /// <summary>Range with Excel filter buttons, for example "A1:W250" (null for none).</summary>
+        public string AutoFilter { get; set; }
 
         internal EmassSheet(EmassWorkbookWriter writer, string name, double[] columnWidths, int[] hiddenColumns)
         {

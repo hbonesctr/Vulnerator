@@ -94,6 +94,11 @@ jobs:
           python -m pip install --quiet openpyxl
           python tools/tests/verify_emass_exports.py sample-exports/sample-eMASS-POAM.xlsx sample-exports/sample-eMASS-HW-SW-List.xlsx
 
+      - name: Verify STIG Details and PDF Summary
+        run: |
+          python -m pip install --quiet openpyxl pypdf
+          python tools/tests/verify_summary_reports.py sample-exports/sample-STIG-Details.xlsx sample-exports/sample-PDF-Summary.pdf
+
       - name: Upload sample eMASS exports (synthetic data)
         if: always()
         uses: actions/upload-artifact@v4

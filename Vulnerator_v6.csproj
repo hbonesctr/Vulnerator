@@ -371,6 +371,9 @@
     <Compile Include="Model\BusinessLogic\AssociateStig.cs" />
     <Compile Include="Model\BusinessLogic\Reports\OpenXmlRiskAssessmentReportCreator.cs" />
     <Compile Include="Model\BusinessLogic\Reports\OpenXmlStigDiscrepanciesReportCreator.cs" />
+    <Compile Include="Model\BusinessLogic\Reports\OpenXmlStigDetailsReportCreator.cs" />
+    <Compile Include="Model\BusinessLogic\Reports\PdfSummaryReportCreator.cs" />
+    <Compile Include="Model\BusinessLogic\Reports\ReportFindings.cs" />
     <Compile Include="Model\BusinessLogic\Reports\OpenXmlStylesheetCreator.cs" />
     <Compile Include="Model\DataAccess\DatabaseBuilder.cs" />
     <Compile Include="Model\DataAccess\DatabaseContext.cs" />

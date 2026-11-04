@@ -1181,6 +1181,51 @@ namespace Vulnerator.ViewModel
                         }
                         return;
                     }
+                    case "6":
+                    {
+                        if ((bool) GetExcelReportName())
+                        {
+                            string exportMarking = ExportMarking.Confirm("STIG Details report");
+                            if (exportMarking == null)
+                            { e.Result = "Cancelled"; return; }
+                            guiFeedback.SetFields("Creating STIG Details report...", "Visible", false);
+                            Messenger.Default.Send(guiFeedback);
+                            string result = new OpenXmlStigDetailsReportCreator().CreateStigDetailsReport(saveExcelFile.FileName);
+                            if (!result.Contains("successful"))
+                            { throw new InvalidOperationException(result); }
+                            ExportMarking.ApplyToWorkbook(saveExcelFile.FileName, exportMarking);
+                            e.Result = "Success";
+                            guiFeedback.SetFields("STIG Details report creation completed...", "Collapsed", false);
+                            Messenger.Default.Send(guiFeedback);
+                        }
+                        else
+                        {
+                            e.Result = "Cancelled";
+                        }
+                        return;
+                    }
+                    case "7":
+                    {
+                        if ((bool) GetPdfReportName())
+                        {
+                            string exportMarking = ExportMarking.Confirm("PDF Summary");
+                            if (exportMarking == null)
+                            { e.Result = "Cancelled"; return; }
+                            guiFeedback.SetFields("Creating PDF Summary...", "Visible", false);
+                            Messenger.Default.Send(guiFeedback);
+                            string result = new PdfSummaryReportCreator().CreatePdfSummary(savePdfFile.FileName, exportMarking);
+                            if (!result.Contains("successful"))
+                            { throw new InvalidOperationException(result); }
+                            e.Result = "Success";
+                            guiFeedback.SetFields("PDF Summary creation completed...", "Collapsed", false);
+                            Messenger.Default.Send(guiFeedback);
+                        }
+                        else
+                        {
+                            e.Result = "Cancelled";
+                        }
+                        return;
+                    }
                     case "3":
                     {
                         if ((bool) GetExcelReportName())
@@ -1282,6 +1327,19 @@ namespace Vulnerator.ViewModel
                             string RiskAssessmentReportPath = $"{location}\\Risk-Assessment-Report_{stamp}.xlsx";
                             new OpenXmlRiskAssessmentReportCreator().CreateRiskAssessmentReport(RiskAssessmentReportPath);
                             ExportMarking.ApplyToWorkbook(RiskAssessmentReportPath, exportMarking);
+                            break;
+                        }
+                        case 6:
+                        {
+                            string stigDetailsPath = $"{location}\\STIG-Details_{stamp}.xlsx";
+                            new OpenXmlStigDetailsReportCreator().CreateStigDetailsReport(stigDetailsPath);
+                            ExportMarking.ApplyToWorkbook(stigDetailsPath, exportMarking);
+                            break;
+                        }
+                        case 7:
+                        {
+                            string pdfSummaryPath = $"{location}\\Vulnerability-Summary_{stamp}.pdf";
+                            new PdfSummaryReportCreator().CreatePdfSummary(pdfSummaryPath, exportMarking);
                             break;
                         }
                         case 3:
@@ -1447,7 +1505,7 @@ namespace Vulnerator.ViewModel
                 savePdfFile = new Microsoft.Win32.SaveFileDialog();
                 savePdfFile.AddExtension = true;
                 savePdfFile.Filter = "PDF Files (*.pdf)|*.pdf";
-                savePdfFile.DefaultExt = "xls";
+                savePdfFile.DefaultExt = "pdf";
                 savePdfFile.Title = "Save PDF Report";
                 savePdfFile.OverwritePrompt = true;
                 savePdfFile.CheckPathExists = true;
