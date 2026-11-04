@@ -1,4 +1,4 @@
-# Using the Software
+﻿# Using the Software
 
 The left menu holds the main pages: **Vulnerability Management**, **Configuration Management**, **Reporting** and
 **News**, with **Help**, **Settings**, **Theme** and **About** at the bottom.
@@ -48,7 +48,16 @@ Choose the report, the filters (finding type, severity, status, group) and expor
 
 * **eMASS POA&M** - the eMASS POA&M import workbook, with Rev 5 controls and assessment procedures
 * **eMASS Hardware / Software** - the eMASS hardware and software list workbooks
-* The other Excel reports (for example the Risk Assessment Report and the STIG / ACAS details)
+* **Risk Assessment Report** - risk workbook of the findings by status and risk level
+* **SCAP & STIG Discrepancies** - rules where the SCAP result and the checklist disagree for the same host
+* **STIG Details** - every checklist and SCAP rule result, one row per host and rule, with the rule text (discussion,
+  check, fix), finding details, comments, Rev 5 controls and CCIs; filter buttons on every column and a
+  *Summary by STIG* sheet (hosts, open CAT I / II / III, compliance %)
+* **PDF Summary** - a printable overview: totals, open findings by source and severity, results by status, STIG
+  compliance, the assets with the most open findings and the most widespread open findings
+
+Each report has its own filters; tick **Use Global Value** to use the Global ones. Generate one report with its button,
+or tick several and use **Launch Selected Reports** to save them all to one folder.
 
 Before each export you can accept or change the **marking**; it is printed in the header and footer of every sheet and
-stored in the file properties. Turn the question off in Settings if you always use the same marking.
+stored in the file properties (for the PDF, at the top and bottom of every page). Turn the question off in Settings if you always use the same marking.

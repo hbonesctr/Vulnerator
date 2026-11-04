@@ -1,4 +1,15 @@
-﻿# Vulnerator 2.0 (7.0.0)
+﻿# Vulnerator 2.0 (7.1.0)
+###### Version 7.1.0, November 2026
+
+| Change Description |
+| :----------------- |
+| New report: STIG Details (successor of the Vulnerator 6 STIG Details tab), with a Summary by STIG sheet |
+| New report: PDF Summary (printable overview with STIG compliance, top assets and most widespread findings) |
+
+
+----------
+
+# Vulnerator 2.0 (7.0.0)
 ###### Version 7.0.0, November 2026
 
 Application rewrite by Hector L. Bones.

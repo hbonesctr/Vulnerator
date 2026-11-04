@@ -119,7 +119,7 @@ namespace Vulnerator.Model.BusinessLogic.Reports
                 systemLine.Format.SpaceAfter = Unit.FromPoint(8);
             }
 
-            Table info = NewTable(section, 5.0, 12.0);
+            Table info = NewTable(section, 2, 5.0, 12.0);
             AddInfoRow(info, "Generated", DateTime.Now.ToString("d MMMM yyyy, HH:mm", CultureInfo.InvariantCulture));
             AddInfoRow(info, "Prepared by", Properties.Settings.Default.Name);
             AddInfoRow(info, "Organization", Properties.Settings.Default.Organization);
@@ -131,7 +131,7 @@ namespace Vulnerator.Model.BusinessLogic.Reports
             // Overview
             section.AddParagraph("Overview", StyleNames.Heading1);
             List<ReportFinding> open = findings.Where(f => f.IsOpen).ToList();
-            Table overview = NewTable(section, 9.0, 4.0);
+            Table overview = NewTable(section, 1, 9.0, 4.0);
             AddInfoRow(overview, "Assets (hosts and software)", Count(findings.Select(f => f.Asset).Where(a => a.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).Count()));
             AddInfoRow(overview, "Results evaluated", Count(findings.Count));
             AddInfoRow(overview, "Open findings", Count(open.Count));
@@ -148,7 +148,7 @@ namespace Vulnerator.Model.BusinessLogic.Reports
 
             // Open findings by source and severity
             section.AddParagraph("Open findings by source and severity", StyleNames.Heading1);
-            Table bySource = NewTable(section, 5.5, 2.2, 2.2, 2.2, 2.2, 2.4);
+            Table bySource = NewTable(section, 1, 5.5, 2.2, 2.2, 2.2, 2.2, 2.4);
             AddHeader(bySource, "Source", "CAT I", "CAT II", "CAT III", "CAT IV", "Total open");
             foreach (IGrouping<string, ReportFinding> type in findings.GroupBy(f => SourceLabel(f.FindingType)).OrderBy(g => g.Key))
             {
@@ -159,7 +159,7 @@ namespace Vulnerator.Model.BusinessLogic.Reports
 
             // Results by status
             section.AddParagraph("Results by status", StyleNames.Heading1);
-            Table byStatus = NewTable(section, 4.5, 2.1, 2.5, 2.5, 2.5, 1.8, 1.8);
+            Table byStatus = NewTable(section, 1, 4.5, 2.1, 2.5, 2.5, 2.5, 1.8, 1.8);
             AddHeader(byStatus, "Source", "Open", "Not a Finding", "Not Applicable", "Not Reviewed", "Error", "Total");
             foreach (IGrouping<string, ReportFinding> type in findings.GroupBy(f => SourceLabel(f.FindingType)).OrderBy(g => g.Key))
             {
@@ -173,7 +173,7 @@ namespace Vulnerator.Model.BusinessLogic.Reports
             if (stigResults.Count > 0)
             {
                 section.AddParagraph("STIG compliance", StyleNames.Heading1);
-                Table stigs = NewTable(section, 7.4, 1.6, 1.4, 1.5, 1.5, 1.5, 2.5);
+                Table stigs = NewTable(section, 2, 7.4, 1.6, 1.4, 1.5, 1.5, 1.5, 2.5);
                 AddHeader(stigs, "STIG", "Version", "Hosts", "Open I", "Open II", "Open III", "Compliance %");
                 foreach (OpenXmlStigDetailsReportCreator.StigSummary s in OpenXmlStigDetailsReportCreator.Summarize(stigResults))
                 {
@@ -188,7 +188,7 @@ namespace Vulnerator.Model.BusinessLogic.Reports
             if (open.Count > 0)
             {
                 section.AddParagraph($"Assets with the most open findings (top {TopCount})", StyleNames.Heading1);
-                Table assets = NewTable(section, 7.6, 2.0, 2.0, 2.0, 2.0, 2.2);
+                Table assets = NewTable(section, 1, 7.6, 2.0, 2.0, 2.0, 2.0, 2.2);
                 AddHeader(assets, "Asset", "CAT I", "CAT II", "CAT III", "CAT IV", "Total open");
                 foreach (var asset in open.GroupBy(f => f.Asset, StringComparer.OrdinalIgnoreCase)
                              .Select(g => new
@@ -209,7 +209,7 @@ namespace Vulnerator.Model.BusinessLogic.Reports
 
                 // Most widespread open findings
                 section.AddParagraph($"Most widespread open findings (top {TopCount})", StyleNames.Heading1);
-                Table widespread = NewTable(section, 3.4, 7.8, 3.0, 1.4, 2.2);
+                Table widespread = NewTable(section, 4, 3.2, 7.0, 4.2, 1.4, 2.0);
                 AddHeader(widespread, "ID", "Title", "Source", "CAT", "Assets");
                 foreach (var item in open.GroupBy(f => new { f.FindingType, f.SourceName, f.RuleIdentifier })
                              .Select(g => new
@@ -270,7 +270,8 @@ namespace Vulnerator.Model.BusinessLogic.Reports
             return text.Length <= length ? text : text.Substring(0, length - 3) + "...";
         }
 
-        private static Table NewTable(Section section, params double[] widthsCm)
+        /// <summary>A table; the first <paramref name="textColumns"/> columns are left-aligned text, the rest right-aligned numbers.</summary>
+        private static Table NewTable(Section section, int textColumns, params double[] widthsCm)
         {
             Table table = section.AddTable();
             table.Borders.Width = 0.5;
@@ -282,7 +283,7 @@ namespace Vulnerator.Model.BusinessLogic.Reports
             for (int i = 0; i < widthsCm.Length; i++)
             {
                 Column column = table.AddColumn(Unit.FromCentimeter(widthsCm[i]));
-                column.Format.Alignment = i == 0 || widthsCm[i] > 4.5 ? ParagraphAlignment.Left : ParagraphAlignment.Right;
+                column.Format.Alignment = i < textColumns ? ParagraphAlignment.Left : ParagraphAlignment.Right;
             }
             return table;
         }
