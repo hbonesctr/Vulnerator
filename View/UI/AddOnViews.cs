@@ -70,16 +70,22 @@ namespace Vulnerator.View.UI
                 }
                 foreach (AddOnView page in AddOnManager.Pages)
                 {
-                    PackIconMaterialKind kind;
-                    if (string.IsNullOrWhiteSpace(page.IconName) || !Enum.TryParse(page.IconName.Trim(), true, out kind))
-                    { kind = PackIconMaterialKind.PuzzleOutline; }
-                    items.Insert(position++, new HamburgerMenuIconItem
+                    try
                     {
-                        Label = page.Title,
-                        ToolTip = page.Title + " (" + page.Owner.Name + " add-on)",
-                        Icon = new PackIconMaterial { Kind = kind, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center },
-                        Tag = new AddOnViewHost(page)
-                    });
+                        PackIconMaterialKind kind;
+                        if (string.IsNullOrWhiteSpace(page.IconName) || !Enum.TryParse(page.IconName.Trim(), true, out kind))
+                        { kind = PackIconMaterialKind.PuzzleOutline; }
+                        items.Insert(position, new HamburgerMenuIconItem
+                        {
+                            Label = page.Title,
+                            ToolTip = page.Title + " (" + page.Owner.Name + " add-on)",
+                            Icon = new PackIconMaterial { Kind = kind, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center },
+                            Tag = new AddOnViewHost(page)
+                        });
+                        position++;
+                    }
+                    catch (Exception exception)
+                    { LogWriter.LogErrorWithDebug("Add-ons: the page '" + page.Title + "' of " + page.Owner.Name + " could not be added to the menu.", exception); }
                 }
             }
             catch (Exception exception)

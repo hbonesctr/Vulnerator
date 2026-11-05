@@ -205,6 +205,10 @@ namespace __NS__
     Check ([TestSample.Entry]::Changes -eq 1 -and [TestBroken.Entry]::Changes -eq 0) 'DataChanged reaches loaded add-ons only'
 
     # Menu and Settings.
+    $pageList = @([Vulnerator.Model.AddOns.AddOnManager]::Pages)
+    $pageInfo = 'pages ' + $pageList.Count + ' [' + (@($pageList | ForEach-Object { $_.Title }) -join ', ') + ']; per add-on: ' + (@($loaded | ForEach-Object { $_.Name + '=' + $_.State + '/' + $_.Pages.Count }) -join ', ')
+    Write-Host ('     ' + $pageInfo)
+    Check ($pageList.Count -eq 2) ('two add-on pages registered (' + $pageInfo + ')')
     $menu = New-Object MahApps.Metro.Controls.HamburgerMenu
     $items = New-Object MahApps.Metro.Controls.HamburgerMenuItemCollection
     foreach ($label in 'Vulnerability Management', 'Reporting', 'News') {
@@ -216,11 +220,13 @@ namespace __NS__
     [Vulnerator.View.UI.AddOnUi]::AddPages($menu)
     $labels = @($items | ForEach-Object { $_.Label }) -join ' | '
     Write-Host ('     menu: ' + $labels)
-    Check ($labels -eq 'Vulnerability Management | Reporting | Sample Dashboard | Nested Page | News') 'add-on pages go before News; the broken one is left out'
+    Check ($labels -eq 'Vulnerability Management | Reporting | Sample Dashboard | Nested Page | News') ('add-on pages go before News; the broken one is left out (menu: ' + $labels + ')')
     Check ($items[2].Icon.Kind -eq [MahApps.Metro.IconPacks.PackIconMaterialKind]::ChartBar -and $items[3].Icon.Kind -eq [MahApps.Metro.IconPacks.PackIconMaterialKind]::PuzzleOutline) 'icons: the named one, else the default'
     Check ($items[2].Tag -is [Vulnerator.View.UI.AddOnViewHost]) 'pages are created on first display'
-    $view = @([Vulnerator.Model.AddOns.AddOnManager]::Pages)[0].CreateView.Invoke()
-    Check ($view -is [System.Windows.Controls.TextBlock] -and $view.Text -eq 'sample page') 'the add-on creates its page'
+    $view = $null
+    $viewError = ''
+    try { $view = $pageList[0].CreateView.Invoke() } catch { $viewError = $_.Exception.Message }
+    Check ($view -is [System.Windows.Controls.TextBlock] -and $view.Text -eq 'sample page') ('the add-on creates its page (' + $(if ($null -eq $view) { 'null ' + $viewError } else { $view.GetType().FullName }) + ')')
 
     $panel = New-Object System.Windows.Controls.StackPanel
     [Vulnerator.View.UI.AddOnUi]::FillIntegrations($panel)
