@@ -220,12 +220,12 @@ namespace __NS__
     [Vulnerator.View.UI.AddOnUi]::AddPages($menu)
     $labels = @($items | ForEach-Object { $_.Label }) -join ' | '
     Write-Host ('     menu: ' + $labels)
-    Check ($labels -eq 'Vulnerability Management | Reporting | Sample Dashboard | Nested Page | News') ('add-on pages go before News; the broken one is left out (menu: ' + $labels + ')')
-    Check ($items[2].Icon.Kind -eq [MahApps.Metro.IconPacks.PackIconMaterialKind]::ChartBar -and $items[3].Icon.Kind -eq [MahApps.Metro.IconPacks.PackIconMaterialKind]::PuzzleOutline) 'icons: the named one, else the default'
+    Check ($labels -eq 'Vulnerability Management | Reporting | Nested Page | Sample Dashboard | News') ('add-on pages go before News in file order; the broken one is left out (menu: ' + $labels + ')')
+    Check ($items[2].Icon.Kind -eq [MahApps.Metro.IconPacks.PackIconMaterialKind]::PuzzleOutline -and $items[3].Icon.Kind -eq [MahApps.Metro.IconPacks.PackIconMaterialKind]::ChartBar) 'icons: the named one, else the default'
     Check ($items[2].Tag -is [Vulnerator.View.UI.AddOnViewHost]) 'pages are created on first display'
     $view = $null
     $viewError = ''
-    try { $view = $pageList[0].CreateView.Invoke() } catch { $viewError = $_.Exception.Message }
+    try { $view = @($pageList | Where-Object { $_.Title -eq 'Sample Dashboard' })[0].CreateView.Invoke() } catch { $viewError = $_.Exception.Message }
     Check ($view -is [System.Windows.Controls.TextBlock] -and $view.Text -eq 'sample page') ('the add-on creates its page (' + $(if ($null -eq $view) { 'null ' + $viewError } else { $view.GetType().FullName }) + ')')
 
     $panel = New-Object System.Windows.Controls.StackPanel
