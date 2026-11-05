@@ -63,6 +63,13 @@ jobs:
         shell: powershell
         run: tools/ci/Write-ThirdPartyNotices.ps1 -BinDir bin/Release
 
+      - name: Add the empty Add-ons folder
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force bin/Release/Add-ons | Out-Null
+          Copy-Item tools/addons/README.txt bin/Release/Add-ons/README.txt
+          if (-not (Test-Path bin/Release/Vulnerator.AddOns.dll)) { Write-Host '::error::Vulnerator.AddOns.dll (add-on contract) is not in the build'; exit 1 }
+
       - name: Launch test (window appears)
         shell: cmd
         timeout-minutes: 5
@@ -102,6 +109,11 @@ jobs:
         shell: cmd
         timeout-minutes: 5
         run: '%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools\tests\Test-EntityFramework.ps1 -BinDir bin\Release'
+
+      - name: Test the add-on mechanism (throw-away test add-ons)
+        shell: cmd
+        timeout-minutes: 5
+        run: '%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools\tests\Test-AddOns.ps1 -BinDir bin\Release'
 
       - name: Verify eMASS exports against the templates
         run: |

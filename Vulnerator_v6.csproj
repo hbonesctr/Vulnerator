@@ -376,6 +376,10 @@
     <Compile Include="Model\BusinessLogic\Reports\PdfSummaryReportCreator.cs" />
     <Compile Include="Model\BusinessLogic\Reports\OpenXmlPortsProtocolsServicesReportCreator.cs" />
     <Compile Include="Model\BusinessLogic\Reports\ReportFindings.cs" />
+    <Compile Include="Model\AddOns\AddOnData.cs" />
+    <Compile Include="Model\AddOns\AddOnHost.cs" />
+    <Compile Include="Model\AddOns\AddOnManager.cs" />
+    <Compile Include="View\UI\AddOnViews.cs" />
     <Compile Include="Model\BusinessLogic\Reports\OpenXmlStylesheetCreator.cs" />
     <Compile Include="Model\DataAccess\AssetEditor.cs" />
     <Compile Include="Model\DataAccess\DatabaseBuilder.cs" />
@@ -1188,6 +1192,12 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include=".github\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="Vulnerator.AddOns\Vulnerator.AddOns.csproj">
+      <Project>{6F1C2A57-3B0E-4C8E-9D41-7A2E5B9C0D11}</Project>
+      <Name>Vulnerator.AddOns</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

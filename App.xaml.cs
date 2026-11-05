@@ -33,6 +33,8 @@ namespace Vulnerator
         void Application_Startup(object sender, StartupEventArgs e)
         {
             CheckSqlite();
+            // Add-ons load before any window, so their pages and settings are there when it opens; failures are logged and skipped.
+            Model.AddOns.AddOnManager.LoadAll();
             if (Vulnerator.Properties.Settings.Default["Environment"].ToString().Equals("Undefined"))
             {
                 SplashWindow splashWindow = new SplashWindow();

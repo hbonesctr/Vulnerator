@@ -68,3 +68,11 @@ or tick several and use **Launch Selected Reports** to save them all to one fold
 
 Before each export you can accept or change the **marking**; it is printed in the header and footer of every sheet and
 stored in the file properties (for the PDF, at the top and bottom of every page). Turn the question off in Settings if you always use the same marking.
+
+## Add-ons
+Add-ons are optional extensions (for example dashboards or integrations); none come with Vulnerator. To install one,
+put its files in the **Add-ons** folder next to Vulnerator.exe (the main file ends in `.AddOn.dll`) and restart
+Vulnerator. Its pages appear in the menu and its options under **Settings > Integrations**, which also lists every
+add-on found and whether it loaded. An add-on that cannot load is skipped and the reason is logged; Vulnerator keeps
+working. If Windows marks the files as downloaded, right-click them, choose **Properties**, tick **Unblock** and restart.
+Add-ons can read findings and hardware but cannot change the database.

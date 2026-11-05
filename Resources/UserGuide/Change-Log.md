@@ -1,4 +1,15 @@
-﻿# Vulnerator 2.0 (7.3.0)
+﻿# Vulnerator 2.0 (7.4.0-beta.1)
+###### Version 7.4.0 beta 1, November 2026
+
+| Change Description |
+| :----------------- |
+| Add-on support: optional add-ons in the Add-ons folder add menu pages and Settings > Integrations options |
+| Add-ons read findings and hardware read-only; a broken or incompatible add-on is skipped and logged |
+
+
+----------
+
+# Vulnerator 2.0 (7.3.0)
 ###### Version 7.3.0, November 2026
 
 | Change Description |

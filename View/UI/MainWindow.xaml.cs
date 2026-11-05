@@ -20,6 +20,7 @@ namespace Vulnerator.View.UI
             //loadingThread.IsBackground = true;
             //loadingThread.Start();
             InitializeComponent();
+            AddOnUi.AddPages(hamburgerMenu);
             //loadingThread.Abort();
         }
 

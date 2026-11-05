@@ -564,6 +564,12 @@
                         </DataGrid>
                     </StackPanel>
                 </Grid>
+                <Label Style="{StaticResource SecondLevelHeaderStyle}">
+                    <TextBlock Text="Integrations (add-ons)"
+                               TextTrimming="CharacterEllipsis" />
+                </Label>
+                <StackPanel x:Name="IntegrationsPanel"
+                            Margin="0,0,0,5" />
             </StackPanel>
         </ScrollViewer>
     </Grid>

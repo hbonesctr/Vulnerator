@@ -163,7 +163,7 @@ ORDER BY VS.SourceName, H.DisplayedHostName, V.VulnerabilityGroupIdentifier, V.U
                 string statuses = Filter(displayedReportName, (f, c, n) => f.Status(c, n));
                 if (!string.IsNullOrWhiteSpace(statuses)) conditions.Add("(UF.Status " + statuses + " OR MOC.MitigatedStatus " + statuses + ")");
 
-                List<ReportFinding> findings = new List<ReportFinding>();
+                List<ReportFinding> findings;
                 using (SQLiteCommand command = DatabaseBuilder.sqliteConnection.CreateCommand())
                 {
                     if (onlyFindingTypes != null && onlyFindingTypes.Length > 0)
@@ -177,41 +177,7 @@ ORDER BY VS.SourceName, H.DisplayedHostName, V.VulnerabilityGroupIdentifier, V.U
                         conditions.Add("FT.FindingType IN (" + string.Join(", ", names) + ")");
                     }
                     command.CommandText = Query.Replace("/*WHERE*/", conditions.Count == 0 ? string.Empty : "WHERE " + string.Join(Environment.NewLine + "  AND ", conditions));
-                    using (SQLiteDataReader reader = command.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            findings.Add(new ReportFinding
-                            {
-                                FindingType = Text(reader, 0),
-                                SourceName = Text(reader, 1),
-                                SourceVersion = Text(reader, 2),
-                                SourceRelease = Text(reader, 3),
-                                HostName = Text(reader, 4),
-                                IpAddress = Text(reader, 5),
-                                SoftwareName = Text(reader, 6),
-                                GroupIdentifier = Text(reader, 7),
-                                RuleIdentifier = Text(reader, 8),
-                                RuleVersion = Text(reader, 9),
-                                SecondaryIdentifier = Text(reader, 10),
-                                Title = Text(reader, 11),
-                                RawSeverity = Text(reader, 12),
-                                SeverityOverride = Text(reader, 13),
-                                Status = Text(reader, 14),
-                                MitigatedStatus = Text(reader, 15),
-                                Description = Text(reader, 16),
-                                CheckContent = Text(reader, 17),
-                                FixText = Text(reader, 18),
-                                FindingDetails = Text(reader, 19),
-                                Comments = Text(reader, 20),
-                                SourceFile = Text(reader, 21),
-                                LastObserved = DateValue(reader, 22),
-                                Groups = Text(reader, 23),
-                                NistControls = Text(reader, 24),
-                                Ccis = Text(reader, 25)
-                            });
-                        }
-                    }
+                    findings = Read(command);
                 }
                 LogWriter.LogStatusUpdate($"{displayedReportName}: {findings.Count} finding(s) after the report filters.");
                 return findings;
@@ -221,6 +187,60 @@ ORDER BY VS.SourceName, H.DisplayedHostName, V.VulnerabilityGroupIdentifier, V.U
                 if (!wasOpen)
                 { DatabaseBuilder.sqliteConnection.Close(); }
             }
+        }
+
+        /// <summary>
+        /// Every finding without the Reporting filters, read through the given connection (add-ons use a separate
+        /// read-only connection).
+        /// </summary>
+        public static List<ReportFinding> LoadAll(SQLiteConnection connection)
+        {
+            using (SQLiteCommand command = connection.CreateCommand())
+            {
+                command.CommandText = Query.Replace("/*WHERE*/", string.Empty);
+                return Read(command);
+            }
+        }
+
+        private static List<ReportFinding> Read(SQLiteCommand command)
+        {
+            List<ReportFinding> findings = new List<ReportFinding>();
+            using (SQLiteDataReader reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    findings.Add(new ReportFinding
+                    {
+                        FindingType = Text(reader, 0),
+                        SourceName = Text(reader, 1),
+                        SourceVersion = Text(reader, 2),
+                        SourceRelease = Text(reader, 3),
+                        HostName = Text(reader, 4),
+                        IpAddress = Text(reader, 5),
+                        SoftwareName = Text(reader, 6),
+                        GroupIdentifier = Text(reader, 7),
+                        RuleIdentifier = Text(reader, 8),
+                        RuleVersion = Text(reader, 9),
+                        SecondaryIdentifier = Text(reader, 10),
+                        Title = Text(reader, 11),
+                        RawSeverity = Text(reader, 12),
+                        SeverityOverride = Text(reader, 13),
+                        Status = Text(reader, 14),
+                        MitigatedStatus = Text(reader, 15),
+                        Description = Text(reader, 16),
+                        CheckContent = Text(reader, 17),
+                        FixText = Text(reader, 18),
+                        FindingDetails = Text(reader, 19),
+                        Comments = Text(reader, 20),
+                        SourceFile = Text(reader, 21),
+                        LastObserved = DateValue(reader, 22),
+                        Groups = Text(reader, 23),
+                        NistControls = Text(reader, 24),
+                        Ccis = Text(reader, 25)
+                    });
+                }
+            }
+            return findings;
         }
 
         // Each filter on its own command: FilterTextCreator adds a @DisplayedReportName parameter on every call.
