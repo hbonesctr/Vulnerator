@@ -10,8 +10,12 @@ namespace Vulnerator.AddOns
     /// <summary>The version of this contract. The host loads add-ons built for this version or an older supported one.</summary>
     public static class AddOnApi
     {
-        /// <summary>Current contract version.</summary>
-        public const int Version = 1;
+        /// <summary>
+        /// Current contract version. 1 = Vulnerator 7.4.0-beta.1; 2 = adds licenses (<see cref="IAddOnHost.Licenses"/>,
+        /// <see cref="IAddOnHost.LicensesChanged"/>, <see cref="IAddOnLicensing"/>), Vulnerator 7.4.0-beta.2.
+        /// An add-on built against version 2 is refused, with a clear message, by a Vulnerator that only has version 1.
+        /// </summary>
+        public const int Version = 2;
 
         /// <summary>Oldest contract version the host still loads.</summary>
         public const int MinimumSupportedVersion = 1;
@@ -98,6 +102,32 @@ namespace Vulnerator.AddOns
         /// view's Dispatcher before touching the UI.
         /// </summary>
         event EventHandler DataChanged;
+
+        /// <summary>
+        /// (Version 2) Every license the user entered under Settings &gt; Integrations, pasted keys and .lic files alike,
+        /// as text, trimmed. Vulnerator stores them but does not check them: each add-on verifies the signature and expiry
+        /// of the licenses meant for it and ignores the others. Read again after <see cref="LicensesChanged"/>.
+        /// </summary>
+        IReadOnlyList<string> Licenses { get; }
+
+        /// <summary>(Version 2) Raised on the UI thread after the user adds or removes a license.</summary>
+        event EventHandler LicensesChanged;
+    }
+
+    /// <summary>
+    /// (Version 2, optional) Implemented by an add-on's entry type (the <see cref="IAddOn"/> class) when it uses licenses.
+    /// Vulnerator shows the answers under Settings &gt; Integrations. Keep both quick: they are called on the UI thread.
+    /// </summary>
+    public interface IAddOnLicensing
+    {
+        /// <summary>One line next to the add-on, for example "Licensed to Example Org until 2027-11-30" or "No license".</summary>
+        string LicenseStatus { get; }
+
+        /// <summary>
+        /// Describes one entered license, for example "Dashboards: valid until 2027-11-30", "Dashboards: expired
+        /// 2026-10-01" or "Dashboards: signature not valid". Return null when the license is not for this add-on.
+        /// </summary>
+        string DescribeLicense(string licenseText);
     }
 
     /// <summary>Log writer for an add-on.</summary>

@@ -44,6 +44,9 @@ namespace Vulnerator.Model.AddOns
 
         internal AddOnHost Host { get; set; }
 
+        /// <summary>The add-on's entry object, when it loaded.</summary>
+        internal IAddOn Instance { get; set; }
+
         /// <summary>"Dashboards 1.0.0 - loaded" style line for Settings and the log.</summary>
         public string Summary
         {
@@ -188,9 +191,10 @@ namespace Vulnerator.Model.AddOns
             { return Fail(addOn, AddOnState.Failed, attribute.AddOnType.FullName + " is not a public IAddOn class with a parameterless constructor"); }
 
             AddOnHost host = null;
+            IAddOn instance;
             try
             {
-                IAddOn instance = (IAddOn)Activator.CreateInstance(attribute.AddOnType);
+                instance = (IAddOn)Activator.CreateInstance(attribute.AddOnType);
                 addOn.Id = string.IsNullOrWhiteSpace(instance.Id) ? addOn.Id : instance.Id.Trim();
                 addOn.Name = string.IsNullOrWhiteSpace(instance.Name) ? addOn.Id : instance.Name.Trim();
                 addOn.Version = instance.Version ?? string.Empty;
@@ -208,6 +212,7 @@ namespace Vulnerator.Model.AddOns
                 if (host != null) host.Open = false;
             }
             addOn.Host = host;
+            addOn.Instance = instance;
             addOn.Pages = host.Pages.ToList().AsReadOnly();
             addOn.SettingsSections = host.SettingsSections.ToList().AsReadOnly();
             addOn.State = AddOnState.Loaded;
@@ -248,6 +253,13 @@ namespace Vulnerator.Model.AddOns
             catch (Exception exception)
             { LogWriter.LogErrorWithDebug("Add-ons: dependency " + name + " could not be loaded.", exception); }
             return null;
+        }
+
+        /// <summary>Tells the loaded add-ons that a license was added or removed.</summary>
+        public static void NotifyLicensesChanged()
+        {
+            foreach (LoadedAddOn addOn in _addOns.Where(a => a.State == AddOnState.Loaded && a.Host != null))
+            { addOn.Host.RaiseLicensesChanged(); }
         }
 
         /// <summary>Tells the loaded add-ons that the data changed (after an import or a database change).</summary>

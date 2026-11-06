@@ -76,3 +76,9 @@ Vulnerator. Its pages appear in the menu and its options under **Settings > Inte
 add-on found and whether it loaded. An add-on that cannot load is skipped and the reason is logged; Vulnerator keeps
 working. If Windows marks the files as downloaded, right-click them, choose **Properties**, tick **Unblock** and restart.
 Add-ons can read findings and hardware but cannot change the database.
+
+### Add-on licenses
+Some add-ons need a license. Under **Settings > Integrations > Licenses**, paste the key and choose **Add license**,
+or choose **Import .lic file...**. Each add-on shows its license status (for example the expiry date) and what it says
+about each license entered. Licenses are kept in an **Add-on licenses** folder next to the database and are checked on
+this computer only; nothing is sent anywhere. **Remove** deletes a license from this computer.

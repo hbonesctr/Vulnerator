@@ -378,6 +378,7 @@
     <Compile Include="Model\BusinessLogic\Reports\ReportFindings.cs" />
     <Compile Include="Model\AddOns\AddOnData.cs" />
     <Compile Include="Model\AddOns\AddOnHost.cs" />
+    <Compile Include="Model\AddOns\AddOnLicenses.cs" />
     <Compile Include="Model\AddOns\AddOnManager.cs" />
     <Compile Include="View\UI\AddOnViews.cs" />
     <Compile Include="Model\BusinessLogic\Reports\OpenXmlStylesheetCreator.cs" />

@@ -54,17 +54,15 @@ namespace Vulnerator.Model.AddOns
         {
             get
             {
-                string baseFolder = null;
-                string database = Properties.Settings.Default.Database;
-                if (!string.IsNullOrWhiteSpace(database) && database != "Undefined")
-                { baseFolder = Path.GetDirectoryName(Path.GetFullPath(database)); }
-                if (string.IsNullOrWhiteSpace(baseFolder))
-                { baseFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Vulnerator"); }
-                string folder = Path.Combine(baseFolder, "Add-on data", SafeName(_owner.Id));
+                string folder = Path.Combine(AddOnLicenses.BaseFolder(), "Add-on data", SafeName(_owner.Id));
                 Directory.CreateDirectory(folder);
                 return folder;
             }
         }
+
+        public IReadOnlyList<string> Licenses => AddOnLicenses.Texts();
+
+        public event EventHandler LicensesChanged;
 
         public event EventHandler DataChanged;
 
@@ -80,16 +78,19 @@ namespace Vulnerator.Model.AddOns
             SettingsSections.Add(new AddOnView(_owner, title.Trim(), null, createView));
         }
 
-        internal void RaiseDataChanged()
+        internal void RaiseDataChanged() => Raise(DataChanged, "DataChanged");
+
+        internal void RaiseLicensesChanged() => Raise(LicensesChanged, "LicensesChanged");
+
+        private void Raise(EventHandler handler, string name)
         {
-            EventHandler handler = DataChanged;
             if (handler == null) return;
             foreach (EventHandler subscriber in handler.GetInvocationList().Cast<EventHandler>())
             {
                 try
                 { subscriber(this, EventArgs.Empty); }
                 catch (Exception exception)
-                { Error("DataChanged handler failed.", exception); }
+                { Error(name + " handler failed.", exception); }
             }
         }
 

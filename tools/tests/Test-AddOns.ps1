@@ -120,7 +120,10 @@ namespace __NS__
         return $template.Replace('__ATTRIBUTE__', $Attribute).Replace('__NS__', $Ns).Replace('__ID__', $Id).Replace('__NAME__', $Name).Replace('__BODY__', $Body)
     }
     $pageBody = 'host.AddPage("Sample Dashboard", "ChartBar", () => new System.Windows.Controls.TextBlock { Text = "sample page" }); host.AddSettingsSection("Sample settings", () => new System.Windows.Controls.TextBlock { Text = "sample settings" }); host.Log.Info("started");'
-    Build (Join-Path $addOnDir 'Sample.AddOn.dll') (AddOnSource 'TestSample' 'test.sample' 'Sample' $pageBody)
+    $licensing = 'public static int LicenseChanges; public string LicenseStatus { get { return Host.Licenses.Count + " license(s)"; } } public string DescribeLicense(string text) { return text.StartsWith("SAMPLE-") ? "Sample: valid" : null; }'
+    $sampleSource = (AddOnSource 'TestSample' 'test.sample' 'Sample' ($pageBody + ' host.LicensesChanged += (sender, e) => LicenseChanges++;')).Replace('public class Entry : IAddOn', 'public class Entry : IAddOn, IAddOnLicensing').Replace('public static int Changes;', 'public static int Changes; ' + $licensing)
+    Build (Join-Path $addOnDir 'Sample.AddOn.dll') $sampleSource
+    Build (Join-Path $addOnDir 'Legacy.AddOn.dll') (AddOnSource 'TestLegacy' 'test.legacy' 'Legacy' '' '[assembly: VulneratorAddOn(typeof(TestLegacy.Entry), ApiVersion = 1)]')
 
     $helper = Join-Path $subDir 'TestHelperLib.dll'
     Add-Type -TypeDefinition 'namespace TestHelperLib { public static class Util { public static string Value() { return "helper ok"; } } }' -OutputAssembly $helper -OutputType Library
@@ -142,9 +145,9 @@ namespace __NS__
     foreach ($entry in $loaded) { Write-Host ('     ' + [System.IO.Path]::GetFileName($entry.File) + ': ' + $entry.Summary) }
     $byFile = @{}
     foreach ($entry in $loaded) { $byFile[[System.IO.Path]::GetFileName($entry.File)] = $entry }
-    Check ($loaded.Count -eq 9) ('9 add-on files found (got ' + $loaded.Count + ')')
+    Check ($loaded.Count -eq 10) ('10 add-on files found (got ' + $loaded.Count + ')')
     $expected = [ordered]@{
-        'Sample.AddOn.dll' = 'Loaded'; 'Nested.AddOn.dll' = 'Loaded'; 'Broken.AddOn.dll' = 'Failed'; 'Future.AddOn.dll' = 'Skipped';
+        'Sample.AddOn.dll' = 'Loaded'; 'Nested.AddOn.dll' = 'Loaded'; 'Legacy.AddOn.dll' = 'Loaded'; 'Broken.AddOn.dll' = 'Failed'; 'Future.AddOn.dll' = 'Skipped';
         'NeedsCore.AddOn.dll' = 'Skipped'; 'Plain.AddOn.dll' = 'Skipped'; 'WrongType.AddOn.dll' = 'Failed'; 'Zz.Duplicate.AddOn.dll' = 'Skipped'; 'Garbage.AddOn.dll' = 'Skipped'
     }
     foreach ($key in $expected.Keys) {
@@ -231,7 +234,40 @@ namespace __NS__
     $panel = New-Object System.Windows.Controls.StackPanel
     [Vulnerator.View.UI.AddOnUi]::FillIntegrations($panel)
     $boxes = @($panel.Children | Where-Object { $_ -is [System.Windows.Controls.GroupBox] })
-    Check ($panel.Children.Count -eq 11 -and $boxes.Count -eq 1 -and $boxes[0].Header -eq 'Sample settings') ('Settings > Integrations lists every add-on file and the settings section (' + $panel.Children.Count + ' items)')
+    Check ($panel.Children.Count -eq 13 -and $boxes.Count -eq 2 -and $boxes[0].Header -eq 'Sample settings' -and $boxes[1].Header -eq 'Licenses') ('Settings > Integrations lists every add-on file, the settings section and the Licenses box (' + $panel.Children.Count + ' items)')
+
+    # Licenses (interface version 2): stored next to the database, handed to add-ons as text, checked by the add-ons.
+    function Texts($element) {
+        $found = New-Object System.Collections.Generic.List[string]
+        if ($element -is [System.Windows.Controls.TextBlock]) { $found.Add($element.Text) }
+        elseif ($element -is [System.Windows.Controls.Panel]) { foreach ($child in $element.Children) { foreach ($t in (Texts $child)) { $found.Add($t) } } }
+        elseif ($element -is [System.Windows.Controls.ContentControl]) { foreach ($t in (Texts $element.Content)) { $found.Add($t) } }
+        return ,$found
+    }
+    $licenses = [Vulnerator.Model.AddOns.AddOnLicenses]
+    $licenseFolder = $licenses::Folder
+    Check ($licenseFolder.StartsWith($workDir, [StringComparison]::OrdinalIgnoreCase)) ('licenses are kept next to the database (' + $licenseFolder + ')')
+    Check ($null -ne $licenses::Add('   ')) 'an empty key is refused'
+    Check ($null -ne $licenses::Add("BAD`0KEY")) 'binary data is refused'
+    $added = $licenses::Add('SAMPLE-1234-ABCD')
+    Check ($null -eq $added) ('a pasted key is stored (' + $added + ')')
+    Check ($licenses::Add('SAMPLE-1234-ABCD') -like '*already*') 'the same key twice is refused'
+    $licFile = Join-Path $workDir 'other.lic'
+    [System.IO.File]::WriteAllText($licFile, "OTHER-LICENSE`r`nline 2`r`n")
+    $imported = $licenses::Import($licFile)
+    Check ($null -eq $imported) ('a .lic file is imported (' + $imported + ')')
+    $seen = @($hostApi.Licenses)
+    Check ($seen.Count -eq 2 -and $seen[0] -eq 'SAMPLE-1234-ABCD' -and $seen[1] -eq "OTHER-LICENSE`r`nline 2") ('add-ons see both licenses as trimmed text (' + ($seen -join ' / ') + ')')
+    Check (@(Get-ChildItem $licenseFolder -Filter '*.lic').Count -eq 2) 'two .lic files in the licenses folder'
+    Check ([TestSample.Entry]::LicenseChanges -eq 2) ('LicensesChanged raised for each change (' + [TestSample.Entry]::LicenseChanges + ')')
+    [Vulnerator.View.UI.AddOnUi]::FillIntegrations($panel)
+    $all = (Texts $panel) -join ' || '
+    Check ($all -like '*License: 2 license(s)*') 'the add-on license status is shown'
+    Check ($all -like '*SAMPLE-1234-ABCD*Sample: valid*' -and $all -like '*OTHER-LICENSE*Not recognized by any installed add-on*') ('each license shows what the add-ons say about it')
+    $first = @($licenses::All())[0]
+    $removed = $licenses::Remove($first)
+    Check ($null -eq $removed -and @($hostApi.Licenses).Count -eq 1 -and @($hostApi.Licenses)[0] -like 'OTHER-LICENSE*') ('a license can be removed (' + $removed + ')')
+    Check ([TestSample.Entry]::LicenseChanges -eq 3) 'LicensesChanged raised on removal'
 
     # No add-ons folder at all: nothing loaded, no error.
     $none = @([Vulnerator.Model.AddOns.AddOnManager]::LoadFrom((Join-Path $workDir 'missing')))

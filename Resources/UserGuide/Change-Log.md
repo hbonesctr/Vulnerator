@@ -1,4 +1,16 @@
-﻿# Vulnerator 2.0 (7.4.0-beta.1)
+﻿# Vulnerator 2.0 (7.4.0-beta.2)
+###### Version 7.4.0 beta 2, November 2026
+
+| Change Description |
+| :----------------- |
+| Settings > Integrations: a Licenses box to paste an add-on license key or import a .lic file, and remove one |
+| Each add-on shows its license status, and what it says about each entered license |
+| Licenses are checked by the add-ons on this computer; nothing is sent anywhere |
+
+
+----------
+
+# Vulnerator 2.0 (7.4.0-beta.1)
 ###### Version 7.4.0 beta 1, November 2026
 
 | Change Description |
