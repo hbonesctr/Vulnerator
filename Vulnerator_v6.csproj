@@ -98,9 +98,6 @@
     <Reference Include="ControlzEx, Version=4.0.0.0, Culture=neutral, PublicKeyToken=69f1c32f803d307e, processorArchitecture=MSIL">
       <HintPath>packages\ControlzEx.4.3.2\lib\net462\ControlzEx.dll</HintPath>
     </Reference>
-    <Reference Include="CsvHelper, Version=15.0.0.0, Culture=neutral, PublicKeyToken=8c4959082be5c823, processorArchitecture=MSIL">
-      <HintPath>packages\CsvHelper.15.0.5\lib\net47\CsvHelper.dll</HintPath>
-    </Reference>
     <Reference Include="DocumentFormat.OpenXml, Version=2.11.3.0, Culture=neutral, PublicKeyToken=8fb06cb64d019a17, processorArchitecture=MSIL">
       <HintPath>packages\DocumentFormat.OpenXml.2.11.3\lib\net46\DocumentFormat.OpenXml.dll</HintPath>
     </Reference>
@@ -127,9 +124,6 @@
     </Reference>
     <Reference Include="HtmlToXamlConverter, Version=1.0.5727.24510, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\HtmlToXamlConverter.1.0.5727.24510\lib\net45\HtmlToXamlConverter.dll</HintPath>
-    </Reference>
-    <Reference Include="JetBrains.Annotations">
-      <HintPath>.\Resources\DllFiles\JetBrains.Annotations.dll</HintPath>
     </Reference>
     <Reference Include="LiveCharts, Version=0.9.7.0, Culture=neutral, PublicKeyToken=0bc1f845d1ebb8df, processorArchitecture=MSIL">
       <HintPath>packages\LiveCharts.0.9.7\lib\net45\LiveCharts.dll</HintPath>
@@ -163,12 +157,6 @@
     </Reference>
     <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=1.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>packages\Microsoft.Bcl.AsyncInterfaces.1.1.1\lib\net461\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Exchange.WebServices, Version=15.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>packages\Microsoft.Exchange.WebServices.2.2\lib\40\Microsoft.Exchange.WebServices.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Exchange.WebServices.Auth, Version=15.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>packages\Microsoft.Exchange.WebServices.2.2\lib\40\Microsoft.Exchange.WebServices.Auth.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.WindowsAPICodePack, Version=1.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>packages\WindowsAPICodePack.1.1.1\lib\Microsoft.WindowsAPICodePack.dll</HintPath>
@@ -414,10 +402,8 @@
     <Compile Include="Model\Entity\FindingType.cs" />
     <Compile Include="Model\Entity\GoverningPolicy.cs" />
     <Compile Include="Model\Entity\Group.cs" />
-    <Compile Include="Model\Entity\GroupContactTitle.cs" />
     <Compile Include="Model\Entity\GroupMitigationOrConditionVulnerability.cs" />
     <Compile Include="Model\Entity\Hardware.cs" />
-    <Compile Include="Model\Entity\HardwareContact.cs" />
     <Compile Include="Model\Entity\HardwarePortProtocolService.cs" />
     <Compile Include="Model\Entity\HardwareSoftwarePortProtocolServiceBoundary.cs" />
     <Compile Include="Model\Entity\HardwareSoftwarePortProtocolService.cs" />
@@ -459,7 +445,6 @@
     <Compile Include="Model\Entity\SoftwareHardware.cs" />
     <Compile Include="Model\Entity\StepOneQuestionnaire.cs" />
     <Compile Include="Model\Entity\SystemCategorization.cs" />
-    <Compile Include="Model\Entity\SystemCategorizationInformationTypesImpactAdjustment.cs" />
     <Compile Include="Model\Entity\TestReference.cs" />
     <Compile Include="Model\Entity\TestScheduleItem.cs" />
     <Compile Include="Model\Entity\Title.cs" />
@@ -486,11 +471,9 @@
     <Compile Include="Settings.cs" />
     <Compile Include="ViewModel\AboutViewModel.cs" />
     <Compile Include="ViewModel\AsyncObservableCollection.cs" />
-    <Compile Include="Model\Object\CciToNist.cs" />
     <Compile Include="Model\BusinessLogic\CklbReader.cs" />
     <Compile Include="Model\BusinessLogic\EmassAssessmentProcedureImporter.cs" />
     <Compile Include="Model\BusinessLogic\CklReader.cs" />
-    <Compile Include="Model\BusinessLogic\DiacapToRmf.cs" />
     <Compile Include="Model\Object\DiscrepancyItem.cs" />
     <Compile Include="Helper\ExtensionMethods.cs" />
     <Compile Include="Helper\FileNameNoPathConverter.cs" />
@@ -499,9 +482,7 @@
     <Compile Include="Model\Object\GitHubActions.cs" />
     <Compile Include="Model\Object\Issue.cs" />
     <Compile Include="Model\Object\Release.cs" />
-    <Compile Include="Model\Object\FormattedCell.cs" />
     <Compile Include="Model\BusinessLogic\HTMLtoXML.cs" />
-    <Compile Include="Model\BusinessLogic\MitigationsTextParser.cs" />
     <Compile Include="Model\BusinessLogic\OpenXmlReportCreator.cs" />
     <Compile Include="Model\BusinessLogic\PdfReportCreator.cs" />
     <Compile Include="ViewModel\ConfigurationManagement\Tabs\Groups.cs" />
@@ -523,22 +504,15 @@
     <Compile Include="ViewModel\VulnerabilityViewModel.cs" />
     <Compile Include="View\Converter\BooleanToCheckboxConverter.cs" />
     <Compile Include="View\Converter\BooleanToCollapsedConverter.cs" />
-    <Compile Include="View\Converter\BooleanToHiddenConverter.cs" />
     <Compile Include="View\Converter\BooleanToIconConverter.cs" />
     <Compile Include="View\Converter\BooleanToVisibilityConverter.cs" />
-    <Compile Include="View\Converter\DateTimeConverter.cs" />
-    <Compile Include="View\Converter\DebugDataBindingConverter.cs" />
     <Compile Include="View\Converter\IsNullConverter.cs" />
     <Compile Include="View\Converter\IsNullToCollapsedConverter.cs" />
     <Compile Include="View\Converter\IsNullToVisibleConverter.cs" />
     <Compile Include="View\Converter\MarkupConverter.cs" />
     <Compile Include="View\Converter\MathConverter.cs" />
-    <Compile Include="View\Converter\MitigationsSelectedItemConverter.cs" />
     <Compile Include="View\Converter\FileTypeToVisibilityConverter.cs" />
     <Compile Include="View\Converter\HtmlToFlowDocumentConverter.cs" />
-    <Compile Include="View\Converter\ImportButtonTextAppendingConverter.cs" />
-    <Compile Include="View\Converter\InverseBooleanConverter.cs" />
-    <Compile Include="View\Converter\MaxLengthToRemainingCharactersConverter.cs" />
     <Compile Include="View\Converter\MultiValueConverter.cs" />
     <Compile Include="View\Converter\NullToBooleanConverter.cs" />
     <Compile Include="View\Converter\RemainingCharactersConverter.cs" />
@@ -592,27 +566,16 @@
     <Compile Include="View\UI\VulnerabilityManagementView.xaml.cs">
       <DependentUpon>VulnerabilityManagementView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="View\Validation\NumericValidationRule.cs" />
     <Compile Include="View\ViewHelper\CommandEnabledComboBox.cs" />
-    <Compile Include="View\Converter\EmailPersonnelLabelJoiner.cs" />
-    <Compile Include="View\Converter\EmailTextLabelStringJoiner.cs" />
     <Compile Include="View\ViewHelper\DependencyProperties.cs" />
-    <Compile Include="View\ViewHelper\MyXmlDataProvider.cs" />
     <Compile Include="Model\BusinessLogic\WasspReader.cs" />
     <Compile Include="Model\BusinessLogic\XccdfReader.cs" />
     <Compile Include="Model\BusinessLogic\XmlWasspReader.cs" />
-    <Compile Include="ViewModel\EventCommand.cs" />
-    <Compile Include="View\Converter\ObtainThirdSplitStringValueConverter.cs" />
-    <Compile Include="View\Converter\StringJoiningConverter.cs" />
-    <Compile Include="View\Converter\ObtainSecondSplitStringValueConverter.cs" />
-    <Compile Include="View\Converter\ObtainFirstSplitStringValueConverter.cs" />
     <Compile Include="View\ViewHelper\AutoRefreshCollectionViewSource.cs" />
-    <Compile Include="View\Validation\BlankFieldValidationRule.cs" />
     <Compile Include="View\UI\CloseReportWorkbook.xaml.cs">
       <DependentUpon>CloseReportWorkbook.xaml</DependentUpon>
     </Compile>
     <Compile Include="View\Validation\EmailValidationRule.cs" />
-    <Compile Include="View\Validation\MitigationDatabaseValidationRule.cs" />
     <Compile Include="View\UI\NoEmailApplication.xaml.cs">
       <DependentUpon>NoEmailApplication.xaml</DependentUpon>
     </Compile>
@@ -764,9 +727,6 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="ViewModel\BaseInpc.cs" />
-    <Compile Include="ViewModel\DelegateCommand.cs" />
-    <Compile Include="View\Converter\StringToBoolConverter.cs" />
     <Page Include="View\UI\NewsView.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -887,9 +847,6 @@
     <Resource Include="Vulnerator_Logo_Large_Color_SquareBackground_20190805.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Update\AcasUniqueFinding.dml" />
-    <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Update\CklUniqueFinding.dml" />
-    <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Update\XccdfUniqueFinding.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\Tables\Create\AdditionalTestConsiderations.ddl" />
     <EmbeddedResource Include="Resources\DdlFiles\Tables\Create\AuthorizationConditions.ddl" />
     <EmbeddedResource Include="Resources\DdlFiles\Tables\Create\AuthorizationToConnectOrInterim_ATC_PendingItems.ddl" />
@@ -925,7 +882,6 @@
     <EmbeddedResource Include="Resources\UserGuide\Looking-Ahead.md" />
     <EmbeddedResource Include="Resources\UserGuide\Using-the-Software.md" />
     <EmbeddedResource Include="Resources\DdlFiles\v6-2-0_CreateVulnerabilityRelatedIndices.ddl" />
-    <EmbeddedResource Include="Resources\DdlFiles\v6-2-0_DropVulnerabilityRelatedIndices.ddl" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Insert\IP_Address.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Insert\MAC_Address.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Insert\Hardware.dml" />
@@ -933,7 +889,6 @@
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Delete\Group.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Delete\GroupIATA_StandardMappingByGroup.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Delete\GroupCCI_MappingByGroup.dml" />
-    <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Delete\GroupConnectedSystemMappingByGroup.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Delete\GroupConnectionMappingByGroup.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Delete\GroupContactMappingByGroup.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Delete\GroupMitigationOrConditionVulnerabilityMappingByGroup.dml" />
@@ -963,7 +918,6 @@
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Insert\HardwarePortProtocolServiceMapping.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Insert\VulnerabilityReferenceVulnerabilityMapping.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Insert\VulnerabilityCCI_Mapping.dml" />
-    <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Insert\VulnerabilityIA_ControlMapping.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Insert\VulnerabilitySourceVulnerabilityMapping.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Select\Hardware.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Select\EmassHardwareList.dml" />
@@ -976,13 +930,10 @@
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Select\EmassSoftwareList.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Select\HardwareCklCreationData.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Select\Indices.dml" />
-    <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Select\UngroupedVulnerabilities.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Select\UniqueVulnerabilityIdentifiersBySource.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Select\VulnerabilitiesForDeletion.dml" />
-    <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Select\VulnerabilityIdentifiersAndVersions.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Select\VulnerabilitySourceName.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Select\VulnerabilitySourceVersionAndRelease.dml" />
-    <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Select\VulnerabilityIndexes.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Update\CredentialedScanStatus.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Update\DeltaAnalysisFlag.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Update\Group.dml" />
@@ -1030,13 +981,9 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Windows Logo.png" />
     <Resource Include="Resources\vulnerator.ico" />
     <Resource Include="Resources\Logo\vulnerator-icon.png" />
     <Resource Include="Resources\Logo\vulnerator-2.0-mark.png" />
-    <Resource Include="Resources\DllFiles\JetBrains.Annotations.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
     <Resource Include="FodyWeavers.xml" />
     <EmbeddedResource Include="Resources\DdlFiles\Tables\Create\ControlApplicabilityAssessment.ddl" />
     <EmbeddedResource Include="Resources\DdlFiles\Tables\Create\ControlSelection.ddl" />
@@ -1173,12 +1120,6 @@
     <EmbeddedResource Include="Resources\DdlFiles\Tables\Create\AssessmentProcedureTestResults.ddl" />
     <EmbeddedResource Include="Resources\DdlFiles\Tables\Create\UniqueFindingsMitigationsOrConditions.ddl" />
     <EmbeddedResource Include="Resources\DdlFiles\Tables\Create\PolicySupportingImages.ddl" />
-    <Content Include="Resources\UserGuide\Images\ThemeFlyout.jpg">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Resources\UserGuide\Images\VulneratorMain.jpg">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\RawData\NIST_800-53r5_CCI_Mapping.xml" />

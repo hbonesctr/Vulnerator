@@ -1,4 +1,3 @@
-using JetBrains.Annotations;
 using System;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
@@ -46,11 +45,9 @@ namespace Vulnerator.Model.Entity
 
         public virtual UniqueFindingSourceFile UniqueFindingSourceFile { get; set; }
 
-        // [CanBeNull]
         // [ForeignKey("MitigationOrCondition")]
         // public long? MitigationOrCondition_ID { get; set; }
         
-        // [CanBeNull]
         // public virtual MitigationOrCondition MitigationOrCondition { get; set; }
 
         [Required]
