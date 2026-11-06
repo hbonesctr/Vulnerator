@@ -24,6 +24,18 @@ SELECT H.Hardware_ID, H.DisplayedHostName, H.FQDN, H.NetBIOS, H.ScanIP, H.Operat
 FROM Hardware H
 ORDER BY H.DisplayedHostName";
 
+        // Newest loaded release per STIG: VulnerabilitySources keeps one row per name, version and release.
+        private const string SubmissionsQuery = @"
+SELECT SS.FindingType, SS.SourceName, SS.SourceVersion, SS.SourceRelease, SS.BenchmarkDate, SS.DiscoveredHostName,
+       SS.FindingSourceFileName, SS.ImportedOn, H.Hardware_ID
+FROM StigSubmissions SS
+         LEFT JOIN Hardware H ON H.DiscoveredHostName = SS.DiscoveredHostName
+ORDER BY SS.SourceName, SS.DiscoveredHostName, SS.ImportedOn";
+
+        private const string SourceReleasesQuery = "SELECT SourceName, SourceVersion, SourceRelease FROM VulnerabilitySources";
+
+        private const string LibraryImportQuery = "SELECT MAX(ImportedOn) FROM StigLibraryImports";
+
         private static readonly string[] ListSeparator = { ", " };
 
         public IReadOnlyList<FindingRecord> GetFindings()
@@ -70,6 +82,107 @@ ORDER BY H.DisplayedHostName";
             }
         }
 
+        public IReadOnlyList<StigSubmissionRecord> GetStigSubmissions()
+        {
+            using (SQLiteConnection connection = OpenReadOnly())
+            {
+                if (connection == null) return new StigSubmissionRecord[0];
+                Dictionary<string, StigRelease> latest = new Dictionary<string, StigRelease>(StringComparer.OrdinalIgnoreCase);
+                using (SQLiteCommand command = connection.CreateCommand())
+                {
+                    command.CommandText = SourceReleasesQuery;
+                    using (SQLiteDataReader reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            StigRelease release = StigRelease.Parse(Text(reader, 1), Text(reader, 2));
+                            StigRelease known;
+                            if (release != null && (!latest.TryGetValue(Text(reader, 0), out known) || release.CompareTo(known) > 0))
+                            { latest[Text(reader, 0)] = release; }
+                        }
+                    }
+                }
+
+                List<StigSubmissionRecord> submissions = new List<StigSubmissionRecord>();
+                using (SQLiteCommand command = connection.CreateCommand())
+                {
+                    command.CommandText = SubmissionsQuery;
+                    using (SQLiteDataReader reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            string name = Text(reader, 1);
+                            StigRelease submitted = StigRelease.Parse(Text(reader, 2), Text(reader, 3));
+                            StigRelease newest;
+                            latest.TryGetValue(name, out newest);
+                            submissions.Add(new StigSubmissionRecord
+                            {
+                                FindingType = Text(reader, 0),
+                                StigName = name,
+                                SubmittedVersion = submitted != null ? submitted.ToString() : Text(reader, 2) + Text(reader, 3),
+                                BenchmarkDate = DateValue(reader, 4),
+                                LatestVersion = newest != null ? newest.ToString() : string.Empty,
+                                IsOutdated = submitted != null && newest != null && submitted.CompareTo(newest) < 0,
+                                HostName = Text(reader, 5),
+                                SourceFile = Text(reader, 6),
+                                ImportedOn = DateValue(reader, 7) ?? DateTime.MinValue,
+                                HardwareId = reader.IsDBNull(8) ? (long?)null : Convert.ToInt64(reader.GetValue(8), CultureInfo.InvariantCulture)
+                            });
+                        }
+                    }
+                }
+                return submissions.AsReadOnly();
+            }
+        }
+
+        public IReadOnlyList<PoamItemRecord> GetPoamItems()
+        {
+            using (SQLiteConnection connection = OpenReadOnly())
+            {
+                if (connection == null) return new PoamItemRecord[0];
+                List<EmassPoamFinding> findings;
+                using (SQLiteCommand command = connection.CreateCommand())
+                {
+                    command.CommandText = OpenXmlEmassPoamReportCreator.UnfilteredQuery();
+                    findings = OpenXmlEmassPoamReportCreator.ReadFindings(command);
+                }
+                return EmassPoamBuilder.Build(findings, OpenXmlEmassPoamReportCreator.CreateOptions())
+                    .Select(item => new PoamItemRecord
+                    {
+                        Status = item.Status,
+                        Summary = item.Summary,
+                        SecurityChecks = item.SecurityChecks.AsReadOnly(),
+                        Controls = item.Controls.AsReadOnly(),
+                        RawSeverity = item.RawSeverity,
+                        DateIdentified = item.DateIdentified,
+                        ScheduledCompletion = item.ScheduledCompletion,
+                        CompletionDate = item.CompletionDate,
+                        DevicesAffected = item.DevicesAffected.AsReadOnly(),
+                        Milestones = item.Milestones.Select(m => new PoamMilestoneRecord
+                        {
+                            Description = m.Description,
+                            Status = m.Status,
+                            ScheduledCompletion = m.ScheduledCompletion,
+                            CompletionDate = m.CompletionDate
+                        }).ToList().AsReadOnly()
+                    }).ToList().AsReadOnly();
+            }
+        }
+
+        public DateTime? GetLastStigLibraryImport()
+        {
+            using (SQLiteConnection connection = OpenReadOnly())
+            {
+                if (connection == null) return null;
+                using (SQLiteCommand command = connection.CreateCommand())
+                {
+                    command.CommandText = LibraryImportQuery;
+                    using (SQLiteDataReader reader = command.ExecuteReader())
+                    { return reader.Read() ? DateValue(reader, 0) : null; }
+                }
+            }
+        }
+
         /// <summary>A read-only connection to the current database, or null when no database is set up yet.</summary>
         private static SQLiteConnection OpenReadOnly()
         {
@@ -109,7 +222,13 @@ ORDER BY H.DisplayedHostName";
                 LastObserved = finding.LastObserved,
                 Groups = List(finding.Groups),
                 NistControls = List(finding.NistControls),
-                Ccis = List(finding.Ccis)
+                Ccis = List(finding.Ccis),
+                HardwareId = finding.HardwareId,
+                FirstDiscovered = finding.FirstDiscovered,
+                SeverityLevel = finding.SeverityLevel,
+                RiskFactor = finding.RiskFactor,
+                SecondarySeverity = finding.SecondarySeverity,
+                References = List(finding.References)
             };
         }
 
@@ -128,6 +247,48 @@ ORDER BY H.DisplayedHostName";
         private static string Text(SQLiteDataReader reader, int ordinal)
         {
             return reader.IsDBNull(ordinal) ? string.Empty : Convert.ToString(reader.GetValue(ordinal), CultureInfo.InvariantCulture);
+        }
+
+        private static DateTime? DateValue(SQLiteDataReader reader, int ordinal)
+        {
+            if (reader.IsDBNull(ordinal)) return null;
+            object value = reader.GetValue(ordinal);
+            if (value is DateTime) return (DateTime)value;
+            DateTime parsed;
+            return DateTime.TryParse(Convert.ToString(value, CultureInfo.InvariantCulture), CultureInfo.InvariantCulture, DateTimeStyles.None, out parsed)
+                ? parsed : (DateTime?)null;
+        }
+
+        /// <summary>A STIG version and release ("2" and "5", or "Release: 5 ...") that compare numerically.</summary>
+        internal sealed class StigRelease : IComparable<StigRelease>
+        {
+            private StigRelease(int version, int release)
+            {
+                Version = version;
+                Release = release;
+            }
+
+            public int Version { get; }
+            public int Release { get; }
+
+            public static StigRelease Parse(string version, string release)
+            {
+                System.Text.RegularExpressions.Match v = System.Text.RegularExpressions.Regex.Match(version ?? string.Empty, @"\d+");
+                System.Text.RegularExpressions.Match r = System.Text.RegularExpressions.Regex.Match(release ?? string.Empty, @"\d+");
+                if (!v.Success) return null;
+                return new StigRelease(int.Parse(v.Value, CultureInfo.InvariantCulture), r.Success ? int.Parse(r.Value, CultureInfo.InvariantCulture) : 0);
+            }
+
+            public int CompareTo(StigRelease other)
+            {
+                if (other == null) return 1;
+                return Version != other.Version ? Version.CompareTo(other.Version) : Release.CompareTo(other.Release);
+            }
+
+            public override string ToString()
+            {
+                return "V" + Version.ToString(CultureInfo.InvariantCulture) + "R" + Release.ToString(CultureInfo.InvariantCulture);
+            }
         }
     }
 }

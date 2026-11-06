@@ -329,6 +329,8 @@ namespace Vulnerator.Model.BusinessLogic
                                 {
                                     xmlReader.Read();
                                     sqliteCommand.Parameters["PrimaryRawRiskIndicator"].Value = ConvertRiskFactorToRawRisk(xmlReader.Value);
+                                    // CAT I covers both Critical and High; keep the risk factor for add-ons (interface version 3).
+                                    ImportFacts.RecordRiskFactor(sqliteCommand, pluginId, xmlReader.Value);
                                     break;
                                 }
                             case "solution":

@@ -19,6 +19,7 @@ namespace Vulnerator.Model.BusinessLogic
     public class XccdfReader
     {
         private readonly DatabaseInterface databaseInterface = new DatabaseInterface();
+        private RawStigReader submitted;
 
         /// <summary>Rule results that could not be matched to a library rule in the last file read.</summary>
         public int UnmatchedResults { get; private set; }
@@ -66,6 +67,7 @@ namespace Vulnerator.Model.BusinessLogic
                     databaseInterface.InsertParsedFileSource(sqliteCommand, file);
                     RawStigReader stigReader = new RawStigReader();
                     stigReader.LoadBenchmark(sqliteCommand, benchmark, file.FileName, "XCCDF", false);
+                    submitted = stigReader;
                     foreach (XElement testResult in testResults)
                     { ReadTestResult(sqliteCommand, testResult, stigReader.Revisions, file, groupName); }
                     sqliteTransaction.Commit();
@@ -128,6 +130,12 @@ namespace Vulnerator.Model.BusinessLogic
             sqliteCommand.Parameters["IsVirtualServer"].Value = "False";
             databaseInterface.InsertHardware(sqliteCommand);
             databaseInterface.MapHardwareToGroup(sqliteCommand);
+            if (submitted != null)
+            {
+                // The benchmark release as the result file has it (interface version 3), per host.
+                ImportFacts.RecordStigSubmission(sqliteCommand, "XCCDF", submitted.SubmittedSourceName, submitted.SubmittedVersion,
+                    submitted.SubmittedRelease, submitted.SubmittedBenchmarkDate, hostName.Trim(), file.FileName);
+            }
             foreach (string ip in ips)
             {
                 sqliteCommand.Parameters["IP_Address"].Value = ip;

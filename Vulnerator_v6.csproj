@@ -386,6 +386,7 @@
     <Compile Include="Model\DataAccess\DatabaseBuilder.cs" />
     <Compile Include="Model\DataAccess\DatabaseContext.cs" />
     <Compile Include="Model\DataAccess\DatabaseInterface.cs" />
+    <Compile Include="Model\DataAccess\ImportFacts.cs" />
     <Compile Include="Model\Entity\AdditionalTestConsideration.cs" />
     <Compile Include="Model\Entity\AuthorizationToConnectOrInterim_ATC_PendingItem.cs" />
     <Compile Include="Model\Entity\AuthorizationCondition.cs" />
@@ -969,6 +970,8 @@
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Update\NistControlsCcisFromEmassAssessmentProcedures.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\Tables\Create\EmassAssessmentProcedures.ddl" />
     <EmbeddedResource Include="Resources\DdlFiles\Tables\Create\StigLibraryImports.ddl" />
+    <EmbeddedResource Include="Resources\DdlFiles\Tables\Create\AcasRiskFactors.ddl" />
+    <EmbeddedResource Include="Resources\DdlFiles\Tables\Create\StigSubmissions.ddl" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Select\EmassPoamVulnerabilities.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Select\EmassSoftwareList.dml" />
     <EmbeddedResource Include="Resources\DdlFiles\StoredProcedures\Select\HardwareCklCreationData.dml" />

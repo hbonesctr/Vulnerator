@@ -12,10 +12,12 @@ namespace Vulnerator.AddOns
     {
         /// <summary>
         /// Current contract version. 1 = Vulnerator 7.4.0-beta.1; 2 = adds licenses (<see cref="IAddOnHost.Licenses"/>,
-        /// <see cref="IAddOnHost.LicensesChanged"/>, <see cref="IAddOnLicensing"/>), Vulnerator 7.4.0-beta.2.
-        /// An add-on built against version 2 is refused, with a clear message, by a Vulnerator that only has version 1.
+        /// <see cref="IAddOnHost.LicensesChanged"/>, <see cref="IAddOnLicensing"/>), Vulnerator 7.4.0-beta.2;
+        /// 3 = adds dashboard data (more <see cref="FindingRecord"/> fields, <see cref="IFindingsData.GetStigSubmissions"/>,
+        /// <see cref="IFindingsData.GetPoamItems"/>, <see cref="IFindingsData.GetLastStigLibraryImport"/>), Vulnerator 7.4.0-beta.3.
+        /// An add-on built against a newer version is refused, with a clear message, by an older Vulnerator.
         /// </summary>
-        public const int Version = 2;
+        public const int Version = 3;
 
         /// <summary>Oldest contract version the host still loads.</summary>
         public const int MinimumSupportedVersion = 1;
@@ -149,6 +151,21 @@ namespace Vulnerator.AddOns
 
         /// <summary>Every hardware asset (Configuration Management &gt; Hardware).</summary>
         IReadOnlyList<HardwareRecord> GetHardware();
+
+        /// <summary>
+        /// (Version 3) Every STIG checklist (CKL, CKLB) and SCAP result (XCCDF) imported by 7.4.0-beta.3 or later, one per
+        /// file, host and STIG, with the release it was submitted with and the newest release Vulnerator has loaded.
+        /// </summary>
+        IReadOnlyList<StigSubmissionRecord> GetStigSubmissions();
+
+        /// <summary>
+        /// (Version 3) The eMASS POA&amp;M items as the eMASS POA&amp;M export builds them (same grouping, statuses and
+        /// scheduled completion dates, from the Settings), without the Reporting filters.
+        /// </summary>
+        IReadOnlyList<PoamItemRecord> GetPoamItems();
+
+        /// <summary>(Version 3) When the DISA STIG library was last imported (Settings), or null if never.</summary>
+        DateTime? GetLastStigLibraryImport();
     }
 
     /// <summary>One finding.</summary>
@@ -210,6 +227,101 @@ namespace Vulnerator.AddOns
         public IReadOnlyList<string> NistControls { get; internal set; }
 
         public IReadOnlyList<string> Ccis { get; internal set; }
+
+        /// <summary>(Version 3) The hardware record (<see cref="HardwareRecord.Id"/>); null for software-only findings.</summary>
+        public long? HardwareId { get; internal set; }
+
+        /// <summary>(Version 3) When the finding was first seen.</summary>
+        public DateTime? FirstDiscovered { get; internal set; }
+
+        /// <summary>
+        /// (Version 3) eMASS severity level: "Very High", "High", "Moderate", "Low" or "Very Low". A severity override wins
+        /// (by CAT); ACAS uses the Nessus risk factor (Critical = Very High); otherwise CAT I = High, II = Moderate,
+        /// III = Low, IV = Very Low. ACAS scans imported before 7.4.0-beta.3 have no risk factor, so Critical shows as High
+        /// until the scan is imported again.
+        /// </summary>
+        public string SeverityLevel { get; internal set; }
+
+        /// <summary>(Version 3) ACAS only: the Nessus risk factor (Critical, High, Medium, Low, None), when kept.</summary>
+        public string RiskFactor { get; internal set; }
+
+        /// <summary>(Version 3) The second severity the source gives; for ACAS, DISA's stig_severity (for example for IAVMs).</summary>
+        public string SecondarySeverity { get; internal set; }
+
+        /// <summary>
+        /// (Version 3) References as "TYPE:value", for example "IAVA:2026-A-0001", "IAVB:2026-B-0002", "IAVT:2026-T-0003",
+        /// "CVE:CVE-2026-0001" or "CWE:79".
+        /// </summary>
+        public IReadOnlyList<string> References { get; internal set; }
+    }
+
+    /// <summary>(Version 3) One STIG checklist or SCAP result as submitted: one file, host and STIG.</summary>
+    public sealed class StigSubmissionRecord
+    {
+        internal StigSubmissionRecord() { }
+
+        /// <summary>CKL (checklists, including CKLB) or XCCDF (SCAP results).</summary>
+        public string FindingType { get; internal set; }
+
+        public string StigName { get; internal set; }
+
+        /// <summary>"V2R4" style, as submitted.</summary>
+        public string SubmittedVersion { get; internal set; }
+
+        /// <summary>The benchmark date as submitted, when the file has one.</summary>
+        public DateTime? BenchmarkDate { get; internal set; }
+
+        /// <summary>The newest release of this STIG Vulnerator has loaded (library or newer checklists), "V2R5" style.</summary>
+        public string LatestVersion { get; internal set; }
+
+        /// <summary>The submitted release is older than <see cref="LatestVersion"/>.</summary>
+        public bool IsOutdated { get; internal set; }
+
+        public string HostName { get; internal set; }
+
+        /// <summary>The hardware record, when the host is in the Hardware list.</summary>
+        public long? HardwareId { get; internal set; }
+
+        public string SourceFile { get; internal set; }
+        public DateTime ImportedOn { get; internal set; }
+    }
+
+    /// <summary>(Version 3) One eMASS POA&amp;M item: one rule or plugin, in one status, across the affected assets.</summary>
+    public sealed class PoamItemRecord
+    {
+        internal PoamItemRecord() { }
+
+        /// <summary>"Ongoing", "Completed" or "Risk Accepted".</summary>
+        public string Status { get; internal set; }
+
+        /// <summary>The control vulnerability description (eMASS column D).</summary>
+        public string Summary { get; internal set; }
+
+        public IReadOnlyList<string> SecurityChecks { get; internal set; }
+        public IReadOnlyList<string> Controls { get; internal set; }
+
+        /// <summary>eMASS raw severity: "Very High", "High", "Moderate", "Low" or "Very Low".</summary>
+        public string RawSeverity { get; internal set; }
+
+        public DateTime? DateIdentified { get; internal set; }
+        public DateTime? ScheduledCompletion { get; internal set; }
+        public DateTime? CompletionDate { get; internal set; }
+        public IReadOnlyList<string> DevicesAffected { get; internal set; }
+        public IReadOnlyList<PoamMilestoneRecord> Milestones { get; internal set; }
+    }
+
+    /// <summary>(Version 3) One POA&amp;M milestone.</summary>
+    public sealed class PoamMilestoneRecord
+    {
+        internal PoamMilestoneRecord() { }
+
+        public string Description { get; internal set; }
+
+        /// <summary>"Open" or "Completed".</summary>
+        public string Status { get; internal set; }
+
+        public DateTime? ScheduledCompletion { get; internal set; }
+        public DateTime? CompletionDate { get; internal set; }
     }
 
     /// <summary>One hardware asset.</summary>

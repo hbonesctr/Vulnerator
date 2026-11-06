@@ -14,9 +14,9 @@
     <NoWarn>$(NoWarn);CS1591</NoWarn>
     <!-- AssemblyVersion stays 1.0.0.0 so add-ons built against any earlier contract still bind without redirects;
          compatibility is decided by AddOnApi.Version. FileVersion/Version follow the contract version. -->
-    <Version>2.0.0</Version>
+    <Version>3.0.0</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
-    <FileVersion>2.0.0.0</FileVersion>
+    <FileVersion>3.0.0.0</FileVersion>
     <Product>Vulnerator 2.0 add-on contract</Product>
     <Copyright>MIT License</Copyright>
     <Deterministic>true</Deterministic>

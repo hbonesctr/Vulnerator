@@ -97,6 +97,13 @@ namespace Vulnerator.Model.BusinessLogic
         /// <summary>Rule id ("SV-254239") to the library revision its findings attach to, filled by <see cref="LoadBenchmark"/>.</summary>
         public Dictionary<string, string> Revisions { get; } = new Dictionary<string, string>();
 
+        /// <summary>The benchmark's name, version, release and date as the file has them (before an older release is
+        /// moved onto the loaded one), filled by <see cref="LoadBenchmark"/>.</summary>
+        public string SubmittedSourceName { get; private set; }
+        public string SubmittedVersion { get; private set; }
+        public string SubmittedRelease { get; private set; }
+        public object SubmittedBenchmarkDate { get; private set; }
+
         /// <summary>
         /// Writes the benchmark's source and rules using an open command (placeholders inserted). As the library
         /// (<paramref name="isLibrary"/>), an older release is refused (returns false) and superseded rules are pruned;
@@ -107,6 +114,10 @@ namespace Vulnerator.Model.BusinessLogic
             RulesRead = 0;
             Revisions.Clear();
             SetSource(sqliteCommand, benchmark, fileName);
+            SubmittedSourceName = sqliteCommand.Parameters["SourceName"].Value?.ToString() ?? string.Empty;
+            SubmittedVersion = sqliteCommand.Parameters["SourceVersion"].Value?.ToString() ?? string.Empty;
+            SubmittedRelease = sqliteCommand.Parameters["SourceRelease"].Value?.ToString() ?? string.Empty;
+            SubmittedBenchmarkDate = sqliteCommand.Parameters["PublishedDate"].Value;
             sqliteCommand.Parameters["FindingType"].Value = findingType;
             if (databaseInterface.SourceHasNewerRelease(sqliteCommand))
             {

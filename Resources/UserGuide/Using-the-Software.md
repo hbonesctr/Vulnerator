@@ -75,7 +75,7 @@ put its files in the **Add-ons** folder next to Vulnerator.exe (the main file en
 Vulnerator. Its pages appear in the menu and its options under **Settings > Integrations**, which also lists every
 add-on found and whether it loaded. An add-on that cannot load is skipped and the reason is logged; Vulnerator keeps
 working. If Windows marks the files as downloaded, right-click them, choose **Properties**, tick **Unblock** and restart.
-Add-ons can read findings and hardware but cannot change the database.
+Add-ons can read findings, hardware, the STIG releases submitted and the eMASS POA&M items, but cannot change the database.
 
 ### Add-on licenses
 Some add-ons need a license. Under **Settings > Integrations > Licenses**, paste the key and choose **Add license**,

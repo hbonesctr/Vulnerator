@@ -190,6 +190,52 @@ namespace __NS__
     try { $findings[0].Title = 'changed' } catch { $readOnlyRecord = $true }
     Check ($readOnlyRecord -and $findings[0].Title -ne 'changed') 'finding records cannot be changed'
 
+    # Interface version 3: dashboard data. A scan with a Critical finding and IAVB/IAVT references, and a checklist
+    # from an older release of a STIG already loaded (its results attach to the newer release; the submission is kept).
+    $dashScan = New-Object Vulnerator.Model.Object.File ('dashboard-scan', 'ACAS - Nessus', 'Ready', (Join-Path $fixtures 'dashboard-scan.nessus'), 'True')
+    if ((New-Object Vulnerator.Model.BusinessLogic.AcasNessusReader).ReadAcasNessusFile($dashScan, 'All') -ne 'Processed') { Fail 'dashboard fixture scan did not import' }
+    $olderCkl = New-Object Vulnerator.Model.Object.File ('older-release', 'Checklist', 'Ready', (Join-Path $fixtures 'older-release.ckl'), 'True')
+    if ((New-Object Vulnerator.Model.BusinessLogic.CklReader).ReadCklFile($olderCkl, 'All') -ne 'Processed') { Fail 'older-release checklist did not import' }
+    $v3 = @($hostApi.Data.GetFindings())
+    $hardwareNow = @($hostApi.Data.GetHardware())
+    $critical = @($v3 | Where-Object { $_.Title -eq 'Synthetic Critical Remote Vulnerability' })
+    $c = if ($critical.Count -gt 0) { $critical[0] } else { $null }
+    $cInfo = if ($null -eq $c) { 'missing' } else { 'level=' + $c.SeverityLevel + ' cat=' + $c.Severity + ' risk=' + $c.RiskFactor + ' second=' + $c.SecondarySeverity + ' refs=' + ($c.References -join ' ') + ' hw=' + $c.HardwareId }
+    Check ($critical.Count -eq 1 -and $c.SeverityLevel -eq 'Very High' -and $c.Severity -eq 'I' -and $c.RiskFactor -eq 'Critical') ('Nessus Critical: CAT I and severity level Very High (' + $cInfo + ')')
+    Check ($null -ne $c -and $c.SecondarySeverity -eq 'I') ('Nessus stig_severity is passed on (' + $cInfo + ')')
+    Check ($null -ne $c -and ($c.References -contains 'IAVB:2026-B-0002') -and ($c.References -contains 'IAVT:2026-T-0003') -and ($c.References -contains 'CVE:CVE-2026-0001')) ('IAVB, IAVT and CVE references (' + $cInfo + ')')
+    $dashHost = @($hardwareNow | Where-Object { $null -ne $c -and $_.Id -eq $c.HardwareId })
+    Check ($dashHost.Count -eq 1 -and $null -ne $c.FirstDiscovered) ('a finding names its hardware record and first-seen date (' + $cInfo + ')')
+    $high = @($v3 | Where-Object { $_.Title -eq 'Synthetic OpenSSH Vulnerability' })
+    Check ($high.Count -ge 1 -and $high[0].SeverityLevel -eq 'High' -and ($high[0].References -contains 'IAVA:2026-A-0001')) ('Nessus High: level High with its IAVA (' + $(if ($high.Count) { $high[0].SeverityLevel + ' ' + ($high[0].References -join ' ') } else { 'missing' }) + ')')
+    $low = @($v3 | Where-Object { $_.Title -eq 'Synthetic Low Finding' })
+    Check ($low.Count -eq 1 -and $low[0].SeverityLevel -eq 'Low') 'Nessus Low: level Low'
+    $levels = (@($v3 | ForEach-Object { $_.SeverityLevel } | Sort-Object -Unique) -join ', ')
+    Check (@($v3 | Where-Object { $_.FindingType -eq 'CKL' -and $_.SeverityLevel -notin 'High', 'Moderate', 'Low' }).Count -eq 0) ('checklist findings: levels High, Moderate or Low (all levels: ' + $levels + ')')
+    Check (@($v3 | Where-Object { [string]::IsNullOrEmpty($_.SeverityLevel) }).Count -eq 0) ('every finding has a severity level (' + $levels + ')')
+
+    $subs = @($hostApi.Data.GetStigSubmissions())
+    $subInfo = (@($subs | ForEach-Object { $_.FindingType + ' ' + $_.StigName + ' ' + $_.SubmittedVersion + '/' + $_.LatestVersion + ' outdated=' + $_.IsOutdated + ' host=' + $_.HostName + ' hw=' + $_.HardwareId + ' date=' + $(if ($_.BenchmarkDate) { $_.BenchmarkDate.ToString('yyyy-MM-dd') } else { '-' }) + ' file=' + $_.SourceFile }) -join ' | ')
+    Write-Host ('     submissions: ' + $subInfo)
+    $oldSub = @($subs | Where-Object { $_.StigName -like '*Server*' -and $_.SubmittedVersion -eq 'V2R4' })
+    Check ($oldSub.Count -eq 1 -and $oldSub[0].IsOutdated -and $oldSub[0].LatestVersion -eq 'V2R5' -and $oldSub[0].BenchmarkDate -eq [datetime]'2025-10-15') ('older-release checklist: submitted V2R4, outdated, latest V2R5 (' + $subInfo + ')')
+    $newSub = @($subs | Where-Object { $_.StigName -like '*Server*' -and $_.SubmittedVersion -eq 'V2R5' })
+    Check ($newSub.Count -eq 1 -and -not $newSub[0].IsOutdated -and $newSub[0].BenchmarkDate -eq [datetime]'2026-01-04') ('current checklist: V2R5, not outdated (' + $subInfo + ')')
+    Check (@($subs | Where-Object { $_.StigName -like '*Browser*' -and $_.SubmittedVersion -eq 'V1R3' -and -not $_.IsOutdated }).Count -eq 1) ('second STIG in the same checklist is listed (' + $subInfo + ')')
+    Check (@($subs | Where-Object { $_.HostName -eq 'TESTHOST01' -and $null -ne $_.HardwareId -and $_.FindingType -eq 'CKL' }).Count -eq $subs.Count -and $subs.Count -eq 3) ('submissions name the host and its hardware record (' + $subInfo + ')')
+
+    $poam = @($hostApi.Data.GetPoamItems())
+    $poamInfo = (@($poam | Select-Object -First 4 | ForEach-Object { $_.Status + ' ' + $_.RawSeverity + ' id=' + $(if ($_.DateIdentified) { $_.DateIdentified.ToString('yyyy-MM-dd') } else { '-' }) + ' due=' + $(if ($_.ScheduledCompletion) { $_.ScheduledCompletion.ToString('yyyy-MM-dd') } else { '-' }) + ' devices=' + ($_.DevicesAffected -join ',') + ' milestones=' + $_.Milestones.Count }) -join ' | ')
+    Write-Host ('     POA&M items ' + $poam.Count + ': ' + $poamInfo)
+    Check ($poam.Count -gt 0) ('POA&M items are returned (' + $poam.Count + ')')
+    Check (@($poam | Where-Object { $_.Status -notin 'Ongoing', 'Completed', 'Risk Accepted' }).Count -eq 0) ('POA&M statuses use eMASS wording (' + $poamInfo + ')')
+    Check (@($poam | Where-Object { $null -eq $_.DateIdentified -or $_.DevicesAffected.Count -eq 0 -or $_.Milestones.Count -eq 0 }).Count -eq 0) ('POA&M items have a date identified, devices and a milestone (' + $poamInfo + ')')
+    Check (@($poam | Where-Object { $_.RawSeverity -notin 'Very High', 'High', 'Moderate', 'Low', 'Very Low' }).Count -eq 0) ('POA&M raw severities use eMASS levels (' + $poamInfo + ')')
+    $libraryError = ''
+    $library = 'not called'
+    try { $library = $hostApi.Data.GetLastStigLibraryImport() } catch { $libraryError = $_.Exception.Message }
+    Check ($libraryError -eq '' -and $null -eq $library) ('no STIG library imported: GetLastStigLibraryImport returns null (' + $libraryError + ')')
+
     # The connection add-ons read through refuses writes.
     $ro = New-Object System.Data.SQLite.SQLiteConnection ([Vulnerator.Model.DataAccess.DatabaseBuilder]::ConnectionStringFor($database) + 'Read Only=True;')
     $ro.Open()

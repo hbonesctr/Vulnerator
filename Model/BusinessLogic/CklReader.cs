@@ -359,6 +359,11 @@ namespace Vulnerator.Model.BusinessLogic
                         }
                         else if (xmlReader.NodeType == XmlNodeType.EndElement && xmlReader.Name.Equals("STIG_INFO"))
                         {
+                            // Keep the release as submitted before an older one is moved onto the loaded release.
+                            ImportFacts.RecordStigSubmission(sqliteCommand, "CKL", sqliteCommand.Parameters["SourceName"].Value,
+                                sqliteCommand.Parameters["SourceVersion"].Value, sqliteCommand.Parameters["SourceRelease"].Value,
+                                sqliteCommand.Parameters["PublishedDate"].Value, ImportFacts.Parameter(sqliteCommand, "DiscoveredHostName"),
+                                ImportFacts.Parameter(sqliteCommand, "FindingSourceFileName"));
                             if (databaseInterface.SourceHasNewerRelease(sqliteCommand))
                             {
                                 // A checklist from an older release: keep the newer release already loaded (its

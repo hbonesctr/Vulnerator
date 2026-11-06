@@ -1,4 +1,16 @@
-﻿# Vulnerator 2.0 (7.4.0-beta.2)
+﻿# Vulnerator 2.0 (7.4.0-beta.3)
+###### Version 7.4.0 beta 3, November 2026
+
+| Change Description |
+| :----------------- |
+| ACAS imports keep the Nessus risk factor, so Critical and High can be told apart (both stay CAT I in reports) |
+| Checklist and SCAP imports keep the STIG release each file was submitted with, even when a newer release is loaded |
+| Add-ons can read more about findings (severity level, first seen, IAVA/IAVB/IAVT and CVE references, hardware), the STIG releases submitted, the eMASS POA&M items and the STIG library import date |
+
+
+----------
+
+# Vulnerator 2.0 (7.4.0-beta.2)
 ###### Version 7.4.0 beta 2, November 2026
 
 | Change Description |

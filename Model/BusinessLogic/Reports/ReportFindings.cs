@@ -37,6 +37,18 @@ namespace Vulnerator.Model.BusinessLogic.Reports
         public string NistControls { get; set; }
         public string Ccis { get; set; }
         public DateTime? LastObserved { get; set; }
+        public DateTime? FirstDiscovered { get; set; }
+        public long? HardwareId { get; set; }
+        public long? SoftwareId { get; set; }
+
+        /// <summary>The Nessus risk factor (Critical, High, Medium, Low, None) when the scan was imported by 7.4.0-beta.3 or later.</summary>
+        public string RiskFactor { get; set; }
+
+        /// <summary>The second severity the source gives (Nessus: DISA's stig_severity, for example for IAVMs).</summary>
+        public string SecondarySeverity { get; set; }
+
+        /// <summary>"TYPE:value" references such as "IAVA:2026-A-0001" or "CVE:CVE-2026-0001", comma-separated.</summary>
+        public string References { get; set; }
 
         /// <summary>The asset name shown in reports: the host, or the software item for software-only findings.</summary>
         public string Asset => !string.IsNullOrWhiteSpace(HostName) ? HostName : (SoftwareName ?? string.Empty);
@@ -75,6 +87,40 @@ namespace Vulnerator.Model.BusinessLogic.Reports
                 if (release.StartsWith("Release:", StringComparison.OrdinalIgnoreCase))
                 { release = release.Substring(8).Trim().Split(' ')[0]; }
                 return "V" + version.TrimStart('V', 'v') + (release.Length > 0 ? "R" + release.TrimStart('R', 'r') : string.Empty);
+            }
+        }
+
+        /// <summary>
+        /// The eMASS five-level severity: Very High, High, Moderate, Low or Very Low. A severity override wins (by CAT);
+        /// else the Nessus risk factor (Critical = Very High); else the CAT (I = High, II = Moderate, III = Low, IV = Very Low).
+        /// </summary>
+        public string SeverityLevel
+        {
+            get
+            {
+                string over = NormalizeSeverity(SeverityOverride);
+                if (!string.IsNullOrEmpty(over)) return CatToLevel(over);
+                switch ((RiskFactor ?? string.Empty).Trim().ToUpperInvariant())
+                {
+                    case "CRITICAL": return "Very High";
+                    case "HIGH": return "High";
+                    case "MEDIUM": return "Moderate";
+                    case "LOW": return "Low";
+                    case "NONE": case "INFO": case "INFORMATIONAL": return "Very Low";
+                }
+                return CatToLevel(NormalizeSeverity(RawSeverity));
+            }
+        }
+
+        public static string CatToLevel(string cat)
+        {
+            switch (cat)
+            {
+                case "I": return "High";
+                case "II": return "Moderate";
+                case "III": return "Low";
+                case "IV": return "Very Low";
+                default: return string.Empty;
             }
         }
 
@@ -132,7 +178,11 @@ SELECT FT.FindingType,
             JOIN NIST_Controls NC ON NCC.NIST_Control_ID = NC.NIST_Control_ID
             WHERE VC.Vulnerability_ID = UF.Vulnerability_ID ORDER BY 1)) AS NistControls,
        (SELECT GROUP_CONCAT(CCI_Number, ', ') FROM (SELECT DISTINCT CI.CCI_Number FROM VulnerabilitiesCCIs VC
-            JOIN CCIs CI ON VC.CCI_ID = CI.CCI_ID WHERE VC.Vulnerability_ID = UF.Vulnerability_ID ORDER BY 1)) AS CCIs
+            JOIN CCIs CI ON VC.CCI_ID = CI.CCI_ID WHERE VC.Vulnerability_ID = UF.Vulnerability_ID ORDER BY 1)) AS CCIs,
+       UF.FirstDiscovered, UF.Hardware_ID, UF.Software_ID, ARF.RiskFactor, V.SecondaryRawRiskIndicator,
+       (SELECT GROUP_CONCAT(Ref, ', ') FROM (SELECT DISTINCT VR.ReferenceType || ':' || VR.Reference AS Ref
+            FROM VulnerabilitiesVulnerabilityReferences VVR JOIN VulnerabilityReferences VR ON VVR.Reference_ID = VR.Reference_ID
+            WHERE VVR.Vulnerability_ID = UF.Vulnerability_ID AND VR.Reference IS NOT NULL ORDER BY 1)) AS Refs
 FROM UniqueFindings UF
          LEFT JOIN FindingTypes FT ON UF.FindingType_ID = FT.FindingType_ID
          LEFT JOIN Vulnerabilities V ON UF.Vulnerability_ID = V.Vulnerability_ID
@@ -141,6 +191,7 @@ FROM UniqueFindings UF
          LEFT JOIN Software S ON UF.Software_ID = S.Software_ID
          LEFT JOIN UniqueFindingsSourceFiles UFSF ON UF.FindingSourceFile_ID = UFSF.FindingSourceFile_ID
          LEFT JOIN MitigationsOrConditions MOC ON UF.MitigationOrCondition_ID = MOC.MitigationOrCondition_ID
+         LEFT JOIN AcasRiskFactors ARF ON FT.FindingType = 'ACAS' AND ARF.UniqueVulnerabilityIdentifier = V.UniqueVulnerabilityIdentifier
 /*WHERE*/
 ORDER BY VS.SourceName, H.DisplayedHostName, V.VulnerabilityGroupIdentifier, V.UniqueVulnerabilityIdentifier";
 
@@ -236,7 +287,13 @@ ORDER BY VS.SourceName, H.DisplayedHostName, V.VulnerabilityGroupIdentifier, V.U
                         LastObserved = DateValue(reader, 22),
                         Groups = Text(reader, 23),
                         NistControls = Text(reader, 24),
-                        Ccis = Text(reader, 25)
+                        Ccis = Text(reader, 25),
+                        FirstDiscovered = DateValue(reader, 26),
+                        HardwareId = LongValue(reader, 27),
+                        SoftwareId = LongValue(reader, 28),
+                        RiskFactor = Text(reader, 29),
+                        SecondarySeverity = Text(reader, 30),
+                        References = Text(reader, 31)
                     });
                 }
             }
@@ -256,6 +313,14 @@ ORDER BY VS.SourceName, H.DisplayedHostName, V.VulnerabilityGroupIdentifier, V.U
         private static string Text(SQLiteDataReader reader, int ordinal)
         {
             return reader.IsDBNull(ordinal) ? string.Empty : Convert.ToString(reader.GetValue(ordinal), CultureInfo.InvariantCulture);
+        }
+
+        private static long? LongValue(SQLiteDataReader reader, int ordinal)
+        {
+            if (reader.IsDBNull(ordinal)) return null;
+            long value;
+            return long.TryParse(Convert.ToString(reader.GetValue(ordinal), CultureInfo.InvariantCulture), NumberStyles.Integer,
+                CultureInfo.InvariantCulture, out value) ? value : (long?)null;
         }
 
         private static DateTime? DateValue(SQLiteDataReader reader, int ordinal)

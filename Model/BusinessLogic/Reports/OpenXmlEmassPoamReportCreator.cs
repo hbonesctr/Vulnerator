@@ -208,10 +208,24 @@ namespace Vulnerator.Model.BusinessLogic.Reports
 
         private List<EmassPoamFinding> ReadFindings()
         {
-            List<EmassPoamFinding> findings = new List<EmassPoamFinding>();
             using (SQLiteCommand sqliteCommand = DatabaseBuilder.sqliteConnection.CreateCommand())
             {
                 BuildFilteredCommand(sqliteCommand);
+                return ReadFindings(sqliteCommand);
+            }
+        }
+
+        /// <summary>The POA&amp;M query without the Reporting filters (add-ons, interface version 3).</summary>
+        public static string UnfilteredQuery()
+        {
+            return new DdlReader().ReadDdl(StoredProcedureBase + "Select.EmassPoamVulnerabilities.dml", Assembly.GetExecutingAssembly());
+        }
+
+        /// <summary>Reads the POA&amp;M finding rows of a prepared command (filtered for the export, unfiltered for add-ons).</summary>
+        public static List<EmassPoamFinding> ReadFindings(SQLiteCommand sqliteCommand)
+        {
+            List<EmassPoamFinding> findings = new List<EmassPoamFinding>();
+            {
                 using (SQLiteDataReader reader = sqliteCommand.ExecuteReader())
                 {
                     bool hasGroupColumns = reader.HasColumn("GroupMitigatedStatus");
