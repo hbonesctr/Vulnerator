@@ -275,8 +275,11 @@ ORDER BY SS.SourceName, SS.DiscoveredHostName, SS.ImportedOn";
             {
                 System.Text.RegularExpressions.Match v = System.Text.RegularExpressions.Regex.Match(version ?? string.Empty, @"\d+");
                 System.Text.RegularExpressions.Match r = System.Text.RegularExpressions.Regex.Match(release ?? string.Empty, @"\d+");
-                if (!v.Success) return null;
-                return new StigRelease(int.Parse(v.Value, CultureInfo.InvariantCulture), r.Success ? int.Parse(r.Value, CultureInfo.InvariantCulture) : 0);
+                // Non-STIG sources (an ACAS plugin feed "202610280000") are not STIG releases: ignore numbers out of range.
+                int versionNumber, releaseNumber = 0;
+                if (!v.Success || !int.TryParse(v.Value, NumberStyles.None, CultureInfo.InvariantCulture, out versionNumber)) return null;
+                if (r.Success && !int.TryParse(r.Value, NumberStyles.None, CultureInfo.InvariantCulture, out releaseNumber)) return null;
+                return new StigRelease(versionNumber, releaseNumber);
             }
 
             public int CompareTo(StigRelease other)
