@@ -27,7 +27,6 @@ KNOWN_BROKEN = {
     "Insert/BoundaryHardwareSoftwarePortProtocolServiceMappingWithIds.dml": "unbalanced parentheses (upstream, asset management)",
     "Insert/HardwareVulnerabilitySourceMapping.dml": "table Hardware_VulnerabilitySources no longer exists (upstream)",
     "Delete/GroupContactMappingByGroup.dml": "table GroupsContacts does not exist; method has no callers",
-    "Select/UngroupedVulnerabilities.dml": "references NistControlsCCIs; file has no callers",
 }
 
 
