@@ -65,13 +65,13 @@ namespace Vulnerator.Model.AddOns
 
         public static string Folder => Path.Combine(BaseFolder(), FolderName);
 
-        /// <summary>Every stored license, oldest first. Unreadable files are logged and left out.</summary>
+        /// <summary>Every stored license, in the order entered (by file name). Unreadable files are logged and left out.</summary>
         public static IReadOnlyList<StoredLicense> All()
         {
             List<StoredLicense> licenses = new List<StoredLicense>();
             string folder = Folder;
             if (!Directory.Exists(folder)) return licenses;
-            foreach (FileInfo file in new DirectoryInfo(folder).GetFiles("*.lic").OrderBy(f => f.CreationTimeUtc).ThenBy(f => f.Name, StringComparer.OrdinalIgnoreCase))
+            foreach (FileInfo file in new DirectoryInfo(folder).GetFiles("*.lic").OrderBy(f => f.Name, StringComparer.OrdinalIgnoreCase))
             {
                 try
                 {
@@ -99,7 +99,13 @@ namespace Vulnerator.Model.AddOns
             try
             {
                 Directory.CreateDirectory(Folder);
-                string file = Path.Combine(Folder, "license-" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmssfff") + "-" + Guid.NewGuid().ToString("N").Substring(0, 8) + ".lic");
+                // Names sort in the order the licenses were entered (the clock can repeat a value, so a counter follows it).
+                string stamp = "license-" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmssfff") + "-";
+                int sequence = 0;
+                string file;
+                do
+                { file = Path.Combine(Folder, stamp + (sequence++).ToString("D3") + ".lic"); }
+                while (System.IO.File.Exists(file));
                 System.IO.File.WriteAllText(file, text + Environment.NewLine, new UTF8Encoding(false));
                 LogWriter.LogStatusUpdate("Add-ons: license added (" + Path.GetFileName(file) + ").");
             }
