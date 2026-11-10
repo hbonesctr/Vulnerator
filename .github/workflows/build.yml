@@ -63,12 +63,21 @@ jobs:
         shell: powershell
         run: tools/ci/Write-ThirdPartyNotices.ps1 -BinDir bin/Release
 
-      - name: Add the empty Add-ons folder
+      - name: Add the Add-ons folder with the free Dashboards add-on
         shell: pwsh
+        # tools/addons/Dashboards holds the compiled free Dashboards add-on (built in the private add-ons repo; not MIT,
+        # see its LICENSE.txt). Its SHA-256 must match SHA256.txt.
         run: |
-          New-Item -ItemType Directory -Force bin/Release/Add-ons | Out-Null
+          New-Item -ItemType Directory -Force bin/Release/Add-ons/Dashboards | Out-Null
           Copy-Item tools/addons/README.txt bin/Release/Add-ons/README.txt
           if (-not (Test-Path bin/Release/Vulnerator.AddOns.dll)) { Write-Host '::error::Vulnerator.AddOns.dll (add-on contract) is not in the build'; exit 1 }
+          $src = 'tools/addons/Dashboards'
+          $dll = "$src/Vulnerator.Dashboards.AddOn.dll"
+          $expected = ((Get-Content "$src/SHA256.txt" -Raw).Trim() -split '\s+')[0].ToLowerInvariant()
+          $actual = (Get-FileHash $dll -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actual -ne $expected) { Write-Host "::error::Dashboards add-on hash $actual does not match SHA256.txt ($expected)"; exit 1 }
+          Copy-Item $dll, "$src/README.txt", "$src/LICENSE.txt" bin/Release/Add-ons/Dashboards/
+          Write-Host ('::notice::Bundled Dashboards add-on ' + (Get-Item $dll).VersionInfo.ProductVersion + ', SHA-256 ' + $actual)
 
       - name: Launch test (window appears)
         shell: cmd
@@ -110,7 +119,7 @@ jobs:
         timeout-minutes: 5
         run: '%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools\tests\Test-EntityFramework.ps1 -BinDir bin\Release'
 
-      - name: Test the add-on mechanism (throw-away test add-ons)
+      - name: Test the add-on mechanism (throw-away test add-ons and the bundled Dashboards add-on)
         shell: cmd
         timeout-minutes: 5
         run: '%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools\tests\Test-AddOns.ps1 -BinDir bin\Release'

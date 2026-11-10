@@ -1,11 +1,15 @@
 Vulnerator 2.0 add-ons
 ======================
 
-Add-ons are optional extensions (for example dashboards or integrations). They are not part of Vulnerator
-and none are included in this release.
+Add-ons are optional extensions (for example dashboards or integrations). This release includes one:
 
-To install an add-on, put its files in this folder: the main file ends in .AddOn.dll. An add-on that comes
-with several files can have a folder of its own here. Then restart Vulnerator.
+  Dashboards (folder "Dashboards") - free, no license key. Offline dashboards: open findings by severity,
+  top hosts, compliance by control family, POA&M aging, trend, coverage gaps, STIG currency and active
+  IAVMs. Open it from the Dashboards item in the menu. It is not part of the MIT-licensed program; see
+  Dashboards\LICENSE.txt. To remove it, close Vulnerator and delete the Dashboards folder.
+
+To install another add-on, put its files in this folder: the main file ends in .AddOn.dll. An add-on that
+comes with several files can have a folder of its own here. Then restart Vulnerator.
 
 Settings > Integrations lists every add-on found and whether it loaded. An add-on that cannot be loaded is
 skipped and the reason is written to the Vulnerator log; Vulnerator itself keeps working.

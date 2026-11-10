@@ -2,7 +2,8 @@
 # subfolder with its own dependency, and add-ons that must be skipped without stopping Vulnerator (throws while
 # starting, needs a newer interface, needs a newer Vulnerator, not an add-on, wrong entry type, not a .NET file,
 # duplicate id). Then checks the read-only data the add-ons get, the data-changed event, the menu pages and the
-# Settings > Integrations section.
+# Settings > Integrations section. Last, loads the free Dashboards add-on that ships in the release (Add-ons\Dashboards)
+# against the test database: it must load with no license, build its dashboards from the real data and say "Free".
 #
 # Windows PowerShell 5.1, 64-bit (the build is x64), STA. Pure ASCII; no PowerShell 7 syntax.
 # Usage: %SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe -File tools\tests\Test-AddOns.ps1 -BinDir bin\Release
@@ -33,7 +34,9 @@ try {
     if (-not (Test-Path $contract)) { Fail 'Vulnerator.AddOns.dll is not in the program folder' }
     $shippedFolder = Join-Path $binPath 'Add-ons'
     Check (Test-Path (Join-Path $shippedFolder 'README.txt')) 'the release has an Add-ons folder with README.txt'
-    Check (@(Get-ChildItem $binPath -Recurse -Filter '*.AddOn.dll').Count -eq 0) 'the release ships no add-ons'
+    $shippedAddOns = @(Get-ChildItem $binPath -Recurse -Filter '*.AddOn.dll' | ForEach-Object { $_.FullName.Substring($binPath.Length + 1) })
+    Check ($shippedAddOns.Count -eq 1 -and $shippedAddOns[0] -eq 'Add-ons\Dashboards\Vulnerator.Dashboards.AddOn.dll') ('the release ships one add-on, Dashboards (' + ($shippedAddOns -join ', ') + ')')
+    Check ((Test-Path (Join-Path $shippedFolder 'Dashboards\LICENSE.txt')) -and (Test-Path (Join-Path $shippedFolder 'Dashboards\README.txt'))) 'Dashboards ships with its LICENSE.txt and README.txt'
 
     # Same set-up as Test-EntityFramework.ps1: the application's configuration, then the program's assemblies.
     [AppDomain]::CurrentDomain.SetData('APP_CONFIG_FILE', (Join-Path $binPath 'Vulnerator.exe.config'))
@@ -314,6 +317,41 @@ namespace __NS__
     $removed = $licenses::Remove($first)
     Check ($null -eq $removed -and @($hostApi.Licenses).Count -eq 1 -and @($hostApi.Licenses)[0] -like 'OTHER-LICENSE*') ('a license can be removed (' + $removed + ')')
     Check ([TestSample.Entry]::LicenseChanges -eq 3) 'LicensesChanged raised on removal'
+
+    # The bundled Dashboards add-on (free), loaded from the release's own Add-ons folder against the test database.
+    $shipped = @([Vulnerator.Model.AddOns.AddOnManager]::LoadFrom($shippedFolder))
+    $dash = @($shipped | Where-Object { $_.Id -eq 'dashboards' })
+    $dashInfo = (@($shipped | ForEach-Object { [System.IO.Path]::GetFileName($_.File) + ': ' + $_.Summary }) -join ' | ')
+    Write-Host ('     shipped: ' + $dashInfo)
+    Check ($shipped.Count -eq 1 -and $dash.Count -eq 1 -and $dash[0].State -eq 'Loaded') ('the bundled Dashboards add-on loads (' + $dashInfo + ')')
+    if ($dash.Count -eq 1 -and $dash[0].State -eq 'Loaded') {
+        Check ($dash[0].Version -like '1.*') ('Dashboards version 1.x (' + $dash[0].Version + ')')
+        $instance = [Vulnerator.Model.AddOns.LoadedAddOn].GetProperty('Instance', [System.Reflection.BindingFlags]'NonPublic,Instance').GetValue($dash[0], $null)
+        Check ($instance.LicenseStatus -eq 'Free (no license needed)') ('Dashboards needs no license (' + $instance.LicenseStatus + ')')
+        $dashPages = @($dash[0].Pages)
+        Check ($dashPages.Count -eq 1 -and $dashPages[0].Title -eq 'Dashboards') 'Dashboards adds its menu page'
+        $dashView = $null
+        $dashViewError = ''
+        try { $dashView = $dashPages[0].CreateView.Invoke() } catch { $dashViewError = $_.Exception.Message }
+        Check ($null -ne $dashView -and $dashView.GetType().FullName -eq 'Vulnerator.Dashboards.DashboardView') ('the Dashboards page opens without a license (' + $(if ($null -eq $dashView) { 'null ' + $dashViewError } else { $dashView.GetType().FullName }) + ')')
+        # What the page loads: every view's data, from the real database through the add-on contract.
+        $model = $null
+        $modelError = ''
+        try { $model = $instance.GetType().GetMethod('Load', [System.Reflection.BindingFlags]'NonPublic,Instance').Invoke($instance, $null) }
+        catch { $inner = $_.Exception; while ($null -ne $inner.InnerException) { $inner = $inner.InnerException }; $modelError = $inner.GetType().FullName + ': ' + $inner.Message }
+        $dbFindings = @($hostApi.Data.GetFindings()).Count
+        $iavms = if ($null -ne $model) { (@($model.Iavms | ForEach-Object { $_.Iavm }) -join ', ') } else { '' }
+        $modelInfo = if ($null -eq $model) { 'error ' + $modelError } else { 'findings ' + $model.FindingCount + ' of ' + $dbFindings + ', families ' + $model.Compliance.Count + ', coverage ' + $model.Coverage.Count + ', IAVMs ' + $iavms + ', marking ' + $model.Marking }
+        Write-Host ('     dashboards: ' + $modelInfo)
+        Check ($null -ne $model -and $model.FindingCount -eq $dbFindings -and $dbFindings -gt 0) ('Dashboards reads every finding from the database (' + $modelInfo + ')')
+        Check ($null -ne $model -and $model.Coverage.Count -gt 0 -and $model.Marking -eq 'UNCLASSIFIED') ('Dashboards lists assets and carries the marking (' + $modelInfo + ')')
+        Check ($null -ne $model -and $iavms -like '*2026-B-0002*') ('Dashboards lists the scan IAVMs (' + $modelInfo + ')')
+        $trend = @(Get-ChildItem $workDir -Recurse -Filter 'trend.json' | Where-Object { $_.FullName -like '*Add-on data*dashboards*' })
+        Check ($trend.Count -eq 1) 'Dashboards keeps its trend in its data folder next to the database'
+        [Vulnerator.View.UI.AddOnUi]::FillIntegrations($panel)
+        $dashTexts = (Texts $panel) -join ' || '
+        Check ($dashTexts -like '*Dashboards*Free (no license needed)*') 'Settings > Integrations shows Dashboards as free'
+    }
 
     # No add-ons folder at all: nothing loaded, no error.
     $none = @([Vulnerator.Model.AddOns.AddOnManager]::LoadFrom((Join-Path $workDir 'missing')))

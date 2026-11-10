@@ -70,12 +70,21 @@ Before each export you can accept or change the **marking**; it is printed in th
 stored in the file properties (for the PDF, at the top and bottom of every page). Turn the question off in Settings if you always use the same marking.
 
 ## Add-ons
-Add-ons are optional extensions (for example dashboards or integrations); none come with Vulnerator. To install one,
+Add-ons are optional extensions (for example dashboards or integrations). To install one,
 put its files in the **Add-ons** folder next to Vulnerator.exe (the main file ends in `.AddOn.dll`) and restart
 Vulnerator. Its pages appear in the menu and its options under **Settings > Integrations**, which also lists every
 add-on found and whether it loaded. An add-on that cannot load is skipped and the reason is logged; Vulnerator keeps
 working. If Windows marks the files as downloaded, right-click them, choose **Properties**, tick **Unblock** and restart.
 Add-ons can read findings, hardware, the STIG releases submitted and the eMASS POA&M items, but cannot change the database.
+
+### Dashboards (included, free)
+Vulnerator comes with the **Dashboards** add-on (in **Add-ons\Dashboards**); it needs no license. Choose **Dashboards**
+in the menu for offline charts of open findings by severity (CAT or Very High to Very Low), top hosts, compliance by
+NIST control family, POA&M aging, the open/closed trend, assets with no scan or checklist, outdated STIG checklists and
+active IAVMs. Every view carries the classification marking. An ACAS finding the host's newest scan no longer reports is
+shown as **Unverified** (neither open nor closed). The trend starts the day Dashboards is first used. To remove it,
+close Vulnerator and delete the **Add-ons\Dashboards** folder. Dashboards is free but not part of the MIT-licensed
+program; see its LICENSE.txt.
 
 ### Add-on licenses
 Some add-ons need a license. Under **Settings > Integrations > Licenses**, paste the key and choose **Add license**,

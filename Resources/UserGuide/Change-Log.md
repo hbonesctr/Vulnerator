@@ -1,4 +1,15 @@
-﻿# Vulnerator 2.0 (7.4.0-beta.3)
+﻿# Vulnerator 2.0 (7.4.0)
+###### Version 7.4.0, November 2026
+
+| Change Description |
+| :----------------- |
+| Includes the free Dashboards add-on (Add-ons\Dashboards, no license needed): severity, top hosts, compliance by control family, POA&M aging, trend, coverage gaps, outdated STIG checklists and active IAVMs |
+| Add-on support (menu pages, Settings > Integrations, add-on licenses) and the dashboard data from the 7.4.0 betas are now in a full release |
+
+
+----------
+
+# Vulnerator 2.0 (7.4.0-beta.3)
 ###### Version 7.4.0 beta 3, November 2026
 
 | Change Description |
