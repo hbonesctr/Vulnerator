@@ -823,8 +823,11 @@ try {
     $backupHardware = $null
     if ($backupPath -and (Test-Path $backupPath)) {
         $bc = New-Object System.Data.SQLite.SQLiteConnection ('Data Source=' + $backupPath + ';Version=3;Read Only=True;')
-        $bc.Open(); try { $cmd = $bc.CreateCommand(); $cmd.CommandText = 'SELECT COUNT(*) FROM Hardware'; $backupHardware = [int]$cmd.ExecuteScalar() } finally { $bc.Dispose() }
-        Remove-Item $backupPath -Force
+        $bc.Open()
+        try { $cmd = $bc.CreateCommand(); try { $cmd.CommandText = 'SELECT COUNT(*) FROM Hardware'; $backupHardware = [int]$cmd.ExecuteScalar() } finally { $cmd.Dispose() } }
+        finally { $bc.Dispose() }
+        [GC]::Collect(); [GC]::WaitForPendingFinalizers()
+        try { Remove-Item $backupPath -Force -ErrorAction Stop } catch { Write-Host ('Note: the backup copy stays in the test folder (' + $_.Exception.Message + ')') }
     }
     Assert-That ($null -eq $backupError -and $backupHardware -eq [int](Get-Scalar 'SELECT COUNT(*) FROM Hardware')) ('the database is backed up while it is open (' + $backupHardware + ' hardware records' + $(if ($backupError) { '; ' + $backupError } else { '' }) + ')')
 
